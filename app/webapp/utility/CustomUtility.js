@@ -2399,31 +2399,39 @@ sap.ui.define([
 
             // Get the source FilterBar
             const oFilterBar = oEvent.getSource();
-            const sFilterBarId = oFilterBar.getId();
+            let sFilterBarId = oFilterBar.getId();
+            
+            // ✅ Extract base ID from full ID (e.g., "container-glassboard---Home--customerFilterBar" -> "customerFilterBar")
+            const aIdParts = sFilterBarId.split("--");
+            if (aIdParts.length > 0) {
+                sFilterBarId = aIdParts[aIdParts.length - 1]; // Get the last part (base ID)
+            }
 
-            // Map FilterBar IDs to corresponding Table IDs
+            // ✅ Map FilterBar IDs to corresponding Table IDs - ISOLATED per fragment
             const filterToTableMap = {
                 "customerFilterBar": "Customers",
                 "employeeFilterBar": "Employees",
                 "opportunityFilterBar": "Opportunities",
-                "projectsFilterBar": "Projects"
+                "projectFilterBar": "Projects",
+                "projectsFilterBar": "Projects" // ✅ Support both naming conventions
                 // ✅ REMOVED: "verticalsFilterBar": "Verticals"
                 // Add more mappings as needed
             };
 
             const sTableId = filterToTableMap[sFilterBarId];
             if (!sTableId) {
-                console.warn("❌ No table mapping found for FilterBar ID:", sFilterBarId);
+                console.warn("❌ No table mapping found for FilterBar ID:", sFilterBarId, "(full ID:", oFilterBar.getId() + ")");
                 return;
             }
 
+            // ✅ Only rebind the specific table for this FilterBar - ISOLATED
             const oTable = this.byId(sTableId);
             if (oTable && typeof oTable.rebind === "function") {
                 oTable.rebind();
-                console.log(`✅ Table '${sTableId}' rebound on filter search`);
+                console.log(`✅ Table '${sTableId}' rebound on filter search (isolated for ${sFilterBarId})`);
             } else if (oTable && typeof oTable.bindRows === "function") {
                 oTable.bindRows();
-                console.log(`✅ Table '${sTableId}' rebind fallback called (bindRows)`);
+                console.log(`✅ Table '${sTableId}' rebind fallback called (bindRows) - isolated`);
             } else {
                 console.warn(`❌ Table '${sTableId}' not found or not ready for rebind.`);
             }

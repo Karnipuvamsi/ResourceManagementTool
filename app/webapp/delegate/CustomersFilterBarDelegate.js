@@ -65,8 +65,21 @@ sap.ui.define([
             return Element.getElementById(sId);
         }
 
+        // ✅ Get fragment name from FilterBar ID to use correct model path
+        const sFilterBarId = oFilterBar.getId();
+        let sFragmentName = "Customers"; // Default
+        if (sFilterBarId.includes("customerFilterBar")) {
+            sFragmentName = "Customers";
+        } else if (sFilterBarId.includes("projectFilterBar")) {
+            sFragmentName = "Projects";
+        } else if (sFilterBarId.includes("opportunityFilterBar")) {
+            sFragmentName = "Opportunities";
+        } else if (sFilterBarId.includes("employeeFilterBar")) {
+            sFragmentName = "Employees";
+        }
+        
         return new FilterField(sId, {
-            conditions: "{$filters>/conditions/" + sPropertyName + "}",
+            conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
             label: sPropertyName,
             maxConditions: -1,

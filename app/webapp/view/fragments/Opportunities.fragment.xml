@@ -2,180 +2,247 @@
                          xmlns="sap.m"
                          xmlns:f="sap.ui.layout.form"
                          xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table">
-    <VBox class="sapUiSmallMargin">
-        <!-- Panel for Table -->
-        <Panel class="sapUiResponsiveMargin" expandable="false">
-            <Toolbar>
-                <ToolbarSpacer />
-                <SearchField
-                    id="opportunitySearchField"
-                    width="300px"
-                    placeholder="Search opportunities..."
-                    liveChange="onOpportunitySearch"
-                    search="onOpportunitySearch" />
-            </Toolbar>
-            <ScrollContainer height="380px" vertical="true" horizontal="false">
-                <mdc:Table
-                    id="Opportunities"
-                    class="verticalsTable rowDetailToggleTable"
-                    header="Count"
-                    autoBindOnInit="false"
-                    busyIndicatorDelay="0"
-                    width="100%"
-                    p13nMode="Column,Sort,Filter,Group"
-                    selectionMode="Single"
-                    delegate='{
-                        "name": "glassboard/delegate/OpportunitiesTableDelegate",
-                        "payload": {
-                            "collectionPath": "Opportunities"
-                        }
-                    }'
-                    showRowCount="true"
-                    threshold="1000"
-                    enableExport="true"
-                    enableAutoColumnWidth="false"
-                    filter="opportunityFilterBar"
-                    filterConditions="{filterModel>/conditions}"
-                    selectionChange="onSelectionChange">
-                    
-                    <mdc:type>
-                        <mdct:ResponsiveTableType />
-                    </mdc:type>
-
-                    <mdc:actions>
-                        <SegmentedButton 
-                            selectedKey="less"
-                            selectionChange="onToggleRowDetail"
-                            tooltip="Toggle Row Details">
-                            <items>
-                                <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
-                                <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
-                            </items>
-                        </SegmentedButton>
-                        <Button icon="sap-icon://delete" id="btnDelete_oppr" tooltip="Delete" press="onDeletePress" enabled="false" />
-                        <SplitButton
-                            id="opportunityUpload"
-                            icon="sap-icon://upload"
-                            tooltip="Upload"
-                            type="Transparent"
-                            press="onUpload"
-                            arrowPress="onSplitButtonArrowPress"
-                        />
-                    </mdc:actions>
-
-                    <mdc:copyProvider>
-                        <!-- <plugins:CopyProvider id="copyProvider_oppr" /> -->
-                    </mdc:copyProvider>
-                </mdc:Table>
-            </ScrollContainer>
-        </Panel>
-        <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
-        <!-- Panel for Form -->
-        <Panel headerText="Opportunity Details" class="sapUiResponsiveMargin" expandable="false">
+                         xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="opportunityDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="true"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="true">
+        
+        <!-- Optional Page Title -->
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Opportunity Management" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <!-- ========== FILTERBAR ========== -->
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="true">
+                <VBox class="sapUiSmallMargin">
+                    <mdc:FilterBar
+                        id="opportunityFilterBar"
+                        delegate='{
+                            "name": "glassboard/delegate/OpportunitiesFilterBarDelegate",
+                            "payload": {
+                                "collectionPath": "Opportunities"
+                            }
+                        }'
+                        search="onFilterSearch"
+                        clear="onFilterBarClear"
+                        showAdaptFiltersButton="true"
+                        showClearButton="true"
+                        showGoButton="true"
+                        showRestoreButton="true"
+                        showVariantManagement="true"
+                        variantBackreference="opportunityFilterBar"
+                        filterConditions="{filterModel>/Opportunities/conditions}"
+                        p13nMode="Item,Value">
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Opportunity Name Filter -->
+                            <mdc:FilterField
+                                id="filterOpportunityName"
+                                label="Opportunity Name"
+                                conditions="{filterModel>/Opportunities/conditions/opportunityName}"
+                                propertyKey="opportunityName"
+                                maxConditions="-1"
+                                required="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Stage Filter -->
+                            <mdc:FilterField
+                                id="filterStage"
+                                label="Stage"
+                                conditions="{filterModel>/Opportunities/conditions/Stage}"
+                                propertyKey="Stage"
+                                maxConditions="-1"
+                                required="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <!-- ========== MAIN CONTENT ========== -->
+        <layout:content>
             <VBox class="sapUiSmallMargin">
-                <HBox width="100%">
-                    <!-- Left Column -->
-                    <VBox width="50%" class="sapUiSmallMarginEnd">
-                        <f:SimpleForm
-                            layout="ResponsiveGridLayout"
-                            editable="true"
-                            labelSpanL="3"
-                            labelSpanM="3"
-                            adjustLabelSpan="false"
-                            emptySpanL="1"
-                            emptySpanM="1"
-                            columnsL="1"
-                            columnsM="1"
-                            class="sapUiNoContentPadding">
-                            <Label text="SAP Opportunity ID" />
-                            <Input id="inputSapOppId_oppr" value="{opportunityModel>/sapOpportunityId}" width="100%" enabled="false" placeholder="Auto-generated" />
-                            
-                            <Label text="SFDC Opportunity ID" />
-                            <Input id="inputSfdcOppId_oppr" value="{opportunityModel>/sfdcOpportunityId}" width="100%" />
-                            
-                            <Label text="Opportunity Name" required="true" />
-                            <Input id="inputOppName_oppr" value="{opportunityModel>/opportunityName}" width="100%" required="true" />
-                            
-                            <Label text="Business Unit" required="true" />
-                            <Input id="inputBusinessUnit_oppr" value="{opportunityModel>/businessUnit}" width="100%" required="true" />
-                            
-                            <Label text="Probability" required="true" />
-                            <Select id="inputProbability_oppr" selectedKey="{opportunityModel>/probability}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Probability..." />
-                                    <core:Item key="ProposalStage" text="0%-ProposalStage" />
-                                    <core:Item key="SoWSent" text="33%-SoWSent" />
-                                    <core:Item key="SoWSigned" text="85%-SoWSigned" />
-                                    <core:Item key="PurchaseOrderReceived" text="100%-PurchaseOrderReceived" />
-                                </items>
-                            </Select>
-                            
-                            <Label text="Stage" required="true" />
-                            <Select id="inputStage_oppr" selectedKey="{opportunityModel>/Stage}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Stage..." />
-                                    <core:Item key="Discover" text="Discover" />
-                                    <core:Item key="Define" text="Define" />
-                                    <core:Item key="OnBid" text="On Bid" />
-                                    <core:Item key="DownSelect" text="Down Select" />
-                                    <core:Item key="SignedDeal" text="Signed Deal" />
-                                </items>
-                            </Select>
-                        </f:SimpleForm>
-                    </VBox>
-                    
-                    <!-- Right Column -->
-                    <VBox width="50%" class="sapUiSmallMarginBegin">
-                        <f:SimpleForm
-                            layout="ResponsiveGridLayout"
-                            editable="true"
-                            labelSpanL="3"
-                            labelSpanM="3"
-                            adjustLabelSpan="false"
-                            emptySpanL="1"
-                            emptySpanM="1"
-                            columnsL="1"
-                            columnsM="1"
-                            class="sapUiNoContentPadding">
-                            <Label text="Sales SPOC" required="true" />
-                            <Input id="inputSalesSPOC_oppr" value="{opportunityModel>/salesSPOC}" width="100%" required="true" />
-                            
-                            <Label text="Delivery SPOC" required="true" />
-                            <Input id="inputDeliverySPOC_oppr" value="{opportunityModel>/deliverySPOC}" width="100%" required="true" />
-                            
-                            <Label text="Expected Start" required="true" />
-                            <DatePicker id="inputExpectedStart_oppr" value="{opportunityModel>/expectedStart}" width="100%" required="true" />
-                            
-                            <Label text="Expected End" required="true" />
-                            <DatePicker id="inputExpectedEnd_oppr" value="{opportunityModel>/expectedEnd}" width="100%" required="true" />
-                            
-                            <Label text="TCV" required="true" />
-                            <Input id="inputTCV_oppr" value="{opportunityModel>/tcv}" width="100%" type="Number" required="true" />
-                            
-                            <Label text="Customer" required="true" />
-                            <Input 
-                                id="inputCustomerId_oppr" 
-                                width="100%"
-                                placeholder="Select Customer"
-                                showValueHelp="true"
-                                valueHelpRequest="onCustomerValueHelpRequest"
-                                required="true">
-                                <layoutData>
-                                    <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
-                                </layoutData>
-                            </Input>
-                        </f:SimpleForm>
-                    </VBox>
-                </HBox>
+                <!-- ===== TABLE PANEL ===== -->
+                <Panel class="sapUiResponsiveMargin" expandable="false">
+                    <Toolbar>
+                        <ToolbarSpacer />
+                        <SearchField
+                            id="opportunitySearchField"
+                            width="300px"
+                            placeholder="Search opportunities..."
+                            liveChange="onOpportunitySearch"
+                            search="onOpportunitySearch" />
+                    </Toolbar>
+                    <ScrollContainer height="350px" vertical="true" horizontal="false">
+                        <mdc:Table
+                            id="Opportunities"
+                            header="Opportunities"
+                            class="verticalsTable rowDetailToggleTable"
+                            autoBindOnInit="false"
+                            busyIndicatorDelay="0"
+                            width="100%"
+                            p13nMode="Column,Sort,Filter,Group"
+                            selectionMode="Single"
+                            delegate='{
+                                "name": "glassboard/delegate/OpportunitiesTableDelegate",
+                                "payload": {
+                                    "collectionPath": "Opportunities"
+                                }
+                            }'
+                            showRowCount="true"
+                            threshold="1000"
+                            enableExport="true"
+                            enableAutoColumnWidth="false"
+                            filter="opportunityFilterBar"
+                            filterConditions="{filterModel>/Opportunities/conditions}"
+                            selectionChange="onSelectionChange"
+                            type="ResponsiveTable">
+                            <mdc:type>
+                                <mdct:ResponsiveTableType />
+                            </mdc:type>
+                            <mdc:actions>
+                                <SegmentedButton 
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
+                                    <items>
+                                        <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
+                                        <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
+                                    </items>
+                                </SegmentedButton>
+                                <Button icon="sap-icon://delete" id="btnDelete_oppr" tooltip="Delete" press="onDeletePress" enabled="false" />
+                                <SplitButton
+                                    id="opportunityUpload"
+                                    icon="sap-icon://upload"
+                                    tooltip="Upload"
+                                    type="Transparent"
+                                    press="onUpload"
+                                    arrowPress="onSplitButtonArrowPress"
+                                />
+                            </mdc:actions>
+                        </mdc:Table>
+                    </ScrollContainer>
+                </Panel>
                 
-                <!-- Buttons Row -->
-                <HBox class="sapUiMediumMarginTop" justifyContent="Center" width="100%">
-                    <Button id="editButton_oppr" text="Edit" type="Emphasized" press="onEditOpportunityForm" enabled="false" class="sapUiSmallMarginEnd" />
-                    <Button id="submitButton_oppr" text="Submit" type="Accept" press="onSubmitOpportunity" />
-                    <Button id="cancelFormButton_oppr" text="Cancel" type="Reject" press="onCancelOpportunityForm" class="sapUiSmallMarginBegin" />
-                </HBox>
+                <!-- ===== SPACE BETWEEN TABLE AND FORM ===== -->
+                <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
+                
+                <!-- ===== FORM PANEL ===== -->
+                <Panel headerText="Opportunity Details" class="sapUiResponsiveMargin" expandable="false">
+                    <VBox class="sapUiSmallMargin">
+                        <HBox width="100%">
+                            <!-- Left Column -->
+                            <VBox width="50%" class="sapUiSmallMarginEnd">
+                                <f:SimpleForm
+                                    layout="ResponsiveGridLayout"
+                                    editable="true"
+                                    labelSpanL="3"
+                                    labelSpanM="3"
+                                    adjustLabelSpan="false"
+                                    emptySpanL="1"
+                                    emptySpanM="1"
+                                    columnsL="1"
+                                    columnsM="1"
+                                    class="sapUiNoContentPadding">
+                                    <Label text="SAP Opportunity ID" />
+                                    <Input id="inputSapOppId_oppr" value="{opportunityModel>/sapOpportunityId}" width="100%" enabled="false" placeholder="Auto-generated" />
+                                    <Label text="SFDC Opportunity ID" />
+                                    <Input id="inputSfdcOppId_oppr" value="{opportunityModel>/sfdcOpportunityId}" width="100%" />
+                                    <Label text="Opportunity Name" required="true" />
+                                    <Input id="inputOppName_oppr" value="{opportunityModel>/opportunityName}" width="100%" required="true" />
+                                    <Label text="Business Unit" required="true" />
+                                    <Input id="inputBusinessUnit_oppr" value="{opportunityModel>/businessUnit}" width="100%" required="true" />
+                                    <Label text="Probability" required="true" />
+                                    <Select id="inputProbability_oppr" selectedKey="{opportunityModel>/probability}" width="100%" required="true">
+                                        <items>
+                                            <core:Item key="" text="Select Probability..." />
+                                            <core:Item key="ProposalStage" text="0%-ProposalStage" />
+                                            <core:Item key="SoWSent" text="33%-SoWSent" />
+                                            <core:Item key="SoWSigned" text="85%-SoWSigned" />
+                                            <core:Item key="PurchaseOrderReceived" text="100%-PurchaseOrderReceived" />
+                                        </items>
+                                    </Select>
+                                    <Label text="Stage" required="true" />
+                                    <Select id="inputStage_oppr" selectedKey="{opportunityModel>/Stage}" width="100%" required="true">
+                                        <items>
+                                            <core:Item key="" text="Select Stage..." />
+                                            <core:Item key="Discover" text="Discover" />
+                                            <core:Item key="Define" text="Define" />
+                                            <core:Item key="OnBid" text="On Bid" />
+                                            <core:Item key="DownSelect" text="Down Select" />
+                                            <core:Item key="SignedDeal" text="Signed Deal" />
+                                        </items>
+                                    </Select>
+                                </f:SimpleForm>
+                            </VBox>
+                            
+                            <!-- Right Column -->
+                            <VBox width="50%" class="sapUiSmallMarginBegin">
+                                <f:SimpleForm
+                                    layout="ResponsiveGridLayout"
+                                    editable="true"
+                                    labelSpanL="3"
+                                    labelSpanM="3"
+                                    adjustLabelSpan="false"
+                                    emptySpanL="1"
+                                    emptySpanM="1"
+                                    columnsL="1"
+                                    columnsM="1"
+                                    class="sapUiNoContentPadding">
+                                    <Label text="Sales SPOC" required="true" />
+                                    <Input id="inputSalesSPOC_oppr" value="{opportunityModel>/salesSPOC}" width="100%" required="true" />
+                                    <Label text="Delivery SPOC" required="true" />
+                                    <Input id="inputDeliverySPOC_oppr" value="{opportunityModel>/deliverySPOC}" width="100%" required="true" />
+                                    <Label text="Expected Start" required="true" />
+                                    <DatePicker id="inputExpectedStart_oppr" value="{opportunityModel>/expectedStart}" width="100%" required="true" />
+                                    <Label text="Expected End" required="true" />
+                                    <DatePicker id="inputExpectedEnd_oppr" value="{opportunityModel>/expectedEnd}" width="100%" required="true" />
+                                    <Label text="TCV" required="true" />
+                                    <Input id="inputTCV_oppr" value="{opportunityModel>/tcv}" width="100%" type="Number" required="true" />
+                                    <Label text="Customer" required="true" />
+                                    <Input 
+                                        id="inputCustomerId_oppr" 
+                                        width="100%"
+                                        placeholder="Select Customer"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onCustomerValueHelpRequest"
+                                        required="true">
+                                        <layoutData>
+                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+                                        </layoutData>
+                                    </Input>
+                                </f:SimpleForm>
+                            </VBox>
+                        </HBox>
+                        
+                        <!-- Buttons Row -->
+                        <HBox class="sapUiMediumMarginTop" justifyContent="Center" width="100%">
+                            <Button id="editButton_oppr" text="Edit" type="Emphasized" press="onEditOpportunityForm" enabled="false" class="sapUiSmallMarginEnd" />
+                            <Button id="submitButton_oppr" text="Submit" type="Accept" press="onSubmitOpportunity" />
+                            <Button id="cancelFormButton_oppr" text="Cancel" type="Reject" press="onCancelOpportunityForm" class="sapUiSmallMarginBegin" />
+                        </HBox>
+                    </VBox>
+                </Panel>
             </VBox>
-        </Panel>
-    </VBox>
+        </layout:content>
+    </layout:DynamicPage>
 </core:FragmentDefinition>

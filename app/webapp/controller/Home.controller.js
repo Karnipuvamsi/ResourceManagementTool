@@ -20,13 +20,26 @@ sap.ui.define([
                 this.getView().setModel(oComponentModel, "default"); // named "default"
             }
 
-            // Then set the filter model (both filterModel and $filters for MDC FilterBar compatibility)
+            // ✅ Set the filter model with isolated conditions per fragment
             const oFilterModel = new sap.ui.model.json.JSONModel({
-                conditions: {},
-                items: []
+                Customers: { conditions: {}, items: [] },
+                Projects: { conditions: {}, items: [] },
+                Opportunities: { conditions: {}, items: [] },
+                Employees: { conditions: {}, items: [] },
+                Demands: { conditions: {}, items: [] },
+                Allocations: { conditions: {}, items: [] },
+                Resources: { conditions: {}, items: [] }
             });
             this.getView().setModel(oFilterModel, "filterModel");
-            this.getView().setModel(oFilterModel, "$filters"); // MDC FilterBar expects $filters model
+            
+            // ✅ Also set $filters model for MDC FilterBar (points to same model but different structure)
+            const oFiltersModel = new sap.ui.model.json.JSONModel({
+                conditions: {}
+            });
+            this.getView().setModel(oFiltersModel, "$filters");
+            
+            // ✅ Set default filters for each entity
+            this._setDefaultFilters();
 
             // Optional: Set a separate model for table-specific state (if needed)
             const oTableModel = new sap.ui.model.json.JSONModel();
@@ -109,7 +122,8 @@ sap.ui.define([
                 requirements: "requirementsPage",
                 bench: "benchPage",
                 pendingProjects: "pendingProjectsPage",
-                pendingOpportunities: "pendingOpportunitiesPage"
+                pendingOpportunities: "pendingOpportunitiesPage",
+                reports: "reportsPage"
             };
 
             const sPageId = pageMap[sKey];
@@ -187,104 +201,25 @@ sap.ui.define([
                     // ✅ Populate Country dropdown when Customers fragment loads
                     this._populateCountryDropdown();
 
-                    // Ensure FilterBar has the correct models
+                    // ✅ Set default filters for Customers FilterBar
                     const oFilterBar = this.byId("customerFilterBar");
                     if (oFilterBar) {
                         oFilterBar.setModel(oModel, "default");
-                        const oFilterModel = this.getView().getModel("$filters");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "$filters");
+                            oFilterBar.setModel(oFilterModel, "filterModel");
                         }
-                        
-                        // Set default visible filters: CustomerName and Vertical
-                        // Wait for FilterBar to be fully initialized
+                        if (oFiltersModel) {
+                            oFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            const fnSetDefaultFilters = () => {
-                                if (oFilterBar && oFilterBar.initialized && typeof oFilterBar.initialized === "function") {
-                                    oFilterBar.initialized().then(() => {
-                                        // Wait for FilterBar to be ready
-                                        setTimeout(() => {
-                                            // Check if there's existing state
-                                            StateUtil.retrieveExternalState(oFilterBar).then((oExistingState) => {
-                                                // Only set default if no FilterFields state exists
-                                                const bHasFilterState = oExistingState && 
-                                                                       oExistingState.filter && 
-                                                                       oExistingState.filter.FilterFields &&
-                                                                       oExistingState.filter.FilterFields.items &&
-                                                                       oExistingState.filter.FilterFields.items.length > 0;
-                                                
-                                                if (!bHasFilterState) {
-                                                    // Set default visible filters: customerName and vertical
-                                                    const oNewState = {
-                                                        filter: {
-                                                            FilterFields: {
-                                                                items: ["customerName", "vertical"]
-                                                            }
-                                                        }
-                                                    };
-                                                    StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
-                                                        console.log("✅ Default filters (customerName, vertical) set successfully");
-                                                    }).catch((e) => {
-                                                        console.warn("Could not set default filter state:", e);
-                                                        // Try alternative approach
-                                                        fnSetDefaultFiltersAlternative();
-                                                    });
-                                                } else {
-                                                    console.log("FilterBar already has filter state, keeping existing");
-                                                }
-                                            }).catch(() => {
-                                                // If retrieve fails, set default directly
-                                                const oNewState = {
-                                                    filter: {
-                                                        FilterFields: {
-                                                            items: ["customerName", "vertical"]
-                                                        }
-                                                    }
-                                                };
-                                                StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
-                                                    console.log("✅ Default filters set (retrieve failed, applied directly)");
-                                                }).catch((e) => {
-                                                    console.warn("Could not set default filter state (fallback):", e);
-                                                    fnSetDefaultFiltersAlternative();
-                                                });
-                                            });
-                                        }, 500);
-                                    }).catch(() => {
-                                        // Retry after delay
-                                        setTimeout(fnSetDefaultFilters, 500);
-                                    });
-                                } else {
-                                    // Retry if FilterBar not ready
-                                    setTimeout(fnSetDefaultFilters, 300);
-                                }
-                            };
-                            
-                            // Alternative approach: directly manipulate FilterFields visibility
-                            const fnSetDefaultFiltersAlternative = () => {
-                                try {
-                                    const aFilterFields = oFilterBar.getFilterFields();
-                                    if (aFilterFields && aFilterFields.length > 0) {
-                                        // Hide all filters first
-                                        aFilterFields.forEach(function(oField) {
-                                            if (oField && oField.setVisible) {
-                                                const sPropertyKey = oField.getPropertyKey();
-                                                // Only show customerName and vertical
-                                                if (sPropertyKey === "customerName" || sPropertyKey === "vertical") {
-                                                    oField.setVisible(true);
-                                                } else {
-                                                    oField.setVisible(false);
-                                                }
-                                            }
-                                        });
-                                        console.log("✅ Default filters set via alternative method");
-                                    }
-                                } catch (e) {
-                                    console.warn("Alternative filter setting failed:", e);
-                                }
-                            };
-                            
-                            fnSetDefaultFilters();
-                        }, 800);
+                            this._setDefaultFilterFields(oFilterBar, ["customerName", "vertical"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["customerName", "vertical"]);
+                        }, 2000);
                     }
 
                     // Initialize table-specific functionality
@@ -362,6 +297,27 @@ sap.ui.define([
                         oTable.setModel(oModel);
                     }
 
+                    // ✅ Set default filters for Opportunities FilterBar
+                    const oOpportunityFilterBar = this.byId("opportunityFilterBar");
+                    if (oOpportunityFilterBar) {
+                        oOpportunityFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oOpportunityFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oOpportunityFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oOpportunityFilterBar, ["opportunityName", "Stage"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oOpportunityFilterBar, ["opportunityName", "Stage"]);
+                        }, 2000);
+                    }
+
                     // Initialize table-specific functionality
                     this.initializeTable("Opportunities");
                     // Reset segmented button to "less" state for this fragment
@@ -432,6 +388,27 @@ sap.ui.define([
                         oTable.setModel(oModel);
                     }
 
+                    // ✅ Set default filters for Projects FilterBar
+                    const oProjectFilterBar = this.byId("projectFilterBar");
+                    if (oProjectFilterBar) {
+                        oProjectFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oProjectFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oProjectFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "status"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "status"]);
+                        }, 2000);
+                    }
+
                     // Initialize table-specific functionality
                     this.initializeTable("Projects");
                     // Reset segmented button to "less" state for this fragment
@@ -485,6 +462,43 @@ sap.ui.define([
                     // Reset segmented button to "less" state for this fragment
                     this._resetSegmentedButtonForFragment("SAPIdStatuses");
                 }.bind(this));
+            } else if (sKey === "reports") {
+                // Check if already loaded to prevent duplicate IDs
+                if (this._bReportsLoaded) {
+                    console.log("[Reports] Fragment already loaded, skipping");
+                    return;
+                }
+                
+                this._bReportsLoaded = true;
+                const oReportsPage = this.getView().byId(sPageId);
+                
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oReportsPage && oReportsPage.getContent) {
+                    const aExistingContent = oReportsPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        console.log("[Reports] Removing existing content to prevent duplicate IDs");
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oReportsPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.Reports",
+                    controller: this
+                }).then(function (oFragment) {
+                    oReportsPage.addContent(oFragment);
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+                }.bind(this)).catch(function (oError) {
+                    console.error("[Reports] Error loading fragment:", oError);
+                });
             } else if (sKey === "employees") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeesLoaded) {
@@ -528,6 +542,27 @@ sap.ui.define([
                     const oModel = this.getOwnerComponent().getModel();
                     if (oModel) {
                         oTable.setModel(oModel);
+                    }
+
+                    // ✅ Set default filters for Employees FilterBar
+                    const oEmployeeFilterBar = this.byId("employeeFilterBar");
+                    if (oEmployeeFilterBar) {
+                        oEmployeeFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oEmployeeFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oEmployeeFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oEmployeeFilterBar, ["fullName", "status"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oEmployeeFilterBar, ["fullName", "status"]);
+                        }, 2000);
                     }
 
                     // Initialize table-specific functionality
@@ -1330,7 +1365,7 @@ sap.ui.define([
             if (aSelectedContexts.length > 0) {
                 const oDemand = aSelectedContexts[0].getObject();
                 // If no project ID yet, get it from demand
-                if (!sProjectId) {
+            if (!sProjectId) {
                     sProjectId = oDemand.sapPId;
                     console.log("✅ Got project ID from selected demand:", sProjectId);
                 }
@@ -1573,7 +1608,7 @@ sap.ui.define([
             const aEmployees = [];
             for (let i = 0; i < aSelectedItems.length; i++) {
                 const oSelectedItem = aSelectedItems[i];
-                const oContext = oSelectedItem.getBindingContext();
+            const oContext = oSelectedItem.getBindingContext();
                 if (oContext) {
                     const oEmployee = oContext.getObject();
                     if (oEmployee && oEmployee.ohrId) {
@@ -1823,17 +1858,17 @@ sap.ui.define([
                         const aAllocationData = [];
                         for (let i = 0; i < aEmployees.length; i++) {
                             const oEmployee = aEmployees[i];
-                            const sAllocationId = this._generateUUID();
-                            
+            const sAllocationId = this._generateUUID();
+            
                             const oAllocData = {
-                                allocationId: sAllocationId,
+                allocationId: sAllocationId,
                                 employeeId: oEmployee.ohrId,
-                                projectId: sProjectId,
-                                startDate: sStartDate,
-                                endDate: sEndDate,
+                projectId: sProjectId,
+                startDate: sStartDate,
+                endDate: sEndDate,
                                 allocationPercentage: iPercentage,
-                                status: "Active"
-                            };
+                status: "Active"
+            };
                             
                             console.log(`🔵 Creating allocation for employee ${oEmployee.ohrId} with percentage: ${iPercentage}%`);
                             console.log(`🔵 Allocation data:`, JSON.stringify(oAllocData, null, 2));
@@ -2199,15 +2234,15 @@ sap.ui.define([
                             const oBackendData = oNewContext.getObject();
                             console.log("✅ Allocation data from backend:", oBackendData);
                             
-                            sap.m.MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
-                            
-                            // Close dialog
-                            this.onFindResourcesDialogClose();
-                            
+                sap.m.MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
+                
+                // Close dialog
+                this.onFindResourcesDialogClose();
+                
                             // ✅ CRITICAL: Refresh Demands table and re-apply project filter
-                            const oDemandsTable = this.byId("Demands");
-                            if (oDemandsTable && oDemandsTable.rebind) {
-                                oDemandsTable.rebind();
+                const oDemandsTable = this.byId("Demands");
+                if (oDemandsTable && oDemandsTable.rebind) {
+                    oDemandsTable.rebind();
                                 // Re-apply project filter if available
                                 if (this._sDemandProjectFilter) {
                                     setTimeout(() => {
@@ -2217,7 +2252,7 @@ sap.ui.define([
                             }
                             
                             // ✅ CRITICAL: Refresh Projects table to update allocation counts (allocatedResources, toBeAllocated)
-                            setTimeout(() => {
+                    setTimeout(() => {
                                 this._hardRefreshTable("Projects");
                                 console.log("✅ Refreshed Projects table to update resource counts");
                             }, 800);
@@ -2359,7 +2394,7 @@ sap.ui.define([
                 const oProjStart = new Date(sProjectStartDate);
                 if (oAllocStart < oProjStart) {
                     sap.m.MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate})`);
-                    return;
+                return;
                 }
             }
             
@@ -5345,27 +5380,49 @@ sap.ui.define([
         _generateNextIdFromBinding: CustomUtility.prototype._generateNextIdFromBinding,
         onFilterSearch: CustomUtility.prototype.onFilterSearch,
         
-        // ✅ NEW: Clear FilterBar handler
+        // ✅ NEW: Clear FilterBar handler - ISOLATED per fragment
         onFilterBarClear: function (oEvent) {
             const oFilterBar = oEvent.getSource();
+            let sFilterBarId = oFilterBar.getId();
+            
+            // ✅ Extract base ID from full ID
+            const aIdParts = sFilterBarId.split("--");
+            if (aIdParts.length > 0) {
+                sFilterBarId = aIdParts[aIdParts.length - 1];
+            }
+            
+            // ✅ Map FilterBar IDs to fragment names and default fields
+            const filterToFragmentMap = {
+                "customerFilterBar": { name: "Customers", defaults: ["customerName", "vertical"] },
+                "projectFilterBar": { name: "Projects", defaults: ["projectName", "status"] },
+                "opportunityFilterBar": { name: "Opportunities", defaults: ["opportunityName", "Stage"] },
+                "employeeFilterBar": { name: "Employees", defaults: ["fullName", "status"] }
+            };
+            
+            const oFragmentInfo = filterToFragmentMap[sFilterBarId] || { name: "Customers", defaults: ["customerName", "vertical"] };
+            const sFragmentName = oFragmentInfo.name;
+            const aDefaultFields = oFragmentInfo.defaults;
             const oFilterModel = this.getView().getModel("filterModel");
-            const oFiltersModel = this.getView().getModel("$filters");
             
-            // Clear all filter conditions from both models
+            // ✅ Clear filter conditions for THIS fragment only in filterModel
             if (oFilterModel) {
-                oFilterModel.setProperty("/conditions", {});
+                oFilterModel.setProperty(`/${sFragmentName}/conditions`, {});
                 oFilterModel.checkUpdate(true);
-            }
-            if (oFiltersModel) {
-                oFiltersModel.setProperty("/conditions", {});
-                oFiltersModel.checkUpdate(true);
+                console.log(`✅ Cleared filters for ${sFragmentName} fragment only`);
             }
             
-            // Clear all FilterField values by getting all filter fields and resetting them
+            // ✅ Clear all FilterField values
             if (oFilterBar) {
                 const aFilterFields = oFilterBar.getFilterFields();
                 if (aFilterFields && aFilterFields.length > 0) {
                     aFilterFields.forEach(function(oFilterField) {
+                        // Clear values using the condition binding
+                        const sPropertyKey = oFilterField.getPropertyKey();
+                        if (sPropertyKey && oFilterModel) {
+                            oFilterModel.setProperty(`/${sFragmentName}/conditions/${sPropertyKey}`, undefined);
+                        }
+                        
+                        // Clear UI values
                         if (oFilterField && oFilterField.setValue) {
                             oFilterField.setValue("");
                         } else if (oFilterField && oFilterField.setSelectedKey) {
@@ -5375,19 +5432,483 @@ sap.ui.define([
                         }
                     });
                 }
+                
+                // ✅ Reset FilterFields state to show only defaults
+                setTimeout(() => {
+                    const oNewState = {
+                        filter: {
+                            FilterFields: {
+                                items: aDefaultFields
+                            }
+                        }
+                    };
+                    StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
+                        console.log(`✅ Reset filter visibility to defaults: ${aDefaultFields.join(", ")}`);
+                        
+                        // ✅ Force update filter fields visibility
+                        setTimeout(() => {
+                            const aFilterFields2 = oFilterBar.getFilterFields();
+                            if (aFilterFields2 && aFilterFields2.length > 0) {
+                                aFilterFields2.forEach(function(oField) {
+                                    if (oField && oField.setVisible) {
+                                        const sKey = oField.getPropertyKey();
+                                        if (aDefaultFields.indexOf(sKey) >= 0) {
+                                            oField.setVisible(true);
+                                        } else {
+                                            oField.setVisible(false);
+                                        }
+                                    }
+                                });
+                            }
+                        }, 100);
+                    }).catch((e) => {
+                        console.warn("Could not reset filter state:", e);
+                    });
+                }, 200);
             }
             
-            // Rebind the table to show all data
-            const oTable = this.byId("Customers");
-            if (oTable) {
-                if (typeof oTable.rebind === "function") {
-                    oTable.rebind();
-                } else if (typeof oTable.bindRows === "function") {
-                    oTable.bindRows();
-                }
+            // ✅ Rebind the specific table for this fragment
+            const filterToTableMap = {
+                "customerFilterBar": "Customers",
+                "projectFilterBar": "Projects",
+                "opportunityFilterBar": "Opportunities",
+                "employeeFilterBar": "Employees"
+            };
+            const sTableId = filterToTableMap[sFilterBarId];
+            if (sTableId) {
+                setTimeout(() => {
+                    const oTable = this.byId(sTableId);
+                    if (oTable) {
+                        if (typeof oTable.rebind === "function") {
+                            oTable.rebind();
+                        } else if (typeof oTable.bindRows === "function") {
+                            oTable.bindRows();
+                        }
+                    }
+                }, 300);
             }
         },
+        
+        // ✅ NEW: Set default filters for each entity
+        _setDefaultFilters: function() {
+            const oFilterModel = this.getView().getModel("filterModel");
+            if (!oFilterModel) return;
+            
+            // ✅ Default filters structure initialized - actual filter fields set in fragment load
+            console.log("✅ Default filter structure initialized for all entities");
+        },
+        
+        // ✅ NEW: Helper function to set default visible filter fields AND show fields with values
+        // ✅ IMPORTANT: Always shows 1-2 important filters for each fragment
+        _setDefaultFilterFields: function(oFilterBar, aDefaultFields) {
+            if (!oFilterBar || !aDefaultFields || aDefaultFields.length === 0) return;
+            
+            // ✅ Get fragment name from FilterBar ID
+            const sFilterBarId = oFilterBar.getId();
+            let sFragmentName = "Customers";
+            if (sFilterBarId.includes("customerFilterBar")) {
+                sFragmentName = "Customers";
+            } else if (sFilterBarId.includes("projectFilterBar")) {
+                sFragmentName = "Projects";
+            } else if (sFilterBarId.includes("opportunityFilterBar")) {
+                sFragmentName = "Opportunities";
+            } else if (sFilterBarId.includes("employeeFilterBar")) {
+                sFragmentName = "Employees";
+            }
+            
+            const oFilterModel = this.getView().getModel("filterModel");
+            const oFragmentConditions = oFilterModel ? oFilterModel.getProperty(`/${sFragmentName}/conditions`) : {};
+            
+            const fnSetDefaultFilters = () => {
+                // ✅ Try multiple times to ensure FilterBar is ready
+                let nAttempts = 0;
+                const nMaxAttempts = 10;
+                
+                const fnTrySetFilters = () => {
+                    nAttempts++;
+                    
+                    if (oFilterBar && oFilterBar.initialized && typeof oFilterBar.initialized === "function") {
+                        oFilterBar.initialized().then(() => {
+                            // ✅ Collect fields that should be visible:
+                            // 1. Default/Important fields (ALWAYS visible - 1-2 per fragment)
+                            // 2. Fields that have values in filterModel
+                            const aFieldsToShow = [...aDefaultFields];
+                            
+                            // Check which fields have values
+                            if (oFragmentConditions) {
+                                Object.keys(oFragmentConditions).forEach(function(sPropertyKey) {
+                                    const oCondition = oFragmentConditions[sPropertyKey];
+                                    // Check if condition has a value
+                                    if (oCondition && 
+                                        (oCondition.length > 0 || 
+                                         (oCondition.operator && oCondition.values && oCondition.values.length > 0))) {
+                                        // Add to visible fields if not already there
+                                        if (aFieldsToShow.indexOf(sPropertyKey) < 0) {
+                                            aFieldsToShow.push(sPropertyKey);
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            // ✅ Always apply the state to ensure important filters are visible
+                            const oNewState = {
+                                filter: {
+                                    FilterFields: {
+                                        items: aFieldsToShow
+                                    }
+                                }
+                            };
+                            
+                            // ✅ Apply state directly (don't check existing state)
+                            StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
+                                console.log(`✅ Important filters (${aFieldsToShow.join(", ")}) set successfully for ${sFragmentName}`);
+                                
+                                // ✅ Also ensure FilterFields are actually visible via setVisible - try multiple times
+                                setTimeout(() => {
+                                    fnSetDefaultFiltersAlternative(aFieldsToShow);
+                                    
+                                    // ✅ Force FilterBar to update/refresh
+                                    if (oFilterBar && typeof oFilterBar.invalidate === "function") {
+                                        oFilterBar.invalidate();
+                                    }
+                                    
+                                    // ✅ Retry once more to ensure visibility
+                                    setTimeout(() => {
+                                        fnSetDefaultFiltersAlternative(aFieldsToShow);
+                                    }, 500);
+                                }, 300);
+                            }).catch((e) => {
+                                console.warn("Could not set default filter state:", e);
+                                fnSetDefaultFiltersAlternative(aFieldsToShow);
+                            });
+                        }).catch(() => {
+                            // If initialization fails, retry
+                            if (nAttempts < nMaxAttempts) {
+                                setTimeout(fnTrySetFilters, 500);
+                            } else {
+                                // Fallback to alternative method
+                                const aFieldsToShow = [...aDefaultFields];
+                                if (oFragmentConditions) {
+                                    Object.keys(oFragmentConditions).forEach(function(sPropertyKey) {
+                                        const oCondition = oFragmentConditions[sPropertyKey];
+                                        if (oCondition && 
+                                            (oCondition.length > 0 || 
+                                             (oCondition.operator && oCondition.values && oCondition.values.length > 0))) {
+                                            if (aFieldsToShow.indexOf(sPropertyKey) < 0) {
+                                                aFieldsToShow.push(sPropertyKey);
+                                            }
+                                        }
+                                    });
+                                }
+                                fnSetDefaultFiltersAlternative(aFieldsToShow);
+                            }
+                        });
+                    } else {
+                        // FilterBar not ready, retry
+                        if (nAttempts < nMaxAttempts) {
+                            setTimeout(fnTrySetFilters, 300);
+                        } else {
+                            // Fallback to alternative method
+                            const aFieldsToShow = [...aDefaultFields];
+                            fnSetDefaultFiltersAlternative(aFieldsToShow);
+                        }
+                    }
+                };
+                
+                fnTrySetFilters();
+            };
+            
+            const fnSetDefaultFiltersAlternative = (aFieldsToShow) => {
+                try {
+                    const aFilterFields = oFilterBar.getFilterFields();
+                    if (aFilterFields && aFilterFields.length > 0) {
+                        aFilterFields.forEach(function(oField) {
+                            if (oField && oField.setVisible) {
+                                const sPropertyKey = oField.getPropertyKey();
+                                // ✅ Always show default/important fields
+                                if (aDefaultFields.indexOf(sPropertyKey) >= 0) {
+                                    oField.setVisible(true);
+                                    // ✅ Force update
+                                    if (oField.rerender) {
+                                        oField.rerender();
+                                    }
+                                } else if (aFieldsToShow && aFieldsToShow.indexOf(sPropertyKey) >= 0) {
+                                    // Show fields with values
+                                    oField.setVisible(true);
+                                } else {
+                                    // Hide fields that are not important and have no value
+                                    oField.setVisible(false);
+                                }
+                            }
+                        });
+                        console.log(`✅ Important filters set via alternative method: ${aFieldsToShow.join(", ")} for ${sFragmentName}`);
+                        
+                        // ✅ Force FilterBar to refresh
+                        if (oFilterBar && typeof oFilterBar.invalidate === "function") {
+                            oFilterBar.invalidate();
+                        }
+                    } else {
+                        // ✅ If FilterFields not ready, retry
+                        setTimeout(() => {
+                            fnSetDefaultFiltersAlternative(aFieldsToShow);
+                        }, 500);
+                    }
+                } catch (e) {
+                    console.warn("Alternative filter setting failed:", e);
+                }
+            };
+            
+            fnSetDefaultFilters();
+        },
 
+        // ============================================
+        // REPORT GENERATION HANDLERS
+        // ============================================
+        
+        onReportTypeChange: function(oEvent) {
+            const oSelectedItem = oEvent.getParameter("selectedItem");
+            if (!oSelectedItem) {
+                return;
+            }
+            
+            const sReportType = oSelectedItem.getKey();
+            const oFiltersPanel = this.byId("reportFiltersPanel");
+            const oGenerateBtn = this.byId("generateReportBtn");
+            
+            // Clear existing filters
+            if (oFiltersPanel) {
+                oFiltersPanel.destroyContent();
+            }
+            
+            // Enable generate button if a report type is selected
+            if (oGenerateBtn) {
+                if (sReportType && sReportType !== "") {
+                    oGenerateBtn.setEnabled(true);
+                } else {
+                    oGenerateBtn.setEnabled(false);
+                }
+            }
+            
+            // Create dynamic filters based on report type
+            if (sReportType && sReportType !== "") {
+                this._createReportFilters(sReportType);
+            }
+        },
+        
+        _createReportFilters: function(sReportType) {
+            const oFiltersPanel = this.byId("reportFiltersPanel");
+            if (!oFiltersPanel) return;
+            
+            // Common filters for most reports
+            const oVBox = new sap.m.VBox({
+                items: []
+            });
+            
+            // Add report-specific filters
+            switch(sReportType) {
+                case "EmployeeBenchReport":
+                    oVBox.addItem(new sap.m.Label({ text: "Band Filter" }));
+                    oVBox.addItem(new sap.m.MultiComboBox({
+                        id: "bandFilter",
+                        placeholder: "Select Bands"
+                    }));
+                    oVBox.addItem(new sap.m.Label({ text: "Employee Type Filter" }));
+                    oVBox.addItem(new sap.m.MultiComboBox({
+                        id: "employeeTypeFilter",
+                        placeholder: "Select Employee Types"
+                    }));
+                    oVBox.addItem(new sap.m.Label({ text: "Minimum Days on Bench" }));
+                    oVBox.addItem(new sap.m.Input({
+                        id: "minDaysOnBench",
+                        type: "Number",
+                        placeholder: "Enter minimum days"
+                    }));
+                    break;
+                case "EmployeeProbableReleaseReport":
+                    oVBox.addItem(new sap.m.Label({ text: "Release Window" }));
+                    oVBox.addItem(new sap.m.Select({
+                        id: "releaseWindow",
+                        items: [
+                            new sap.ui.core.Item({ key: "30", text: "30 Days" }),
+                            new sap.ui.core.Item({ key: "60", text: "60 Days" }),
+                            new sap.ui.core.Item({ key: "90", text: "90 Days" }),
+                            new sap.ui.core.Item({ key: "All", text: "All" })
+                        ]
+                    }));
+                    break;
+                case "RevenueForecastReport":
+                    oVBox.addItem(new sap.m.Label({ text: "Start Month (YYYY-MM)" }));
+                    oVBox.addItem(new sap.m.DatePicker({
+                        id: "startMonth",
+                        displayFormat: "yyyy-MM"
+                    }));
+                    oVBox.addItem(new sap.m.Label({ text: "End Month (YYYY-MM)" }));
+                    oVBox.addItem(new sap.m.DatePicker({
+                        id: "endMonth",
+                        displayFormat: "yyyy-MM"
+                    }));
+                    break;
+                case "SupervisorTeamAllocationReport":
+                    oVBox.addItem(new sap.m.Label({ text: "Supervisor ID" }));
+                    oVBox.addItem(new sap.m.Input({
+                        id: "supervisorId",
+                        placeholder: "Enter Supervisor OHR ID"
+                    }));
+                    break;
+                case "EmployeeAssignmentHistoryReport":
+                    oVBox.addItem(new sap.m.Label({ text: "Employee ID" }));
+                    oVBox.addItem(new sap.m.Input({
+                        id: "employeeId",
+                        placeholder: "Enter Employee OHR ID"
+                    }));
+                    oVBox.addItem(new sap.m.Label({ text: "Limit" }));
+                    oVBox.addItem(new sap.m.Input({
+                        id: "limit",
+                        type: "Number",
+                        value: "50"
+                    }));
+                    break;
+            }
+            
+            oFiltersPanel.addContent(oVBox);
+        },
+        
+        onGenerateReport: function() {
+            const oReportTypeSelect = this.byId("reportTypeSelect");
+            const sReportType = oReportTypeSelect ? oReportTypeSelect.getSelectedKey() : "";
+            
+            if (!sReportType) {
+                sap.m.MessageToast.show("Please select a report type");
+                return;
+            }
+            
+            // Collect filter values
+            const oFilters = this._collectReportFilters(sReportType);
+            
+            // Call the appropriate report function
+            const oModel = this.getOwnerComponent().getModel();
+            if (!oModel) {
+                sap.m.MessageToast.show("Model not available");
+                return;
+            }
+            
+            // Map report type to function name
+            const sFunctionName = "generate" + sReportType;
+            
+            // Show busy indicator
+            const oTable = this.byId("reportDataTable");
+            if (oTable) {
+                oTable.setBusy(true);
+            }
+            
+            // Call the function
+            oModel.callFunction(sFunctionName, {
+                method: "GET",
+                urlParameters: oFilters,
+                success: (oData) => {
+                    this._displayReportResults(sReportType, oData);
+                    if (oTable) {
+                        oTable.setBusy(false);
+                    }
+                },
+                error: (oError) => {
+                    console.error("Error generating report:", oError);
+                    sap.m.MessageToast.show("Error generating report: " + (oError.message || "Unknown error"));
+                    if (oTable) {
+                        oTable.setBusy(false);
+                    }
+                }
+            });
+        },
+        
+        _collectReportFilters: function(sReportType) {
+            const oFilters = {};
+            
+            switch(sReportType) {
+                case "EmployeeBenchReport":
+                    const oBandFilter = this.byId("bandFilter");
+                    const oEmployeeTypeFilter = this.byId("employeeTypeFilter");
+                    const oMinDays = this.byId("minDaysOnBench");
+                    if (oBandFilter) oFilters.bandFilter = oBandFilter.getSelectedKeys();
+                    if (oEmployeeTypeFilter) oFilters.employeeTypeFilter = oEmployeeTypeFilter.getSelectedKeys();
+                    if (oMinDays) oFilters.minDaysOnBench = parseInt(oMinDays.getValue()) || 0;
+                    break;
+                case "EmployeeProbableReleaseReport":
+                    const oReleaseWindow = this.byId("releaseWindow");
+                    if (oReleaseWindow) oFilters.releaseWindow = oReleaseWindow.getSelectedKey();
+                    break;
+                case "RevenueForecastReport":
+                    const oStartMonth = this.byId("startMonth");
+                    const oEndMonth = this.byId("endMonth");
+                    if (oStartMonth) oFilters.startMonth = oStartMonth.getValue();
+                    if (oEndMonth) oFilters.endMonth = oEndMonth.getValue();
+                    break;
+                case "SupervisorTeamAllocationReport":
+                    const oSupervisorId = this.byId("supervisorId");
+                    if (oSupervisorId) oFilters.supervisorId = oSupervisorId.getValue();
+                    break;
+                case "EmployeeAssignmentHistoryReport":
+                    const oEmployeeId = this.byId("employeeId");
+                    const oLimit = this.byId("limit");
+                    if (oEmployeeId) oFilters.employeeId = oEmployeeId.getValue();
+                    if (oLimit) oFilters.limit = parseInt(oLimit.getValue()) || 50;
+                    break;
+            }
+            
+            return oFilters;
+        },
+        
+        _displayReportResults: function(sReportType, oData) {
+            // Display summary cards
+            const oSummaryCards = this.byId("reportSummaryCards");
+            if (oSummaryCards) {
+                oSummaryCards.destroyContent();
+                
+                if (oData.summary) {
+                    Object.keys(oData.summary).forEach(sKey => {
+                        const oValue = oData.summary[sKey];
+                        if (typeof oValue === 'number' || typeof oValue === 'string') {
+                            const oCard = new sap.m.GenericTile({
+                                header: sKey,
+                                subHeader: String(oValue),
+                                frameType: "OneByOne"
+                            });
+                            oSummaryCards.addContent(oCard);
+                        }
+                    });
+                }
+            }
+            
+            // Display report data in table
+            const oTable = this.byId("reportDataTable");
+            const oExportBtn = this.byId("exportReportBtn");
+            
+            if (oTable && oData.reportData) {
+                // Create a JSON model for the report data
+                const oReportModel = new sap.ui.model.json.JSONModel({
+                    results: oData.reportData
+                });
+                oTable.setModel(oReportModel);
+            }
+            
+            if (oExportBtn) {
+                oExportBtn.setVisible(true);
+            }
+        },
+        
+        onExportReport: function() {
+            const oReportTypeSelect = this.byId("reportTypeSelect");
+            const sReportType = oReportTypeSelect ? oReportTypeSelect.getSelectedKey() : "";
+            
+            if (!sReportType) {
+                sap.m.MessageToast.show("Please select a report type");
+                return;
+            }
+            
+            // Implementation for CSV export
+            sap.m.MessageToast.show("Export functionality will be implemented");
+        },
+        
         // For upload functionality function
         onUpload: CustomUtility.prototype._onUploadPress,
         onFileUploadSubmit: CustomUtility.prototype._onFileUploadSubmit,
