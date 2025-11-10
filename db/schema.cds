@@ -1,14 +1,11 @@
-// CORRECTED SCHEMA - All issues from audit fixed
-// Changes made:
-// 1. Fixed Customer.to_vertical cardinality (to many → to one)
-// 2. Removed redundant Customer.vertical field
-// 3. Fixed EmployeeBandEnum duplicate values
-// 4. Added Demand ↔ Skills relationship
-// 5. Added Employee ↔ Skills relationship (many-to-many)
-// 6. Added Employee ↔ Project allocation entity
-// 7. Added Employee supervisor self-reference
-// 8. Added reverse associations
-// 9. ✅ CONVERTED: Vertical entity to VerticalEnum (fixed values, no longer needs data table)
+// RESOURCE MANAGEMENT TOOL - DATA SCHEMA
+// 
+// Key Design Decisions:
+// 1. Employee Skills: Use EmployeeSkill junction table (many-to-many) - NO string field
+// 2. Skills are managed via Skills master data entity
+// 3. Employee skills link to Skills via EmployeeSkill (enables skill matching with demands)
+// 4. Vertical converted to enum (no longer an entity)
+// 5. Date fields (doj, lwd) are Date type (not String)
 
 namespace db;
 
@@ -42,6 +39,8 @@ entity Customer {
         country          : String;
         status           : CustomerStatusEnum;
         vertical         : VerticalEnum;  // ✅ CHANGED: Now using enum instead of entity
+        startDate        : Date;          // ✅ NEW: Customer start date
+        endDate          : Date;          // ✅ NEW: Customer end date
         
         to_Opportunities : Association to many Opportunity
                                on to_Opportunities.customerId = $self.SAPcustId;
@@ -139,17 +138,16 @@ entity Project {
 // ----------------------- Demand -------------------------------------
 
 entity Demand {
-    key demandId          : UUID;
-        skillId           : UUID;          // ✅ NEW: Foreign key to Skills
-        skill             : String;        // Keep for display/compatibility
+    key demandId          : Integer;       // ✅ Changed from UUID to Integer for simplicity
+        skill             : String;        // Skill name (simple string field)
         band              : String;
         sapPId            : String;
         quantity          : Integer;
+        allocatedCount    : Integer;      // ✅ NEW: Calculated - count of allocations matching this demand's skill
+        remaining         : Integer;      // ✅ NEW: Calculated - quantity - allocatedCount
     
-        to_Project        : Association to one Project      // ✅ NEW: Reverse association
+        to_Project        : Association to one Project
                            on to_Project.sapPId = $self.sapPId;
-        to_Skill          : Association to one Skills       // ✅ NEW: Skills relationship
-                           on to_Skill.id = $self.skillId;
 }
 
 // -------------------- Employee --------------------
@@ -163,9 +161,10 @@ type EmployeeTypeEnum     : String enum {
 
 type EmployeeStatusEnum   : String enum {
     PreAllocated = 'Pre Allocated';
-    Bench = 'Bench';
-    Resigned = 'Resigned';
     Allocated = 'Allocated';
+    Resigned = 'Resigned';
+    UnproductiveBench = 'Unproductive Bench';
+    ProductiveBench = 'Productive Bench';
 }
 
 type GenderEnum           : String enum {
@@ -188,11 +187,11 @@ type EmployeeBandEnum     : String enum {
     Band5B = '5B';
 }
 
-// ✅ NEW: Junction table for Employee-Skills (many-to-many)
+// ✅ Employee-Skills Junction Table (Many-to-Many)
+// This is the PRIMARY way to track employee skills - links Employee to Skills master data
 entity EmployeeSkill {
     key employeeId        : String;
-    key skillId           : UUID;
-    proficiencyLevel      : String;         // Optional: Beginner, Intermediate, Expert
+    key skillId           : Integer;  // Foreign key to Skills (Integer)
     
     to_Employee           : Association to one Employee
                               on to_Employee.ohrId = $self.employeeId;
@@ -212,9 +211,10 @@ entity EmployeeProjectAllocation {
     key allocationId      : UUID;
     employeeId            : String;
     projectId             : String;
-    startDate             : Date;
-    endDate                : Date;
-    allocationPercentage  : Integer;        // 0-100
+    startDate             : Date;        // ✅ Allocation start date (defaults to project start, but can be modified for employees joining mid-project)
+    endDate               : Date;        // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
+    allocationDate        : Date;       // ✅ Date when allocation was created
+    allocationPercentage  : Integer;    // ✅ NEW: Percentage of employee time allocated (0-100), default 100
     status                : AllocationStatusEnum;
     
     to_Employee           : Association to one Employee
@@ -229,27 +229,23 @@ entity Employee {
         mailid            : String;
         gender            : GenderEnum;
         employeeType      : EmployeeTypeEnum;
-        doj               : String;           // ✅ FIXED: Changed from String to Date
+        doj               : Date;
         band              : EmployeeBandEnum;
         role              : String;
         location          : String;
         supervisorOHR     : String;
-        skills            : String;         // Keep for backward compatibility/display
+        skills            : String;  // Simple string field - stores comma-separated skill names
         city              : String;
-        lwd               : String;          // ✅ FIXED: Changed from String to Date
+        lwd               : Date;
         status            : EmployeeStatusEnum;
     
-    // ✅ NEW: Self-referential associations
+    // Self-referential associations (Supervisor-Subordinate hierarchy)
     to_Supervisor         : Association to one Employee
                           on to_Supervisor.ohrId = $self.supervisorOHR;
     to_Subordinates       : Association to many Employee
                           on to_Subordinates.supervisorOHR = $self.ohrId;
     
-    // ✅ NEW: Skills relationship
-    to_Skills             : Association to many EmployeeSkill
-                          on to_Skills.employeeId = $self.ohrId;
-    
-    // ✅ NEW: Project allocations
+    // Project allocations
     to_Allocations        : Association to many EmployeeProjectAllocation
                           on to_Allocations.employeeId = $self.ohrId;
 }
@@ -257,12 +253,12 @@ entity Employee {
 //-------------Skills--------------------
 
 entity Skills {
-    key id                : UUID;
+    key id                : Integer;  // Changed from UUID to Integer for simplicity
         name              : String;
         category          : String;
     
-    to_Demands            : Association to many Demand      // ✅ NEW: Reverse association
-                          on to_Demands.skillId = $self.id;
-    to_EmployeeSkills     : Association to many EmployeeSkill  // ✅ NEW
+    // Note: Demand now uses simple skill string field (no association)
+    // EmployeeSkill junction table still uses skillId for many-to-many relationship
+    to_EmployeeSkills     : Association to many EmployeeSkill
                           on to_EmployeeSkills.skillId = $self.id;
 }

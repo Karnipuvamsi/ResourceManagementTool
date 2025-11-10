@@ -58,7 +58,7 @@
                     busyIndicatorDelay="0"
                     width="100%"
                     p13nMode="Column,Sort,Filter,Group"
-                    selectionMode="Single"
+                    selectionMode="Multi"
                     delegate='{
                         "name": "glassboard/delegate/EmployeesTableDelegate",
                         "payload": {
@@ -69,10 +69,11 @@
                     threshold="1000"
                     enableExport="true"
                     enableAutoColumnWidth="false"
-                    selectionChange="onSelectionChange"
-                    type="Table">
-
-                   
+                    selectionChange="onSelectionChange">
+                    
+                    <mdc:type>
+                        <mdct:ResponsiveTableType />
+                    </mdc:type>
 
                     <mdc:actions>
                         <SegmentedButton 

@@ -37,10 +37,11 @@
                     enableAutoColumnWidth="false"
                     filter="projectFilterBar"
                     filterConditions="{filterModel>/conditions}"
-                    selectionChange="onSelectionChange"
-                    type="Table">
-
+                    selectionChange="onSelectionChange">
                     
+                    <mdc:type>
+                        <mdct:ResponsiveTableType />
+                    </mdc:type>
 
                     <mdc:actions>
                         <SegmentedButton 

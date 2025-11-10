@@ -32,15 +32,16 @@
                         }
                     }'
                     showRowCount="true"
-                    type="Table"
                     threshold="1000"
                     enableExport="true"
                     enableAutoColumnWidth="false"
                     filter="opportunityFilterBar"
                     filterConditions="{filterModel>/conditions}"
                     selectionChange="onSelectionChange">
-
-                  
+                    
+                    <mdc:type>
+                        <mdct:ResponsiveTableType />
+                    </mdc:type>
 
                     <mdc:actions>
                         <SegmentedButton 

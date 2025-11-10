@@ -31,7 +31,6 @@
                             "collectionPath": "Employees"
                         }
                     }'
-                    type="Table"
                     showRowCount="true"
                     threshold="25"
                     enableExport="true"
@@ -39,8 +38,10 @@
                     filter="employeeFilterBar"
                     filterConditions="{filterModel>/conditions}"
                     selectionChange="onSelectionChange">
-
-                   
+                    
+                    <mdc:type>
+                        <mdct:ResponsiveTableType />
+                    </mdc:type>
 
                     <mdc:actions>
                         <SegmentedButton 
@@ -125,9 +126,10 @@
                                 <items>
                                     <core:Item key="" text="Select Status..." />
                                     <core:Item key="PreAllocated" text="Pre Allocated" />
-                                    <core:Item key="Bench" text="Bench" />
-                                    <core:Item key="Resigned" text="Resigned" />
                                     <core:Item key="Allocated" text="Allocated" />
+                                    <core:Item key="Resigned" text="Resigned" />
+                                    <core:Item key="UnproductiveBench" text="Unproductive Bench" />
+                                    <core:Item key="ProductiveBench" text="Productive Bench" />
                                 </items>
                             </Select>
                         </f:SimpleForm>
@@ -191,7 +193,17 @@
                             </Input>
                             
                             <Label text="Skills" />
-                            <Input id="inputSkills_emp" value="{employeeModel>/skills}" width="100%" placeholder="Enter skills (comma-separated)" />
+                            <MultiComboBox 
+                                id="inputSkills_emp" 
+                                width="100%" 
+                                placeholder="Select skills"
+                                selectionChange="onSkillsSelectionChange"
+                                items="{
+                                    path: '/Skills',
+                                    templateShareable: false
+                                }">
+                                <core:Item key="{name}" text="{name}" />
+                            </MultiComboBox>
                             
                             <Label text="Last Working Date" />
                             <DatePicker id="inputLWD_emp" value="{employeeModel>/lwd}" width="100%" />

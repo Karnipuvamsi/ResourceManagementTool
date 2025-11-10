@@ -39,18 +39,18 @@
       </Input>
 
       <Label text="From" labelFor="startDate"/>
-      <DatePicker id="startDate" valueFormat="yyyy-MM-dd" displayFormat="long"/>
+      <DatePicker id="startDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
 
       <Label text="To" labelFor="endDate"/>
-      <DatePicker id="endDate" valueFormat="yyyy-MM-dd" displayFormat="long"/>
+      <DatePicker id="endDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
       
-      <Label text="Allocation Percentage" labelFor="allocationPercentageDialog"/>
-      <Input
-        id="allocationPercentageDialog"
+      <Label text="Allocation %" labelFor="allocationPercentage_allocate"/>
+      <Input 
+        id="allocationPercentage_allocate" 
         type="Number"
-        placeholder="0-100"
         value="100"
-        maxLength="3" />
+        placeholder="0-100"
+        width="100%"/>
     </VBox>
 
     <beginButton>

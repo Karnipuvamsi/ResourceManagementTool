@@ -3,7 +3,7 @@
     xmlns="sap.m"
     xmlns:f="sap.ui.layout.form"
     xmlns:mdc="sap.ui.mdc"
-    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:table="sap.ui.mdc.table"
 >
     <VBox class="sapUiSmallMargin">
         <!-- Panel for Table -->
@@ -58,10 +58,11 @@
                     enableAutoColumnWidth="false"
                     filter="customerFilterBar"
                     filterConditions="{filterModel>/conditions}"
-                    selectionChange="onSelectionChange"
-                    type="Table"
-                >
-                   
+                    selectionChange="onSelectionChange">
+                    
+                    <mdc:type>
+                        <table:ResponsiveTableType />
+                    </mdc:type>
 
                     <mdc:actions>
                         <SegmentedButton selectedKey="less" selectionChange="onToggleRowDetail" tooltip="Toggle Row Details">
