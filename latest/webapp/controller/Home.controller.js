@@ -425,7 +425,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oResPage.addContent(oFragment);
 
-                    const oTable = this.byId("Res");
+                    const oTable = this.byId("allocationEmpTable");
                     // Ensure table starts with show-less state
                     oTable.removeStyleClass("show-more");
                     oTable.addStyleClass("show-less");
@@ -440,9 +440,9 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("Res");
+                    this.initializeTable("allocationEmpTable");
                     // Reset segmented button to "less" state for this fragment
-                    this._resetSegmentedButtonForFragment("Res");
+                    this._resetSegmentedButtonForFragment("allocationEmpTable");
 
                     // ✅ Initialize Project ID field and form
                     setTimeout(() => {
@@ -1272,7 +1272,7 @@ sap.ui.define([
         },
         onResSearch: function (oEvent) {
             const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
-            this._applyEmpSearchFilter("Res", "/Employees", sQuery);
+            this._applyEmpSearchFilter("allocationEmpTable", "/Employees", sQuery);
         },
         onResourceSearch: function (oEvent) {
             const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";

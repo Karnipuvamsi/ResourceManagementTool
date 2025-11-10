@@ -96,7 +96,7 @@
                         <!-- <tnt:NavigationListItem key="verticals" text="Verticals" /> -->
                     </tnt:NavigationListGroup>
 
-                    <tnt:NavigationListGroup text="Allocations">
+                    <tnt:NavigationListGroup text="allocationProjectTable">
                         <tnt:NavigationListItem
                             key="overview"
                             text="Allocations Overview"
@@ -200,7 +200,7 @@
                     <!-- ✅ REMOVED: <Page id="verticalsPage" title="Verticals" /> (Vertical is now an enum) -->
                     <Page
                         id="allocationPage"
-                        title="Allocations"
+                        title="allocationProjectTable"
                     />
                     <!-- <Page id="requirementsPage" title="Requirements" /> -->
                     <Page

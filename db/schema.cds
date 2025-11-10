@@ -238,6 +238,7 @@ entity Employee {
         city              : String;
         lwd               : String;          // ✅ FIXED: Changed from String to Date
         status            : EmployeeStatusEnum;
+        empallocpercentage:Integer64;
     
     // ✅ NEW: Self-referential associations
     to_Supervisor         : Association to one Employee

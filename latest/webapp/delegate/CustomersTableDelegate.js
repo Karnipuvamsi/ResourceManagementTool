@@ -70,7 +70,7 @@ sap.ui.define([
                     labels: ["Pre Allocated", "Bench", "Resigned", "Allocated"]
                 }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "status": { 
                     values: ["Active", "Completed", "Cancelled"],
                     labels: ["Active", "Completed", "Cancelled"]
@@ -108,7 +108,7 @@ sap.ui.define([
                 "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
                 "skillId": { targetEntity: "Skills", displayField: "name", keyField: "id" }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
                 "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
             }

@@ -41,7 +41,7 @@
             </Toolbar>
             <ScrollContainer height="380px" vertical="true" horizontal="false">
                 <mdc:Table
-                    id="Res"
+                    id="allocationEmpTable"
                     header="Employees"
                     class="verticalsTable rowDetailToggleTable"
                     autoBindOnInit="false"

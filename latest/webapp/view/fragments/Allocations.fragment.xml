@@ -25,7 +25,7 @@
             </Toolbar>
             <ScrollContainer height="380px" vertical="true" horizontal="false">
                 <mdc:Table
-                    id="Allocations"
+                    id="allocationProjectTable"
                     header="Projects"
                     class="verticalsTable rowDetailToggleTable"
                     autoBindOnInit="false"

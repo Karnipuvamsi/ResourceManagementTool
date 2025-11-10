@@ -70,7 +70,7 @@ sap.ui.define([
                     labels: ["Pre Allocated", "Bench", "Resigned", "Allocated"]
                 }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "status": { 
                     values: ["Active", "Completed", "Cancelled"],
                     labels: ["Active", "Completed", "Cancelled"]
@@ -107,7 +107,7 @@ sap.ui.define([
                 "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
                 "skillId": { targetEntity: "Skills", displayField: "name", keyField: "id" }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
                 "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
             }
@@ -224,7 +224,7 @@ sap.ui.define([
             
             // ✅ CRITICAL: Check if this is the Res table and apply Bench filter
             const sTableId = oTable.getId();
-            if (sTableId && sTableId.includes("Res")) {
+            if (sTableId && sTableId.includes("allocationEmpTable")) {
                 // Store flag that this is Res table - filter will be applied in controller
                 // We can't apply filter here directly, but we can set a flag
                 console.log("[EmployeesTableDelegate] Res table detected, Bench filter should be applied");

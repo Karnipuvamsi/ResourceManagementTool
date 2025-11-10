@@ -35,7 +35,7 @@ sap.ui.define([
                     labels: ["Yes", "No"]
                 }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "status": { 
                     values: ["Active", "Completed", "Cancelled"],
                     labels: ["Active", "Completed", "Cancelled"]
@@ -59,7 +59,7 @@ sap.ui.define([
                 "oppId": { targetEntity: "Opportunities", displayField: "opportunityName", keyField: "sapOpportunityId" },
                 "gpm": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" }
             },
-            "Allocations": {
+            "allocationProjectTable": {
                 "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
                 "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
             }

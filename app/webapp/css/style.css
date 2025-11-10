@@ -73,3 +73,8 @@
  
  .sapMSplitContainerHideMode>.sapMSplitContainerDetail .sapUiResponsiveMargin, .sapUiResponsiveMargin{margin:0px !important;}
  .extraSpace {height:20px !important;}
+ .sapUiSmallMarginBottom {
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid #ddd;
+}

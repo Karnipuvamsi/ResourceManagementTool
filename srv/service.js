@@ -1,7 +1,7 @@
 const cds = require('@sap/cds');
 
 module.exports = cds.service.impl(async function () {
-    const { Opportunities, Customers, Projects, Employees, Verticals } = this.entities;
+    const { Opportunities, Customers, Projects, Employees, Verticals, Allocations } = this.entities;
 
 
     this.before('CREATE', Opportunities, async (req) => {
@@ -26,7 +26,7 @@ module.exports = cds.service.impl(async function () {
         const result = await SELECT.one`max(SAPcustId)`.from(Customers);
 
         console.log(result);
-        
+
 
 
         let nextId = 1;
@@ -58,5 +58,21 @@ module.exports = cds.service.impl(async function () {
         req.data.sapPId = `P-${String(nextId).padStart(4, '0')}`;
 
     });
+
+    this.on('CREATE', Allocations, async (req) => {
+        // 1. Fetch the employee record by ohrId
+        const result = await SELECT.one.from(Employees).where({ ohrId: req.data.employeeId });
+        console.log("📥 Fetched Employee:", result);
+        console.log("Current empallocpercentage:", result.empallocpercentage);
+
+        // 2. Calculate new allocation percentage
+        const total_allocper = result.empallocpercentage + req.data.allocationPercentage;
+        console.log("📊 Total Allocation Percentage to update:", total_allocper);
+
+        // 3. Update the employee record with new allocation percentage
+        await UPDATE(Employees).set({ empallocpercentage: total_allocper }).where({ ohrId: req.data.employeeId });
+        console.log("✅ Employee allocation percentage updated successfully.");
+    });
+    
 
 });

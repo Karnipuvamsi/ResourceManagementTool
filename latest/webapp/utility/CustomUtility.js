@@ -175,10 +175,10 @@ sap.ui.define([
                 "Opportunities": { edit: "btnEdit_oppr", delete: "btnDelete_oppr" },
                 "Projects": { edit: "btnEdit_proj", delete: "btnDelete_proj" },
                 "SAPIdStatuses": { edit: "btnEdit_sap", delete: "btnDelete_sap" },
-                "Allocations":{ demand: "demand_alloc"},
+                "allocationProjectTable":{ demand: "demand_alloc"},
                 "Demands":{resources: "Resources_demand"},
                 "Resources":{allocate: "btnResourceAllocate"},
-                "Res": {allocateRes: "btnResAllocate"}
+                "allocationEmpTable": {allocateRes: "btnResAllocate"}
                 // ✅ REMOVED: "Verticals": { edit: "btnEdit_vert", delete: "btnDelete_vert" }
             };
 
@@ -2559,7 +2559,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oAllocationPage.addContent(oFragment);
 
-                    const oTable = this.byId("Allocations");
+                    const oTable = this.byId("allocationProjectTable");
 
                     oTable.removeStyleClass("show-more");
                     oTable.addStyleClass("show-less");
@@ -2569,8 +2569,8 @@ sap.ui.define([
                         oTable.setModel(oModel);
                     }
 
-                    this.initializeTable("Allocations");
-                    this._resetSegmentedButtonForFragment("Allocations");
+                    this.initializeTable("allocationProjectTable");
+                    this._resetSegmentedButtonForFragment("allocationProjectTable");
                 }.bind(this));
            
         },
@@ -2679,7 +2679,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oAllocationPage.addContent(oFragment);
 
-                    const oTable = this.byId("Res");
+                    const oTable = this.byId("allocationEmpTable");
 
                     oTable.removeStyleClass("show-more");
                     oTable.addStyleClass("show-less");
@@ -2689,8 +2689,8 @@ sap.ui.define([
                         oTable.setModel(oModel);
                     }
 
-                    this.initializeTable("Res");
-                    this._resetSegmentedButtonForFragment("Res");
+                    this.initializeTable("allocationEmpTable");
+                    this._resetSegmentedButtonForFragment("allocationEmpTable");
                 }.bind(this));
                 // Your logic here
             } else if (selectedKey === "projects") {
@@ -2708,7 +2708,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oAllocationPage.addContent(oFragment);
 
-                    const oTable = this.byId("Allocations");
+                    const oTable = this.byId("allocationProjectTable");
 
                     oTable.removeStyleClass("show-more");
                     oTable.addStyleClass("show-less");
@@ -2718,8 +2718,8 @@ sap.ui.define([
                         oTable.setModel(oModel);
                     }
 
-                    this.initializeTable("Allocations");
-                    this._resetSegmentedButtonForFragment("Allocations");
+                    this.initializeTable("allocationProjectTable");
+                    this._resetSegmentedButtonForFragment("allocationProjectTable");
                 }.bind(this));
             }
         }
