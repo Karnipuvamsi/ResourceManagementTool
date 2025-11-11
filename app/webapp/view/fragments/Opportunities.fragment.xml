@@ -33,9 +33,7 @@
                             }
                         }'
                         search="onFilterSearch"
-                        clear="onFilterBarClear"
                         showAdaptFiltersButton="true"
-                        showClearButton="true"
                         showGoButton="true"
                         showRestoreButton="true"
                         showVariantManagement="true"
@@ -52,6 +50,7 @@
                                 propertyKey="opportunityName"
                                 maxConditions="-1"
                                 required="false"
+                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -66,6 +65,7 @@
                                 propertyKey="Stage"
                                 maxConditions="-1"
                                 required="false"
+                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -213,9 +213,9 @@
                                     <Label text="Delivery SPOC" required="true" />
                                     <Input id="inputDeliverySPOC_oppr" value="{opportunityModel>/deliverySPOC}" width="100%" required="true" />
                                     <Label text="Expected Start" required="true" />
-                                    <DatePicker id="inputExpectedStart_oppr" value="{opportunityModel>/expectedStart}" width="100%" required="true" />
+                                    <DatePicker id="inputExpectedStart_oppr" value="{opportunityModel>/expectedStart}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" required="true" />
                                     <Label text="Expected End" required="true" />
-                                    <DatePicker id="inputExpectedEnd_oppr" value="{opportunityModel>/expectedEnd}" width="100%" required="true" />
+                                    <DatePicker id="inputExpectedEnd_oppr" value="{opportunityModel>/expectedEnd}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" required="true" />
                                     <Label text="TCV" required="true" />
                                     <Input id="inputTCV_oppr" value="{opportunityModel>/tcv}" width="100%" type="Number" required="true" />
                                     <Label text="Customer" required="true" />

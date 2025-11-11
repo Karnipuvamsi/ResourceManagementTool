@@ -76,6 +76,10 @@ sap.ui.define([
             sFragmentName = "Opportunities";
         } else if (sFilterBarId.includes("employeeFilterBar")) {
             sFragmentName = "Employees";
+        } else if (sFilterBarId.includes("resFilterBar")) {
+            sFragmentName = "Resources"; // ✅ NEW: Res fragment (Employees view in Allocations)
+        } else if (sFilterBarId.includes("allocationFilterBar")) {
+            sFragmentName = "Allocations"; // ✅ NEW: Allocations fragment (Projects view in Allocations)
         }
         
         // ✅ Determine if property is a string type for case-insensitive filtering
@@ -102,6 +106,7 @@ sap.ui.define([
             propertyKey: sPropertyName,
             label: sPropertyName,
             maxConditions: -1,
+            defaultOperator: "EQ", // ✅ Default operator is "Equal To" instead of "Contains"
             delegate: {
                 name: "sap/ui/mdc/field/FieldBaseDelegate",
                 payload: {}

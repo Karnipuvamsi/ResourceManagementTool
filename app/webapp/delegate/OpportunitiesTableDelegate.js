@@ -62,8 +62,8 @@ sap.ui.define([
                     labels: ["Full Time", "Subcon", "Intern", "Yet To Join"]
                 },
                 "band": { 
-                    values: ["1", "2", "3", "Band4A_1", "Band4A_2", "Band4B_C", "Band4B_LC", "Band4C", "Band4D", "Band5A", "Band5B"],
-                    labels: ["1", "2", "3", "4A_1", "4A_2", "4B_C", "4B_LC", "4C", "4D", "5A", "5B"]
+                    values: ["1", "2", "3", "Band4A", "Band4BC", "Band4BLC", "Band4C", "Band4D", "Band5A", "Band5B", "BandSubcon"],
+                    labels: ["1", "2", "3", "4A", "4B-C", "4B-LC", "4C", "4D", "5A", "5B", "Subcon"]
                 },
                 "status": { 
                     values: ["PreAllocated", "Bench", "Resigned", "Allocated"],

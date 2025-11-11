@@ -137,7 +137,7 @@
                 initialPage="root1"
             >
                 <pages>
-                   <Page id="root1" title="Welcome">
+                   <Page id="root1" showHeader="false">
                         <HBox id="_IDGenHBox7" justifyContent="Start" alignItems="Start">
                             <VBox id="_IDGenVBox170" class="benchC Card">
                                 <Text id="_IDGenText95" text="Total Head Count" class="myCardTitle"/>
@@ -185,45 +185,41 @@
 
                     <Page
                         id="customersPage"
-                        title="Customers"
-                        
+                        showHeader="false"
                     />
                     <Page
                         id="opportunitiesPage"
-                         title="Opportunities"
-                        
+                        showHeader="false"
                     />
                     <Page
                         id="projectsPage"
-                        title="Projects"
-                       
+                        showHeader="false"
                     />
                     <Page
                         id="employeesPage"
-                        title="Employees"
-                       
+                        showHeader="false"
                     />
                     <!-- ✅ REMOVED: <Page id="verticalsPage" title="Verticals" /> (Vertical is now an enum) -->
                     <Page
                         id="allocationPage"
-                        title="Overview"
+                        showHeader="false"
                     />
                     <!-- <Page id="requirementsPage" title="Requirements" /> -->
                     <Page
                         id="benchPage"
-                        title="Bench Report"
+                        showHeader="false"
                     />
                     <Page
                         id="pendingProjectsPage"
-                        title="Pending Projects"
+                        showHeader="false"
                     />
                     <Page
                         id="pendingOpportunitiesPage"
-                        title="Pending Opportunities"
+                        showHeader="false"
                     />
                     <Page
                         id="reportsPage"
-                        title="Reports"
+                        showHeader="false"
                     />
                 </pages>
             </NavContainer>

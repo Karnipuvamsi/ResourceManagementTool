@@ -2,83 +2,176 @@
                          xmlns="sap.m"
                          xmlns:f="sap.ui.layout.form"
                          xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table">
-    <VBox class="sapUiSmallMargin">
-        <!-- Panel for Table -->
-        <Panel class="sapUiResponsiveMargin" expandable="false">
-            <Toolbar>
-                <Select
-                    id="allocationViewSelect"
-                    selectedKey="projects"
-                    change="onAllocationViewChange">
-                    <core:Item key="employees" text="Employees" />
-                    <core:Item key="projects" text="Projects" />
-                </Select>
-                <ToolbarSpacer />
-                <SearchField
-                    id="allocationSearchField"
-                    width="300px"
-                    placeholder="Search projects..."
-                    liveChange="onAllocationSearch"
-                    search="onAllocationSearch" />                                 
-            </Toolbar>
-            <ScrollContainer height="380px" vertical="true" horizontal="false">
-                <mdc:Table
-                    id="Allocations"
-                    header="Projects"
-                    class="verticalsTable rowDetailToggleTable"
-                    autoBindOnInit="false"
-                    busyIndicatorDelay="0"
-                    width="100%"
-                    p13nMode="Column,Sort,Filter,Group"
-                    selectionMode="Single"
-                    delegate='{
-                        "name": "glassboard/delegate/AllocationsTableDelegate",
-                        "payload": {
-                            "collectionPath": "Projects"
-                        }
-                    }'
-                    showRowCount="true"
-                    threshold="1000"
-                    enableExport="true"
-                    enableAutoColumnWidth="false"
-                    selectionChange="onSelectionChange">
-
-                    <mdc:type>
-                        <mdct:ResponsiveTableType />
-                    </mdc:type>
-
-                    <mdc:actions>
-                        <SegmentedButton 
-                            selectedKey="less"
-                            selectionChange="onToggleRowDetail"
-                            tooltip="Toggle Row Details">
-                            <items>
-                                <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
-                                <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
-                            </items>
-                        </SegmentedButton>
-                        <Button icon="sap-icon://delete" id="btnDelete_alloc" tooltip="Delete" press="onDeletePress" enabled="false" />
-                        <Button text="Demand" id="demand_alloc" press="onDemandPress" enabled="false"/>
-                        <SplitButton
-                            id="allocationUpload"
-                            icon="sap-icon://upload"
-                            tooltip="Upload"
-                            type="Transparent"
-                            press="onUpload"
-                            arrowPress="onSplitButtonArrowPress"
-                        />
-                    </mdc:actions>
-                </mdc:Table>
-            </ScrollContainer>
-        </Panel>
-        <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
-
-        <!-- Panel for Form -->
-        <Panel headerText="Project Allocation Details" class="sapUiResponsiveMargin" expandable="false">
+                         xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="allocationDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="true"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="true">
+        
+        <!-- Optional Page Title -->
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Project Allocation Overview" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <!-- ========== FILTERBAR ========== -->
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="true">
+                <VBox class="sapUiSmallMargin">
+                    <mdc:FilterBar
+                        id="allocationFilterBar"
+                        delegate='{
+                            "name": "glassboard/delegate/ProjectsFilterBarDelegate",
+                            "payload": {
+                                "collectionPath": "Projects"
+                            }
+                        }'
+                        search="onFilterSearch"
+                        showAdaptFiltersButton="true"
+                        showGoButton="true"
+                        showRestoreButton="true"
+                        showVariantManagement="true"
+                        variantBackreference="allocationFilterBar"
+                        filterConditions="{filterModel>/Allocations/conditions}"
+                        p13nMode="Item,Value">
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Project Name Filter -->
+                            <mdc:FilterField
+                                id="filterAllocationProjectName"
+                                label="Project Name"
+                                conditions="{filterModel>/Allocations/conditions/projectName}"
+                                propertyKey="projectName"
+                                maxConditions="-1"
+                                required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Project Type Filter -->
+                            <mdc:FilterField
+                                id="filterAllocationProjectType"
+                                label="Project Type"
+                                conditions="{filterModel>/Allocations/conditions/projectType}"
+                                propertyKey="projectType"
+                                maxConditions="-1"
+                                required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- SOW Received Filter -->
+                            <mdc:FilterField
+                                id="filterAllocationSOWReceived"
+                                label="SOW Received"
+                                conditions="{filterModel>/Allocations/conditions/SOWReceived}"
+                                propertyKey="SOWReceived"
+                                maxConditions="-1"
+                                required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <!-- ========== MAIN CONTENT ========== -->
+        <layout:content>
             <VBox class="sapUiSmallMargin">
-                <!-- Allocation details form can be added here if needed -->
+                <!-- Panel for Table -->
+                <Panel class="sapUiResponsiveMargin" expandable="false">
+                    <Toolbar>
+                        <Select
+                            id="allocationViewSelect"
+                            selectedKey="projects"
+                            change="onAllocationViewChange">
+                            <core:Item key="employees" text="Employees" />
+                            <core:Item key="projects" text="Projects" />
+                        </Select>
+                        <ToolbarSpacer />
+                    </Toolbar>
+                    <ScrollContainer height="380px" vertical="true" horizontal="false">
+                        <mdc:Table
+                            id="Allocations"
+                            header="Projects"
+                            class="verticalsTable rowDetailToggleTable"
+                            autoBindOnInit="false"
+                            busyIndicatorDelay="0"
+                            width="100%"
+                            p13nMode="Column,Sort,Filter,Group"
+                            selectionMode="Single"
+                            delegate='{
+                                "name": "glassboard/delegate/AllocationsTableDelegate",
+                                "payload": {
+                                    "collectionPath": "Projects"
+                                }
+                            }'
+                            showRowCount="true"
+                            threshold="1000"
+                            enableExport="true"
+                            enableAutoColumnWidth="false"
+                            filter="allocationFilterBar"
+                            filterConditions="{filterModel>/Allocations/conditions}"
+                            selectionChange="onSelectionChange">
+
+                            <mdc:type>
+                                <mdct:ResponsiveTableType />
+                            </mdc:type>
+
+                            <mdc:actions>
+                                <SegmentedButton 
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
+                                    <items>
+                                        <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
+                                        <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
+                                    </items>
+                                </SegmentedButton>
+                                <Button icon="sap-icon://delete" id="btnDelete_alloc" tooltip="Delete" press="onDeletePress" enabled="false" />
+                                <Button text="Demand" id="demand_alloc" press="onDemandPress" enabled="false"/>
+                                <SplitButton
+                                    id="allocationUpload"
+                                    icon="sap-icon://upload"
+                                    tooltip="Upload"
+                                    type="Transparent"
+                                    press="onUpload"
+                                    arrowPress="onSplitButtonArrowPress"
+                                />
+                            </mdc:actions>
+                        </mdc:Table>
+                    </ScrollContainer>
+                </Panel>
+                <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
+
+                <!-- Panel for Form -->
+                <Panel headerText="Project Allocation Details" class="sapUiResponsiveMargin" expandable="false">
+                    <VBox class="sapUiSmallMargin">
+                        <!-- Allocation details form can be added here if needed -->
+                    </VBox>
+                </Panel>
             </VBox>
-        </Panel>
-    </VBox>
+        </layout:content>
+    </layout:DynamicPage>
 </core:FragmentDefinition>

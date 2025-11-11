@@ -34,9 +34,7 @@
                     }
                 }'
                 search="onFilterSearch"
-                clear="onFilterBarClear"
                 showAdaptFiltersButton="true"
-                showClearButton="true"
                 showGoButton="true"
                 showRestoreButton="true"
                         showVariantManagement="true"
@@ -53,6 +51,7 @@
                                 propertyKey="customerName"
                                 maxConditions="-1"
                                 required="false"
+                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -67,6 +66,7 @@
                                 propertyKey="vertical"
                                 maxConditions="-1"
                                 required="false"
+                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -162,17 +162,9 @@
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
                             <Label text="Country" required="true" />
-                            <Select id="inputCountry" selectedKey="{customerModel>/country}" width="100%" change="onCountryChange" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Country..." />
-                                </items>
-                            </Select>
+                            <Input id="inputCountry" value="{customerModel>/country}" width="100%" required="true" placeholder="Enter Country" />
                             <Label text="City" required="true" />
-                            <Select id="inputCity" selectedKey="{customerModel>/city}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select City..." />
-                                </items>
-                            </Select>
+                            <Input id="inputCity" value="{customerModel>/city}" width="100%" required="true" placeholder="Enter City" />
                         </f:SimpleForm>
                     </VBox>
                     

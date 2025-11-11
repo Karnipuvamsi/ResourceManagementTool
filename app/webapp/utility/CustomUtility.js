@@ -2313,7 +2313,7 @@ sap.ui.define([
             const sKey = oEvent.getParameters("key").item.mProperties.key;
 
             // Detect which table is currently visible
-            const aTableIds = ["Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses"]; // ✅ REMOVED: "Verticals"
+            const aTableIds = ["Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses", "Res", "Allocations"]; // ✅ Added: "Res", "Allocations"
             aTableIds.forEach((sTableId) => {
                 const oTable = this.byId(sTableId);
                 if (oTable && oTable.getVisible()) {
@@ -2413,7 +2413,9 @@ sap.ui.define([
                 "employeeFilterBar": "Employees",
                 "opportunityFilterBar": "Opportunities",
                 "projectFilterBar": "Projects",
-                "projectsFilterBar": "Projects" // ✅ Support both naming conventions
+                "projectsFilterBar": "Projects", // ✅ Support both naming conventions
+                "resFilterBar": "Res", // ✅ NEW: Employee FilterBar in Res fragment (Allocations - Employees view)
+                "allocationFilterBar": "Allocations" // ✅ NEW: Project FilterBar in Allocations fragment (Allocations - Projects view)
                 // ✅ REMOVED: "verticalsFilterBar": "Verticals"
                 // Add more mappings as needed
             };

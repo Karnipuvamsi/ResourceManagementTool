@@ -174,17 +174,17 @@ type GenderEnum           : String enum {
 }
 
 type EmployeeBandEnum     : String enum {
-    Band1 = '1';        // ✅ FIXED: Made unique (was '2')
-    Band2  = '2';                // ✅ FIXED: Now unique
+    Band1 = '1';
+    Band2 = '2';
     Band3 = '3';
-    Band4A_1 = '4A_1';
-    Band4A_2 = '4A_2';
-    Band4B_C = '4B_C';
-    Band4B_LC = '4B_LC';
+    Band4A = '4A';
+    Band4BC = '4B-C';
+    Band4BLC = '4B-LC';
     Band4C = '4C';
     Band4D = '4D';
     Band5A = '5A';
     Band5B = '5B';
+    BandSubcon = 'Subcon';
 }
 
 // ✅ Employee-Skills Junction Table (Many-to-Many)
@@ -235,6 +235,7 @@ entity Employee {
         location          : String;
         supervisorOHR     : String;
         skills            : String;  // Simple string field - stores comma-separated skill names
+        country           : String;  // ✅ NEW: Employee country with value help
         city              : String;
         lwd               : Date;
         status            : EmployeeStatusEnum;

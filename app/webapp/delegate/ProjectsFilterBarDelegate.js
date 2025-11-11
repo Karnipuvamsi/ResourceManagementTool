@@ -41,6 +41,12 @@ sap.ui.define([
                 continue;
             }
 
+            // ✅ EXCLUDE "status" PROPERTY FROM PROJECTS FILTERS
+            if (sKey === "status" && sEntitySet === "Projects") {
+                console.log(`[Delegate] Skipping excluded property: ${sKey} for Projects`);
+                continue;
+            }
+
             // Skip navigation properties
             if (oProp.$isCollection || oProp.$Type?.startsWith("MyService.")) continue;
 

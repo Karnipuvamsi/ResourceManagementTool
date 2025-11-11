@@ -81,17 +81,17 @@ sap.ui.define([
 
             // ✅ Initialize Band-Designation mapping for dependent dropdowns
             this.mBandToDesignations = {
-                "1": ["CEO", "CTO", "CFO", "President", "Vice President"],
-                "2": ["Senior Vice President", "Vice President", "Director"],
-                "3": ["Senior Director", "Director", "Associate Director"],
-                "4A_1": ["Senior Manager", "Manager", "Assistant Manager"],
-                "4A_2": ["Manager", "Assistant Manager", "Team Lead"],
-                "4B_C": ["Consultant", "Senior Consultant", "Lead Consultant"],
-                "4B_LC": ["Lead Consultant", "Senior Consultant", "Consultant"],
-                "4C": ["Senior Associate", "Associate", "Junior Associate"],
-                "4D": ["Associate", "Junior Associate", "Trainee"],
-                "5A": ["Senior Analyst", "Analyst", "Junior Analyst"],
-                "5B": ["Analyst", "Junior Analyst", "Trainee"]
+                "1": ["Senior Vice President"],
+                "2": ["Vice President"],
+                "3": ["Assistant Vice President"],
+                "4A": ["Consultant", "Management Trainee"],
+                "4B-C": ["Consultant", "Assistant Manager"],
+                "4B-LC": ["Assistant Manager", "Lead Consultant"],
+                "4C": ["Manager", "Principal Consultant", "Project Manager"],
+                "4D": ["Senior Manager", "Senior Principal Consultant", "Senior Project Manager"],
+                "5A": ["Process Associate"],
+                "5B": ["Senior Associate", "Technical Associate"],
+                "Subcon": ["Subcon"]
             };
 
             // ✅ Populate Country dropdown in Customers fragment when loaded
@@ -400,13 +400,13 @@ sap.ui.define([
                         if (oFiltersModel) {
                             oProjectFilterBar.setModel(oFiltersModel, "$filters");
                         }
-                        // ✅ Set defaults with multiple retries
-                        setTimeout(() => {
-                            this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "status"]);
-                        }, 1000);
-                        setTimeout(() => {
-                            this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "status"]);
-                        }, 2000);
+                            // ✅ Set defaults with multiple retries - 3 important filters: projectName, projectType, SOWReceived
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 2000);
                     }
 
                     // Initialize table-specific functionality
@@ -570,6 +570,18 @@ sap.ui.define([
                     // Reset segmented button to "less" state for this fragment
                     this._resetSegmentedButtonForFragment("Employees");
 
+                    // ✅ Populate Country dropdown when Employees fragment loads
+                    // Use multiple timeouts to ensure fragment is fully rendered
+                    setTimeout(() => {
+                        this._populateCountryDropdown();
+                    }, 500);
+                    setTimeout(() => {
+                        this._populateCountryDropdown();
+                    }, 1000);
+                    setTimeout(() => {
+                        this._populateCountryDropdown();
+                    }, 2000);
+
                     // ✅ Initialize Employee form (no ID preview needed - manual OHR ID entry)
                     setTimeout(() => {
                         oTable.initialized().then(() => {
@@ -631,6 +643,27 @@ sap.ui.define([
                     const oModel = this.getOwnerComponent().getModel();
                     if (oModel) {
                         oTable.setModel(oModel);
+                    }
+
+                    // ✅ Set default filters for Res FilterBar (Employees view in Allocations)
+                    const oResFilterBar = this.byId("resFilterBar");
+                    if (oResFilterBar) {
+                        oResFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oResFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oResFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                        }, 2000);
                     }
 
                     // Initialize table-specific functionality
@@ -999,6 +1032,27 @@ sap.ui.define([
                             oTable.setModel(oModel);
                         }
                         
+                        // ✅ Set default filters for Res FilterBar (Employees view in Allocations)
+                        const oResFilterBar = this.byId("resFilterBar");
+                        if (oResFilterBar) {
+                            oResFilterBar.setModel(oModel, "default");
+                            const oFilterModel = this.getView().getModel("filterModel");
+                            const oFiltersModel = this.getView().getModel("$filters");
+                            if (oFilterModel) {
+                                oResFilterBar.setModel(oFilterModel, "filterModel");
+                            }
+                            if (oFiltersModel) {
+                                oResFilterBar.setModel(oFiltersModel, "$filters");
+                            }
+                            // ✅ Set defaults with multiple retries
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                            }, 2000);
+                        }
+                        
                         this.initializeTable("Res").then(() => {
                             // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
                             // Use multiple retries to ensure binding is ready
@@ -1067,6 +1121,27 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             oTable.setModel(oModel);
+                        }
+                        
+                        // ✅ Set default filters for Allocations FilterBar (Projects view in Allocations)
+                        const oAllocationFilterBar = this.byId("allocationFilterBar");
+                        if (oAllocationFilterBar) {
+                            oAllocationFilterBar.setModel(oModel, "default");
+                            const oFilterModel = this.getView().getModel("filterModel");
+                            const oFiltersModel = this.getView().getModel("$filters");
+                            if (oFilterModel) {
+                                oAllocationFilterBar.setModel(oFilterModel, "filterModel");
+                            }
+                            if (oFiltersModel) {
+                                oAllocationFilterBar.setModel(oFiltersModel, "$filters");
+                            }
+                            // ✅ Set defaults with multiple retries - 3 important filters: projectName, projectType, SOWReceived
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oAllocationFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oAllocationFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 2000);
                         }
                         
                         this.initializeTable("Allocations");
@@ -1380,6 +1455,159 @@ sap.ui.define([
                     this._resetSegmentedButtonForFragment("Allocations");
                 }
             }.bind(this));
+        },
+        
+        // ✅ NEW: Handler for Demands dropdown to switch between Employees (Res) and Projects (Allocations) views
+        // ✅ ISOLATED: This handler only affects the Demands view dropdown, does not interfere with onAllocationViewChange
+        onSelection: function (oEvent) {
+            // Get selected key from Select control
+            const oSelect = oEvent.getSource();
+            const sSelectedKey = oSelect.getSelectedKey();
+            const oAllocationPage = this.byId("allocationPage");
+            
+            console.log("✅ Demands view change - Selected key:", sSelectedKey);
+            
+            if (!oAllocationPage) {
+                console.error("Allocation page not found");
+                return;
+            }
+            
+            // Reset flag so fragment can be reloaded
+            this._bAllocationsLoaded = false;
+            
+            // Destroy current content
+            oAllocationPage.destroyContent();
+            
+            if (sSelectedKey === "employees") {
+                console.log("✅ Loading Employees view (Res fragment) from Demands dropdown");
+                // Load Employees view (Res fragment)
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.Res",
+                    controller: this
+                }).then(function (oFragment) {
+                    oAllocationPage.addContent(oFragment);
+                    const oTable = this.byId("Res");
+                    
+                    if (oTable) {
+                        oTable.removeStyleClass("show-more");
+                        oTable.addStyleClass("show-less");
+                        
+                        const oModel = this.getOwnerComponent().getModel();
+                        if (oModel) {
+                            oTable.setModel(oModel);
+                        }
+                        
+                        // ✅ Set default filters for Res FilterBar (Employees view in Allocations)
+                        const oResFilterBar = this.byId("resFilterBar");
+                        if (oResFilterBar) {
+                            oResFilterBar.setModel(oModel, "default");
+                            const oFilterModel = this.getView().getModel("filterModel");
+                            const oFiltersModel = this.getView().getModel("$filters");
+                            if (oFilterModel) {
+                                oResFilterBar.setModel(oFilterModel, "filterModel");
+                            }
+                            if (oFiltersModel) {
+                                oResFilterBar.setModel(oFiltersModel, "$filters");
+                            }
+                            // ✅ Set defaults with multiple retries
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oResFilterBar, ["fullName", "status"]);
+                            }, 2000);
+                        }
+                        
+                        this.initializeTable("Res").then(() => {
+                            // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
+                            const fnApplyBenchFilter = () => {
+                                const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
+                                if (oResBinding) {
+                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                    oResBinding.filter([oBenchFilter]);
+                                    console.log("✅ Res table filtered to show only UnproductiveBench employees");
+                                    
+                                    // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
+                                    oResBinding.attachDataReceived(() => {
+                                        const oCurrentFilters = oResBinding.getFilters();
+                                        const bHasBenchFilter = oCurrentFilters && oCurrentFilters.some(f => 
+                                            f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "UnproductiveBench"
+                                        );
+                                        if (!bHasBenchFilter) {
+                                            const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
+                                            aFilters.push(oBenchFilter);
+                                            oResBinding.filter(aFilters);
+                                            console.log("✅ Re-applied UnproductiveBench filter after dataReceived");
+                                        }
+                                    });
+                                    
+                                    return true;
+                                }
+                                return false;
+                            };
+                            
+                            // Try immediately
+                            if (!fnApplyBenchFilter()) {
+                                // Retry after short delay
+                                setTimeout(() => {
+                                    if (!fnApplyBenchFilter()) {
+                                        // Final retry
+                                        setTimeout(fnApplyBenchFilter, 500);
+                                    }
+                                }, 300);
+                            }
+                        });
+                        
+                        this._resetSegmentedButtonForFragment("Res");
+                    }
+                }.bind(this));
+            } else {
+                // Load Projects view (Allocations fragment)
+                console.log("✅ Loading Projects view (Allocations fragment) from Demands dropdown");
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.Allocations",
+                    controller: this
+                }).then(function (oFragment) {
+                    oAllocationPage.addContent(oFragment);
+                    const oTable = this.byId("Allocations");
+                    
+                    if (oTable) {
+                        oTable.removeStyleClass("show-more");
+                        oTable.addStyleClass("show-less");
+                        
+                        const oModel = this.getOwnerComponent().getModel();
+                        if (oModel) {
+                            oTable.setModel(oModel);
+                        }
+                        
+                        // ✅ Set default filters for Allocations FilterBar (Projects view in Allocations)
+                        const oAllocationFilterBar = this.byId("allocationFilterBar");
+                        if (oAllocationFilterBar) {
+                            oAllocationFilterBar.setModel(oModel, "default");
+                            const oFilterModel = this.getView().getModel("filterModel");
+                            const oFiltersModel = this.getView().getModel("$filters");
+                            if (oFilterModel) {
+                                oAllocationFilterBar.setModel(oFilterModel, "filterModel");
+                            }
+                            if (oFiltersModel) {
+                                oAllocationFilterBar.setModel(oFiltersModel, "$filters");
+                            }
+                            // ✅ Set defaults with multiple retries - 3 important filters: projectName, projectType, SOWReceived
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oAllocationFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oAllocationFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                            }, 2000);
+                        }
+                        
+                        this.initializeTable("Allocations");
+                        this._resetSegmentedButtonForFragment("Allocations");
+                    }
+                }.bind(this));
+            }
         },
         
         // ✅ NEW: Resources handler - shows resources for selected demand
@@ -2781,8 +3009,8 @@ sap.ui.define([
         onSubmitCustomer: function () {
             const sCustId = this.byId("inputCustomerId").getValue(),
                 sCustName = this.byId("inputCustomerName").getValue(),
-                sCountry = this.byId("inputCountry").getSelectedKey(),
-                sState = this.byId("inputCity").getSelectedKey(), // ✅ FIXED: City is a Select control
+                sCountry = this.byId("inputCountry").getValue(), // ✅ FIXED: Country is now Input (free text)
+                sState = this.byId("inputCity").getValue(), // ✅ FIXED: City is now Input (free text)
                 sStatus = this.byId("inputStatus").getSelectedKey(),
                 sVertical = this.byId("inputVertical").getSelectedKey();
 
@@ -3622,18 +3850,8 @@ sap.ui.define([
                 this._initializeCustomerIdField();
             }
             this.byId("inputCustomerName")?.setValue("");
-            this.byId("inputCountry")?.setSelectedKey("");
-            this.byId("inputCity")?.setSelectedKey("");
-            // Clear City dropdown items (except placeholder) when country is cleared
-            const oCitySelect = this.byId("inputCity");
-            if (oCitySelect) {
-                const aItems = oCitySelect.getItems();
-                aItems.forEach((oItem, iIndex) => {
-                    if (iIndex > 0) {
-                        oCitySelect.removeItem(oItem);
-                    }
-                });
-            }
+            this.byId("inputCountry")?.setValue(""); // ✅ FIXED: Country is now Input (free text)
+            this.byId("inputCity")?.setValue(""); // ✅ FIXED: City is now Input (free text)
             this.byId("inputStatus")?.setSelectedKey("");
             this.byId("inputVertical")?.setSelectedKey("");
             
@@ -3668,7 +3886,8 @@ sap.ui.define([
                 sBand = this.byId("inputBand_emp").getSelectedKey(),
                 sRole = this.byId("inputRole_emp").getSelectedKey(), // ✅ FIXED: Role is a Select control
                 sLocation = this.byId("inputLocation_emp").getValue(),
-                sCity = this.byId("inputCity_emp").getValue(),
+                sCountry = this.byId("inputCountry_emp").getSelectedKey(),  // ✅ NEW: Country field
+                sCity = this.byId("inputCity_emp").getSelectedKey(),  // ✅ CHANGED: Now uses getSelectedKey
                 // Get Supervisor OHR ID from data attribute (not displayed name)
                 sSupervisor = (this.byId("inputSupervisor_emp")?.data("selectedId")) || this.byId("inputSupervisor_emp")?.getValue() || "",
                 // Get selected skill names from MultiComboBox and join as comma-separated string
@@ -3711,6 +3930,7 @@ sap.ui.define([
                     "band": sBand || "",
                     "role": sRole || "",
                     "location": sLocation || "",
+                    "country": sCountry || "",  // ✅ NEW: Country field
                     "city": sCity || "",
                     "supervisorOHR": sSupervisor || "",
                     "skills": sSkills || "",  // Store skills as comma-separated string
@@ -3784,6 +4004,7 @@ sap.ui.define([
                     "band": sBand || "",
                     "role": sRole || "",
                     "location": sLocation || "",
+                    "country": sCountry || "",  // ✅ NEW: Country field
                     "city": sCity || "",
                     "supervisorOHR": sSupervisor || "",
                     "skills": sSkills || "",  // Store skills as comma-separated string
@@ -5361,7 +5582,8 @@ sap.ui.define([
                 });
             }
             this.byId("inputLocation_emp")?.setValue("");
-            this.byId("inputCity_emp")?.setValue("");
+            this.byId("inputCountry_emp")?.setSelectedKey("");  // ✅ NEW: Clear country
+            this.byId("inputCity_emp")?.setSelectedKey("");  // ✅ CHANGED: Now uses setSelectedKey
             this.byId("inputSupervisor_emp")?.setValue("");
             this.byId("inputSupervisor_emp")?.data("selectedId", "");
             this.byId("inputSkills_emp")?.removeAllSelectedItems();
@@ -5426,114 +5648,7 @@ sap.ui.define([
         _generateNextIdFromBinding: CustomUtility.prototype._generateNextIdFromBinding,
         onFilterSearch: CustomUtility.prototype.onFilterSearch,
         
-        // ✅ NEW: Clear FilterBar handler - ISOLATED per fragment
-        onFilterBarClear: function (oEvent) {
-            const oFilterBar = oEvent.getSource();
-            let sFilterBarId = oFilterBar.getId();
-            
-            // ✅ Extract base ID from full ID
-            const aIdParts = sFilterBarId.split("--");
-            if (aIdParts.length > 0) {
-                sFilterBarId = aIdParts[aIdParts.length - 1];
-            }
-            
-            // ✅ Map FilterBar IDs to fragment names and default fields
-            const filterToFragmentMap = {
-                "customerFilterBar": { name: "Customers", defaults: ["customerName", "vertical"] },
-                "projectFilterBar": { name: "Projects", defaults: ["projectName", "status"] },
-                "opportunityFilterBar": { name: "Opportunities", defaults: ["opportunityName", "Stage"] },
-                "employeeFilterBar": { name: "Employees", defaults: ["fullName", "status"] }
-            };
-            
-            const oFragmentInfo = filterToFragmentMap[sFilterBarId] || { name: "Customers", defaults: ["customerName", "vertical"] };
-            const sFragmentName = oFragmentInfo.name;
-            const aDefaultFields = oFragmentInfo.defaults;
-            const oFilterModel = this.getView().getModel("filterModel");
-            
-            // ✅ Clear filter conditions for THIS fragment only in filterModel
-            if (oFilterModel) {
-                oFilterModel.setProperty(`/${sFragmentName}/conditions`, {});
-                oFilterModel.checkUpdate(true);
-                console.log(`✅ Cleared filters for ${sFragmentName} fragment only`);
-            }
-            
-            // ✅ Clear all FilterField values
-            if (oFilterBar) {
-                const aFilterFields = oFilterBar.getFilterFields();
-                if (aFilterFields && aFilterFields.length > 0) {
-                    aFilterFields.forEach(function(oFilterField) {
-                        // Clear values using the condition binding
-                        const sPropertyKey = oFilterField.getPropertyKey();
-                        if (sPropertyKey && oFilterModel) {
-                            oFilterModel.setProperty(`/${sFragmentName}/conditions/${sPropertyKey}`, undefined);
-                        }
-                        
-                        // Clear UI values
-                        if (oFilterField && oFilterField.setValue) {
-                            oFilterField.setValue("");
-                        } else if (oFilterField && oFilterField.setSelectedKey) {
-                            oFilterField.setSelectedKey("");
-                        } else if (oFilterField && oFilterField.clear) {
-                            oFilterField.clear();
-                        }
-                    });
-                }
-                
-                // ✅ Reset FilterFields state to show only defaults
-                setTimeout(() => {
-                    const oNewState = {
-                        filter: {
-                            FilterFields: {
-                                items: aDefaultFields
-                            }
-                        }
-                    };
-                    StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
-                        console.log(`✅ Reset filter visibility to defaults: ${aDefaultFields.join(", ")}`);
-                        
-                        // ✅ Force update filter fields visibility
-                        setTimeout(() => {
-                            const aFilterFields2 = oFilterBar.getFilterFields();
-                            if (aFilterFields2 && aFilterFields2.length > 0) {
-                                aFilterFields2.forEach(function(oField) {
-                                    if (oField && oField.setVisible) {
-                                        const sKey = oField.getPropertyKey();
-                                        if (aDefaultFields.indexOf(sKey) >= 0) {
-                                            oField.setVisible(true);
-                                        } else {
-                                            oField.setVisible(false);
-                                        }
-                                    }
-                                });
-                            }
-                        }, 100);
-                    }).catch((e) => {
-                        console.warn("Could not reset filter state:", e);
-                    });
-                }, 200);
-            }
-            
-            // ✅ Rebind the specific table for this fragment
-            const filterToTableMap = {
-                "customerFilterBar": "Customers",
-                "projectFilterBar": "Projects",
-                "opportunityFilterBar": "Opportunities",
-                "employeeFilterBar": "Employees"
-            };
-            const sTableId = filterToTableMap[sFilterBarId];
-            if (sTableId) {
-                setTimeout(() => {
-                    const oTable = this.byId(sTableId);
-                    if (oTable) {
-                        if (typeof oTable.rebind === "function") {
-                            oTable.rebind();
-                        } else if (typeof oTable.bindRows === "function") {
-                            oTable.bindRows();
-                        }
-                    }
-                }, 300);
-            }
-        },
+        // ✅ REMOVED: onFilterBarClear function - Clear button removed from all FilterBars
         
         // ✅ NEW: Set default filters for each entity
         _setDefaultFilters: function() {
@@ -7006,34 +7121,47 @@ sap.ui.define([
             }
         },
 
-        // ✅ Helper: Populate Country dropdown when Customers fragment is loaded
+        // ✅ Helper: Populate Country dropdown for Employee form
         _populateCountryDropdown: function () {
-            const oCountrySelect = this.byId("inputCountry");
-            if (oCountrySelect && this._mCountryToCities) {
-                const aCountries = Object.keys(this._mCountryToCities).sort();
-                const aItems = oCountrySelect.getItems();
-                
-                // Clear existing items (except placeholder)
-                aItems.forEach((oItem, iIndex) => {
-                    if (iIndex > 0) { // Keep first placeholder item
-                        oCountrySelect.removeItem(oItem);
-                    }
-                });
-                
-                // Add country items
-                aCountries.forEach((sCountry) => {
-                    oCountrySelect.addItem(new sap.ui.core.Item({
-                        key: sCountry,
-                        text: sCountry
-                    }));
-                });
+            // ✅ Populate Employee Country Dropdown
+            const oEmployeeCountrySelect = this.byId("inputCountry_emp");
+            if (!oEmployeeCountrySelect) {
+                console.warn("⚠️ Employee Country dropdown not found (inputCountry_emp)");
+                return;
             }
+            
+            if (!this._mCountryToCities) {
+                console.warn("⚠️ Country to Cities mapping not initialized");
+                return;
+            }
+            
+            const aCountries = Object.keys(this._mCountryToCities).sort();
+            console.log("✅ Populating Employee Country dropdown with", aCountries.length, "countries");
+            
+            const aItems = oEmployeeCountrySelect.getItems();
+            
+            // Clear existing items (except placeholder)
+            aItems.forEach((oItem, iIndex) => {
+                if (iIndex > 0) { // Keep first placeholder item
+                    oEmployeeCountrySelect.removeItem(oItem);
+                }
+            });
+            
+            // Add country items
+            aCountries.forEach((sCountry) => {
+                oEmployeeCountrySelect.addItem(new sap.ui.core.Item({
+                    key: sCountry,
+                    text: sCountry
+                }));
+            });
+            
+            console.log("✅ Employee Country dropdown populated successfully");
         },
 
-        // ✅ Handler: Country change - populate City dropdown
-        onCountryChange: function (oEvent) {
+        // ✅ Handler: Employee Country change - populate Employee City dropdown
+        onEmployeeCountryChange: function (oEvent) {
             const sSelectedCountry = oEvent.getParameter("selectedItem")?.getKey() || "";
-            const oCitySelect = this.byId("inputCity");
+            const oCitySelect = this.byId("inputCity_emp");
             
             if (!oCitySelect) {
                 return;
@@ -7064,10 +7192,10 @@ sap.ui.define([
             });
             
             // Update model
-            const oCustomerModel = this.getView().getModel("customerModel");
-            if (oCustomerModel) {
-                oCustomerModel.setProperty("/country", sSelectedCountry);
-                oCustomerModel.setProperty("/city", ""); // Reset city when country changes
+            const oEmployeeModel = this.getView().getModel("employeeModel");
+            if (oEmployeeModel) {
+                oEmployeeModel.setProperty("/country", sSelectedCountry);
+                oEmployeeModel.setProperty("/city", ""); // Reset city when country changes
             }
         },
 

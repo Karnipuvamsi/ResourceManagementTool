@@ -33,9 +33,7 @@
                             }
                         }'
                         search="onFilterSearch"
-                        clear="onFilterBarClear"
                         showAdaptFiltersButton="true"
-                        showClearButton="true"
                         showGoButton="true"
                         showRestoreButton="true"
                         showVariantManagement="true"
@@ -52,20 +50,40 @@
                                 propertyKey="projectName"
                                 maxConditions="-1"
                                 required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
                                 }'
                             />
-                            <!-- Status Filter -->
+                            <!-- Project Type Filter -->
                             <mdc:FilterField
-                                id="filterProjectStatus"
-                                label="Status"
-                                conditions="{filterModel>/Projects/conditions/status}"
-                                propertyKey="status"
+                                id="filterProjectType"
+                                label="Project Type"
+                                conditions="{filterModel>/Projects/conditions/projectType}"
+                                propertyKey="projectType"
                                 maxConditions="-1"
                                 required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- SOW Received Filter -->
+                            <mdc:FilterField
+                                id="filterSOWReceived"
+                                label="SOW Received"
+                                conditions="{filterModel>/Projects/conditions/SOWReceived}"
+                                propertyKey="SOWReceived"
+                                maxConditions="-1"
+                                required="false"
+                                defaultOperator="EQ"
+                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -170,9 +188,9 @@
                                     <Label text="Project Name" />
                                     <Input id="inputProjectName_proj" value="{projectModel>/projectName}" width="100%" />
                                     <Label text="Start Date" />
-                                    <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" width="100%" />
+                                    <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="End Date" />
-                                    <DatePicker id="inputEndDate_proj" value="{projectModel>/endDate}" width="100%" />
+                                    <DatePicker id="inputEndDate_proj" value="{projectModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="GPM" />
                                     <Input 
                                         id="inputGPM_proj" 
