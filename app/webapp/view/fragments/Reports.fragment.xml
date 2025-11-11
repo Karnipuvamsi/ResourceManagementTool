@@ -1,0 +1,112 @@
+<core:FragmentDefinition
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="reportsDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="true"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="true">
+        
+        <!-- Optional Page Title -->
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Reports" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <!-- ========== FILTERBAR ========== -->
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="true">
+                <VBox class="sapUiSmallMargin">
+                    <!-- Report Selection -->
+                    <HBox class="sapUiSmallMarginBottom" alignItems="Center">
+                        <Label text="Report Type:" class="sapUiSmallMarginEnd" />
+                        <Select
+                            id="reportTypeSelect"
+                            width="400px"
+                            change="onReportTypeChange">
+                            <core:Item key="EmployeeBenchReport" text="Employee Bench Report"/>
+                            <core:Item key="EmployeeProbableReleaseReport" text="Employee Probable Release Report"/>
+                            <core:Item key="RevenueForecastReport" text="Revenue Forecast Report"/>
+                            <core:Item key="EmployeeAllocationReport" text="Employee Allocation Report"/>
+                            <core:Item key="EmployeeSkillReport" text="Employee Skill Report"/>
+                            <core:Item key="ProjectsNearingCompletionReport" text="Projects Nearing Completion Report"/>
+                            <core:Item key="SupervisorTeamAllocationReport" text="Supervisor Team Allocation Report"/>
+                            <core:Item key="CustomerProjectPortfolioReport" text="Customer Project Portfolio Report"/>
+                            <core:Item key="UtilizationTrendReport" text="Utilization Trend Report"/>
+                            <core:Item key="SkillsGapAnalysisReport" text="Skills Gap Analysis Report"/>
+                            <core:Item key="EmployeeAssignmentHistoryReport" text="Employee Assignment History Report"/>
+                        </Select>
+                        <Button
+                            id="generateReportBtn"
+                            text="Generate Report"
+                            type="Emphasized"
+                            press="onGenerateReport"
+                            class="sapUiSmallMarginBegin"
+                            enabled="false"/>
+                    </HBox>
+                    
+                    <!-- Dynamic Filter Panel -->
+                    <VBox id="reportFiltersPanel" class="sapUiSmallMarginTop">
+                        <!-- Filters will be dynamically added here based on report type -->
+                    </VBox>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <!-- ========== MAIN CONTENT ========== -->
+        <layout:content>
+            <VBox class="sapUiSmallMargin">
+                <!-- Summary Cards Panel -->
+                <Panel class="sapUiResponsiveMargin" headerText="Report Summary" expandable="true" expanded="true">
+                    <HBox id="reportSummaryCards" class="sapUiSmallMargin" wrap="Wrap">
+                        <!-- Summary cards will be dynamically added here -->
+                    </HBox>
+                </Panel>
+                
+                <!-- Report Data Table Panel -->
+                <Panel class="sapUiResponsiveMargin" headerText="Report Data" expandable="true" expanded="true">
+                    <VBox class="sapUiSmallMargin">
+                        <Toolbar>
+                            <ToolbarSpacer />
+                            <Button
+                                id="exportReportBtn"
+                                text="Export to CSV"
+                                icon="sap-icon://excel-attachment"
+                                press="onExportReport"
+                                visible="false"/>
+                        </Toolbar>
+                        
+                        <ScrollContainer height="400px" vertical="true" horizontal="false">
+                            <mdc:Table
+                                id="reportDataTable"
+                                header="Report Data"
+                                class="verticalsTable"
+                                autoBindOnInit="false"
+                                busyIndicatorDelay="0"
+                                width="100%"
+                                p13nMode="Column,Sort,Filter,Group"
+                                selectionMode="None"
+                                showRowCount="true"
+                                threshold="1000"
+                                enableExport="true"
+                                enableAutoColumnWidth="false"
+                                type="ResponsiveTable">
+                                <mdc:type>
+                                    <mdct:ResponsiveTableType/>
+                                </mdc:type>
+                            </mdc:Table>
+                        </ScrollContainer>
+                    </VBox>
+                </Panel>
+            </VBox>
+        </layout:content>
+    </layout:DynamicPage>
+</core:FragmentDefinition>

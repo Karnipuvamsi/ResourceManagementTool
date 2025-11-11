@@ -121,6 +121,11 @@
                             text="Pending Opportunities"
                             icon="sap-icon://initiative"
                         />
+                        <tnt:NavigationListItem
+                            key="reports"
+                            text="Reports"
+                            icon="sap-icon://business-objects-experience"
+                        />
                     </tnt:NavigationListGroup>
                 </tnt:NavigationList>
             </tnt:SideNavigation>
@@ -215,6 +220,10 @@
                     <Page
                         id="pendingOpportunitiesPage"
                         title="Pending Opportunities"
+                    />
+                    <Page
+                        id="reportsPage"
+                        title="Reports"
                     />
                 </pages>
             </NavContainer>

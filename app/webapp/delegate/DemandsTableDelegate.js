@@ -97,8 +97,9 @@ sap.ui.define([
                 "oppId": { targetEntity: "Opportunities", displayField: "opportunityName", keyField: "sapOpportunityId" }
             },
             "Demands": {
-                "skillId": { targetEntity: "Skills", displayField: "name", keyField: "id" },
-                "sapPId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
+                // Removed skillId association - using simple skill string field
+                // ✅ REMOVED: sapPId association - we want to display the ID directly, not the project name
+                // "sapPId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
             },
             "Employees": {
                 "supervisorOHR": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" }
@@ -129,12 +130,12 @@ sap.ui.define([
         
         if (sTableId === "Demands") {
             mCustomHeaders = {
-                "sapPId": "Project Name",
+                "sapPId": "Project ID", // ✅ Changed from "Project Name" to "Project ID"
                 "skillId": "Skill",
                 "skill": "Skill",
                 "band": "Band",
-                "quantity": "Quantity",
-                "demandId": "Demand ID"
+                "quantity": "Quantity"
+                // ✅ Removed "demandId" - it's auto-generated and not needed in table display
             };
         } else {
             // Default headers for other tables
@@ -193,6 +194,12 @@ sap.ui.define([
 
                     // Check if it's a property (not a navigation property)
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
+                        // ✅ For Demands table, exclude demandId from display (it's auto-generated)
+                        if (sCollectionPath === "Demands" && sPropertyName === "demandId") {
+                            console.log("[GenericDelegate] Skipping demandId for Demands table (auto-generated)");
+                            return;
+                        }
+                        
                         const sType = oProperty.$Type || "Edm.String";
                         
                         // ✅ Use shared formatter to ensure label matches getFilterDelegate
@@ -252,8 +259,8 @@ sap.ui.define([
         // ✅ Expand associations to load related entity names
         const sCollectionPath = sPath.replace(/^\//, "");
         if (sCollectionPath === "Demands") {
-            // Expand Project and Skill associations for Demands table
-            oBindingInfo.parameters.$expand = "to_Project,to_Skill";
+            // Expand Project association for Demands table (skill is now a simple string field)
+            oBindingInfo.parameters.$expand = "to_Project";
             
             // ✅ CRITICAL: Try to get project filter from controller if available
             // This is a workaround - ideally filter should be applied via binding.filter()
@@ -274,11 +281,17 @@ sap.ui.define([
         }
 
         console.log("[DemandsTableDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[DemandsTableDelegate] Expanded associations for Demands: to_Project,to_Skill");
+        console.log("[DemandsTableDelegate] Expanded associations for Demands: to_Project");
     };
 
     GenericTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         console.log("[GenericDelegate] addItem called for property:", sPropertyName);
+
+        // ✅ Skip non-property fields like _actions, _columns, etc.
+        if (sPropertyName.startsWith("_") || sPropertyName === "actions" || sPropertyName === "columns") {
+            console.log("[GenericDelegate] Skipping non-property field:", sPropertyName);
+            return Promise.reject("Skipping non-property field: " + sPropertyName);
+        }
 
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
@@ -297,12 +310,11 @@ sap.ui.define([
             
             if (sTableId === "Demands") {
                 mCustomHeaders = {
-                    "sapPId": "Project Name",
-                    "skillId": "Skill",
+                    "sapPId": "Project ID", // ✅ Changed from "Project Name" to "Project ID"
                     "skill": "Skill",
                     "band": "Band",
-                    "quantity": "Quantity",
-                    "demandId": "Demand ID"
+                    "quantity": "Quantity"
+                    // ✅ Removed "demandId" - it's auto-generated and not needed in table display
                 };
             } else {
                 // Default headers for other tables
@@ -378,7 +390,9 @@ sap.ui.define([
                     };
 
                     oAssocPromise.then(function(oAssocConfig) {
-                        const bIsAssoc = !!oAssocConfig;
+                        // ✅ CRITICAL: For Demands table, sapPId should NOT be treated as association
+                        // We want to display the ID directly, not the project name
+                        const bIsAssoc = !!oAssocConfig && !(sTableId === "Demands" && sPropertyName === "sapPId");
                         let oField;
 
                         if (bIsEnum) {
@@ -415,9 +429,9 @@ sap.ui.define([
                             } else if (sPropertyName === "oppId") {
                                 sAssocPath = "to_Opportunity/opportunityName"; // Display opportunity name
                             } else if (sPropertyName === "sapPId") {
-                                sAssocPath = "to_Project/projectName"; // Display project name
-                            } else if (sPropertyName === "skillId") {
-                                sAssocPath = "to_Skill/name"; // Display skill name
+                                // ✅ REMOVED: Don't use association for sapPId - display ID directly
+                                // sAssocPath = "to_Project/projectName"; // Display project name
+                                sAssocPath = ""; // No association - display ID directly
                             } else {
                                 // Fallback: try to construct association path
                                 sAssocPath = sPropertyName.replace("Id", "").replace("OHR", "");
@@ -428,9 +442,9 @@ sap.ui.define([
                                 } else if (sAssocPath === "supervisor") {
                                     sAssocPath = "to_Supervisor/fullName";
                                 } else if (sAssocPath === "sapP" || sAssocPath === "project") {
-                                    sAssocPath = "to_Project/projectName";
-                                } else if (sAssocPath === "skill") {
-                                    sAssocPath = "to_Skill/name";
+                                    // ✅ REMOVED: Don't use association for sapPId - display ID directly
+                                    // sAssocPath = "to_Project/projectName";
+                                    sAssocPath = ""; // No association - display ID directly
                                 } else {
                                     sAssocPath = sPropertyName; // Fallback to ID
                                 }
@@ -498,15 +512,24 @@ sap.ui.define([
                             });
                             console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
                         } else {
+                            // ✅ Check if field is integer type - don't bind tooltip directly for integers
+                            const sType = oProperty.dataType || "";
+                            const bIsInteger = sType.includes("Int") || sType.includes("Integer") || sPropertyName === "demandId";
+                            
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
-                                tooltip: "{" + sPropertyName + "}",
+                                // ✅ Don't set tooltip for integer fields to avoid "not valid for aggregation" error
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
                                     mode: "TwoWay",
                                     formatter: fnEditModeFormatter
                                 }
                             });
+                            
+                            // ✅ Set tooltip only for non-integer fields
+                            if (!bIsInteger) {
+                                oField.setTooltip("{" + sPropertyName + "}");
+                            }
                         }
 
                         const oColumn = new Column({

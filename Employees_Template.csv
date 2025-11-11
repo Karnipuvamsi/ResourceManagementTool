@@ -1,4 +1,4 @@
-﻿ohrId,mailid,fullName,gender,employeeType,doj,band,role,location,supervisorOHR,skills,city,lwd,status
+﻿ohrId,mailid,fullName,gender,employeeType,doj,band,role,location,supervisorOHR,city,lwd,status
 EMP001,john.doe@company.com,John Doe,Male,FullTime,2020-01-15,3,Senior Developer,Bangalore,EMP010,"Java, JavaScript, SAP UI5",Bangalore,,Allocated
 EMP002,jane.smith@company.com,Jane Smith,Female,FullTime,2019-06-01,4A_1,Project Manager,Hyderabad,EMP010,"Project Management, Agile, Scrum",Hyderabad,,Allocated
 EMP003,robert.johnson@company.com,Robert Johnson,Male,FullTime,2021-03-20,2,Junior Developer,Mumbai,,"Python, MySQL, Angular",Mumbai,,Bench

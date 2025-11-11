@@ -65,8 +65,40 @@ sap.ui.define([
             return Element.getElementById(sId);
         }
 
-        return new FilterField(sId, {
-            conditions: "{$filters>/conditions/" + sPropertyName + "}",
+        // ✅ Get fragment name from FilterBar ID to use correct model path
+        const sFilterBarId = oFilterBar.getId();
+        let sFragmentName = "Employees"; // Default
+        if (sFilterBarId.includes("customerFilterBar")) {
+            sFragmentName = "Customers";
+        } else if (sFilterBarId.includes("projectFilterBar")) {
+            sFragmentName = "Projects";
+        } else if (sFilterBarId.includes("opportunityFilterBar")) {
+            sFragmentName = "Opportunities";
+        } else if (sFilterBarId.includes("employeeFilterBar")) {
+            sFragmentName = "Employees";
+        }
+        
+        // ✅ Determine if property is a string type for case-insensitive filtering
+        let bIsString = false;
+        try {
+            const oModel = oFilterBar.getModel("default");
+            const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
+            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            if (oMetaModel) {
+                const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
+                const oEntityType = oMetaModel.getObject(sEntityTypePath);
+                const oProp = oEntityType && oEntityType[sPropertyName];
+                if (oProp && oProp.$Type === "Edm.String") {
+                    bIsString = true;
+                }
+            }
+        } catch (e) {
+            // If metadata check fails, default to treating as string for safety
+            bIsString = true;
+        }
+        
+        const oFilterFieldConfig = {
+            conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
             label: sPropertyName,
             maxConditions: -1,
@@ -74,7 +106,14 @@ sap.ui.define([
                 name: "sap/ui/mdc/field/FieldBaseDelegate",
                 payload: {}
             }
-        });
+        };
+        
+        // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
+        if (bIsString) {
+            oFilterFieldConfig.caseSensitive = false;
+        }
+        
+        return new FilterField(sId, oFilterFieldConfig);
     };
 
     GenericFilterBarDelegate.removeItem = async function (oFilterBar, oFilterField) {

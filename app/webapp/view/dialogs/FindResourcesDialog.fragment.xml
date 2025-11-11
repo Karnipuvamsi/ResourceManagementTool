@@ -11,7 +11,7 @@
         afterClose="onFindResourcesDialogClose">
         
         <VBox class="sapUiSmallMargin">
-            <Label text="Select an employee on bench to allocate:" />
+            <Label text="Select one or more employees on bench to allocate:" />
             <SearchField
                 id="findResourcesSearchField"
                 width="100%"
@@ -22,14 +22,14 @@
             <ScrollContainer height="400px" vertical="true" horizontal="false">
                 <Table
                     id="findResourcesTable"
-                    mode="SingleSelectMaster"
+                    mode="MultiSelect"
                     selectionChange="onFindResourcesSelectionChange"
                     items="{
                         path: '/Employees',
                         filters: [{
                             path: 'status',
                             operator: 'EQ',
-                            value1: 'Bench'
+                            value1: 'UnproductiveBench'
                         }],
                         sorter: [{
                             path: 'fullName',
@@ -74,7 +74,7 @@
             <VBox class="sapUiSmallMarginTop">
                 <Label text="Allocation Details:" />
                 <HBox class="sapUiSmallMarginTop">
-                    <VBox class="sapUiSmallMarginEnd" width="50%">
+                    <VBox class="sapUiSmallMarginEnd" width="33%">
                         <Label text="Start Date" labelFor="allocationStartDate" />
                         <DatePicker
                             id="allocationStartDate"
@@ -82,7 +82,7 @@
                             displayFormat="long"
                             placeholder="Select start date" />
                     </VBox>
-                    <VBox width="50%">
+                    <VBox class="sapUiSmallMarginEnd" width="33%">
                         <Label text="End Date" labelFor="allocationEndDate" />
                         <DatePicker
                             id="allocationEndDate"
@@ -90,16 +90,14 @@
                             displayFormat="long"
                             placeholder="Select end date" />
                     </VBox>
-                </HBox>
-                <HBox class="sapUiSmallMarginTop">
-                    <VBox class="sapUiSmallMarginEnd" width="50%">
-                        <Label text="Allocation Percentage" labelFor="allocationPercentage" />
+                    <VBox width="34%">
+                        <Label text="Allocation %" labelFor="allocationPercentage_find" />
                         <Input
-                            id="allocationPercentage"
+                            id="allocationPercentage_find"
                             type="Number"
-                            placeholder="0-100"
                             value="100"
-                            maxLength="3" />
+                            placeholder="0-100"
+                            width="100%" />
                     </VBox>
                 </HBox>
             </VBox>

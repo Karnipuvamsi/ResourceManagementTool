@@ -3,13 +3,29 @@
     xmlns="sap.m"
     xmlns:f="sap.ui.layout.form"
     xmlns:mdc="sap.ui.mdc"
-    xmlns:mdct="sap.ui.mdc.table"
->
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="customerDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="true"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="true">
+        
+        <!-- Optional Page Title -->
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Customer Management" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <!-- ========== FILTERBAR ========== -->
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="true">
     <VBox class="sapUiSmallMargin">
-        <!-- Panel for Table -->
-        <Panel class="sapUiResponsiveMargin" expandable="false">
-            <!-- FilterBar with Go and Adapt Filters -->
-            <!-- <mdc:FilterBar
+                    <mdc:FilterBar
                 id="customerFilterBar"
                 delegate='{
                     "name": "glassboard/delegate/CustomersFilterBarDelegate",
@@ -23,10 +39,51 @@
                 showClearButton="true"
                 showGoButton="true"
                 showRestoreButton="true"
-                filterConditions="{filterModel>/conditions}"
+                        showVariantManagement="true"
+                        variantBackreference="customerFilterBar"
+                        filterConditions="{filterModel>/Customers/conditions}"
                 p13nMode="Item,Value">
-            </mdc:FilterBar> -->
-            
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Customer Name Filter -->
+                            <mdc:FilterField
+                                id="filterCustomerName"
+                                label="Customer Name"
+                                conditions="{filterModel>/Customers/conditions/customerName}"
+                                propertyKey="customerName"
+                                maxConditions="-1"
+                                required="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Vertical Filter -->
+                            <mdc:FilterField
+                                id="filterVertical"
+                                label="Vertical"
+                                conditions="{filterModel>/Customers/conditions/vertical}"
+                                propertyKey="vertical"
+                                maxConditions="-1"
+                                required="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <!-- ========== MAIN CONTENT ========== -->
+        <layout:content>
+            <VBox class="sapUiSmallMargin">
+                <!-- ===== TABLE PANEL ===== -->
+                <Panel class="sapUiResponsiveMargin" expandable="false">
             <Toolbar>
                 <ToolbarSpacer />
                 <SearchField
@@ -36,10 +93,10 @@
                     liveChange="onCustomerSearch"
                     search="onCustomerSearch" />
             </Toolbar>
-            <!-- <ScrollContainer height="350px" vertical="true" horizontal="false"> -->
+                    <ScrollContainer height="350px" vertical="true" horizontal="false">
                 <mdc:Table
                     id="Customers"
-                    header="Count"
+                            header="Customers"
                     class="verticalsTable rowDetailToggleTable"
                     autoBindOnInit="false"
                     busyIndicatorDelay="0"
@@ -57,14 +114,17 @@
                     enableExport="true"
                     enableAutoColumnWidth="false"
                     filter="customerFilterBar"
-                    filterConditions="{filterModel>/conditions}"
+                            filterConditions="{filterModel>/Customers/conditions}"
                     selectionChange="onSelectionChange"
-                    type="Table"
-                >
-                   
-
+                            type="ResponsiveTable">
+                            <mdc:type>
+                                <table:ResponsiveTableType />
+                            </mdc:type>
                     <mdc:actions>
-                        <SegmentedButton selectedKey="less" selectionChange="onToggleRowDetail" tooltip="Toggle Row Details">
+                                <SegmentedButton
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
                             <items>
                                 <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More" />
                                 <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less" />
@@ -73,15 +133,14 @@
                         <Button icon="sap-icon://delete" id="btnDelete_cus" tooltip="Delete" press="onDeletePress" enabled="false" />
                         <SplitButton id="customerUpload" icon="sap-icon://upload" tooltip="Upload" type="Transparent" press="onUpload" arrowPress="onSplitButtonArrowPress" />
                     </mdc:actions>
-
-                    <mdc:copyProvider>
-                        <!-- <plugins:CopyProvider id="copyProvider" /> -->
-                    </mdc:copyProvider>
                 </mdc:Table>
-            <!-- </ScrollContainer> -->
+                    </ScrollContainer>
         </Panel>
+                
+                <!-- ===== SPACE BETWEEN TABLE AND FORM ===== -->
         <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
-        <!-- Panel for Form -->
+                
+                <!-- ===== FORM PANEL ===== -->
         <Panel headerText="Customer Details" class="sapUiResponsiveMargin" expandable="false">
             <VBox class="sapUiSmallMargin">
                 <HBox width="100%">
@@ -100,17 +159,14 @@
                             class="sapUiNoContentPadding">
                             <Label text="Customer ID" />
                             <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" />
-                            
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
-                            
                             <Label text="Country" required="true" />
                             <Select id="inputCountry" selectedKey="{customerModel>/country}" width="100%" change="onCountryChange" required="true">
                                 <items>
                                     <core:Item key="" text="Select Country..." />
                                 </items>
                             </Select>
-                            
                             <Label text="City" required="true" />
                             <Select id="inputCity" selectedKey="{customerModel>/city}" width="100%" required="true">
                                 <items>
@@ -142,7 +198,6 @@
                                     <core:Item key="P" text="Prospect" />
                                 </items>
                             </Select>
-                            
                             <Label text="Vertical" required="true" />
                             <Select id="inputVertical" selectedKey="{customerModel>/vertical}" width="100%" required="true">
                                 <items>
@@ -172,4 +227,6 @@
             </VBox>
         </Panel>
     </VBox>
+        </layout:content>
+    </layout:DynamicPage>
 </core:FragmentDefinition>
