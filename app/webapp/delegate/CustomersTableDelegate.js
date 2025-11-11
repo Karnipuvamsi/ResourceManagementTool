@@ -216,6 +216,87 @@ sap.ui.define([
         oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
             $count: true
         });
+        
+        // ✅ Make all string filters case-insensitive by recreating them
+        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
+            const oModel = oTable.getModel();
+            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            const sCollectionPath = sPath.replace(/^\//, "");
+            
+            const fnMakeCaseInsensitive = (aFilters) => {
+                if (!aFilters || !Array.isArray(aFilters)) return aFilters;
+                
+                return aFilters.map((oFilter) => {
+                    if (!oFilter || !oFilter.getPath) return oFilter;
+                    
+                    const sFilterPath = oFilter.getPath();
+                    // Check if this is a string property
+                    let bIsString = false;
+                    try {
+                        if (oMetaModel) {
+                            const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sFilterPath}`);
+                            if (oProp && oProp.$Type === "Edm.String") {
+                                bIsString = true;
+                            }
+                        }
+                    } catch (e) {
+                        // If we can't determine, skip modification
+                    }
+                    
+                    // Recreate filter with caseSensitive: false for string filters
+                    if (bIsString) {
+                        try {
+                            const sOperator = oFilter.getOperator();
+                            const vValue1 = oFilter.getValue1();
+                            const vValue2 = oFilter.getValue2();
+                            const aNestedFilters = oFilter.getFilters ? oFilter.getFilters() : null;
+                            const bAnd = oFilter.getAnd ? oFilter.getAnd() : true;
+                            
+                            // Recreate the filter with caseSensitive: false
+                            const oNewFilter = new sap.ui.model.Filter({
+                                path: sFilterPath,
+                                operator: sOperator,
+                                value1: vValue1,
+                                value2: vValue2,
+                                caseSensitive: false,
+                                filters: aNestedFilters ? fnMakeCaseInsensitive(aNestedFilters) : undefined,
+                                and: aNestedFilters ? bAnd : undefined
+                            });
+                            
+                            return oNewFilter;
+                        } catch (e) {
+                            console.warn("[CustomersTableDelegate] Could not recreate filter with caseSensitive:", e);
+                            return oFilter;
+                        }
+                    }
+                    
+                    // Recursively process nested filters
+                    if (oFilter.getFilters && oFilter.getFilters()) {
+                        const aNestedFilters = oFilter.getFilters();
+                        const aNewNestedFilters = fnMakeCaseInsensitive(aNestedFilters);
+                        if (aNewNestedFilters !== aNestedFilters) {
+                            // Recreate filter with updated nested filters
+                            try {
+                                return new sap.ui.model.Filter({
+                                    path: sFilterPath,
+                                    operator: oFilter.getOperator(),
+                                    value1: oFilter.getValue1(),
+                                    value2: oFilter.getValue2(),
+                                    filters: aNewNestedFilters,
+                                    and: oFilter.getAnd ? oFilter.getAnd() : true
+                                });
+                            } catch (e) {
+                                return oFilter;
+                            }
+                        }
+                    }
+                    
+                    return oFilter;
+                });
+            };
+            
+            oBindingInfo.filters = fnMakeCaseInsensitive(oBindingInfo.filters);
+        }
 
         console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
         console.log("[GenericDelegate] Table payload:", oTable.getPayload());
@@ -481,7 +562,27 @@ sap.ui.define([
                     }
                 } catch (e) { /* ignore */ }
 
-                return Promise.resolve(new FilterField({
+                // ✅ Determine if property is a string type for case-insensitive filtering
+                let bIsString = false;
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.String") {
+                            bIsString = true;
+                        }
+                    }
+                } catch (e) {
+                    // If metadata check fails, check dataType
+                    if (sDataType === "sap.ui.model.type.String") {
+                        bIsString = true;
+                    }
+                }
+                
+                const oFilterFieldConfig = {
                     label: String(sName)
                         .replace(/([A-Z])/g, ' $1')
                         .replace(/^./, function (str) { return str.toUpperCase(); })
@@ -489,7 +590,14 @@ sap.ui.define([
                     propertyKey: sName,
                     conditions: "{$filters>/conditions/" + sName + "}",
                     dataType: sDataType
-                }));
+                };
+                
+                // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
+                if (bIsString) {
+                    oFilterFieldConfig.caseSensitive = false;
+                }
+                
+                return Promise.resolve(new FilterField(oFilterFieldConfig));
             }
         };
     };

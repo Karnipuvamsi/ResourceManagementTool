@@ -78,7 +78,26 @@ sap.ui.define([
             sFragmentName = "Employees";
         }
         
-        return new FilterField(sId, {
+        // ✅ Determine if property is a string type for case-insensitive filtering
+        let bIsString = false;
+        try {
+            const oModel = oFilterBar.getModel("default");
+            const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
+            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            if (oMetaModel) {
+                const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
+                const oEntityType = oMetaModel.getObject(sEntityTypePath);
+                const oProp = oEntityType && oEntityType[sPropertyName];
+                if (oProp && oProp.$Type === "Edm.String") {
+                    bIsString = true;
+                }
+            }
+        } catch (e) {
+            // If metadata check fails, default to treating as string for safety
+            bIsString = true;
+        }
+        
+        const oFilterFieldConfig = {
             conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
             label: sPropertyName,
@@ -87,7 +106,14 @@ sap.ui.define([
                 name: "sap/ui/mdc/field/FieldBaseDelegate",
                 payload: {}
             }
-        });
+        };
+        
+        // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
+        if (bIsString) {
+            oFilterFieldConfig.caseSensitive = false;
+        }
+        
+        return new FilterField(sId, oFilterFieldConfig);
     };
 
     GenericFilterBarDelegate.removeItem = async function (oFilterBar, oFilterField) {

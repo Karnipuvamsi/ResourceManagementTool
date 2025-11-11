@@ -611,13 +611,14 @@ sap.ui.define([
                     }
                 }
 
+                // ✅ DEFAULT: Load Employees view (Res fragment) first instead of Projects
                 Fragment.load({
                     id: this.getView().getId(),
-                    name: "glassboard.view.fragments.Allocations",
+                    name: "glassboard.view.fragments.Res",
                     controller: this
                 }).then(function (oFragment) {
                     oAllocationPage.addContent(oFragment);
-                    const oTable = this.byId("Allocations");
+                    const oTable = this.byId("Res");
 
                     if (oLogButton) {
                         oLogButton.setVisible(false);
@@ -633,9 +634,54 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("Allocations");
+                    this.initializeTable("Res").then(() => {
+                        // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
+                        // Use multiple retries to ensure binding is ready
+                        const fnApplyBenchFilter = () => {
+                            const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
+                            if (oResBinding) {
+                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                oResBinding.filter([oBenchFilter]);
+                                console.log("✅ Res table filtered to show only UnproductiveBench employees");
+                                
+                                // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
+                                oResBinding.attachDataReceived(() => {
+                                    const oCurrentFilters = oResBinding.getFilters();
+                                    const bHasBenchFilter = oCurrentFilters && oCurrentFilters.some(f => 
+                                        f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "UnproductiveBench"
+                                    );
+                                    if (!bHasBenchFilter) {
+                                        const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
+                                        aFilters.push(oBenchFilter);
+                                        oResBinding.filter(aFilters);
+                                        console.log("✅ Re-applied UnproductiveBench filter after dataReceived");
+                                    }
+                                });
+                                
+                                return true;
+                            }
+                            return false;
+                        };
+                        
+                        // Try immediately
+                        if (!fnApplyBenchFilter()) {
+                            // Retry after short delay
+                            setTimeout(() => {
+                                if (!fnApplyBenchFilter()) {
+                                    // Final retry
+                                    setTimeout(fnApplyBenchFilter, 500);
+                                }
+                            }, 300);
+                        }
+                    });
                     // Reset segmented button to "less" state for this fragment
-                    this._resetSegmentedButtonForFragment("Allocations");
+                    this._resetSegmentedButtonForFragment("Res");
+                    
+                    // Ensure dropdown is set to "employees"
+                    const oSelect = this.byId("resViewSelect");
+                    if (oSelect) {
+                        oSelect.setSelectedKey("employees");
+                    }
                 }.bind(this));
             }
             // ✅ REMOVED: Verticals fragment loading (Vertical is now an enum, not an entity)
