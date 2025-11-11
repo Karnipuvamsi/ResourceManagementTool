@@ -8,7 +8,7 @@
         id="projectDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="true"
-        headerExpanded="true"
+        headerExpanded="false"
         toggleHeaderOnTitleClick="true">
         
         <!-- Optional Page Title -->
@@ -35,7 +35,7 @@
                         search="onFilterSearch"
                         clear="onFilterBarClear"
                         showAdaptFiltersButton="true"
-                        showClearButton="true"
+                        showClearButton="false"
                         showGoButton="true"
                         showRestoreButton="true"
                         showVariantManagement="true"
@@ -92,7 +92,7 @@
                             liveChange="onProjectSearch"
                             search="onProjectSearch" />
                     </Toolbar>
-                    <ScrollContainer height="350px" vertical="true" horizontal="false">
+                    <ScrollContainer height="200px" vertical="true" horizontal="false">
                         <mdc:Table
                             id="Projects"
                             header="Projects"

@@ -13,8 +13,7 @@
                 <HBox
                     width="100%"
                     justifyContent="SpaceBetween"
-                    alignContent="Center"
-                >
+                    alignContent="Center">
                     <HBox>
                         <Button
                             id="sideNavigationToggleButton"
@@ -181,50 +180,17 @@
                             </VBox>
                         </HBox>
                     </Page>
- 
-
-                    <Page
-                        id="customersPage"
-                        title="Customers"
-                        
-                    />
-                    <Page
-                        id="opportunitiesPage"
-                         title="Opportunities"
-                        
-                    />
-                    <Page
-                        id="projectsPage"
-                        title="Projects"
-                       
-                    />
-                    <Page
-                        id="employeesPage"
-                        title="Employees"
-                       
-                    />
+                    <Page id="customersPage" showHeader="false" title="Customer Management"/>
+                    <Page id="opportunitiesPage" showHeader="false" title="Opportunities"/>
+                    <Page id="projectsPage" showHeader="false" title="Projects" />
+                    <Page id="employeesPage" showHeader="false" title="Employees" />
                     <!-- ✅ REMOVED: <Page id="verticalsPage" title="Verticals" /> (Vertical is now an enum) -->
-                    <Page
-                        id="allocationPage"
-                        title="Overview"
-                    />
+                    <Page id="allocationPage" title="Overview" />
                     <!-- <Page id="requirementsPage" title="Requirements" /> -->
-                    <Page
-                        id="benchPage"
-                        title="Bench Report"
-                    />
-                    <Page
-                        id="pendingProjectsPage"
-                        title="Pending Projects"
-                    />
-                    <Page
-                        id="pendingOpportunitiesPage"
-                        title="Pending Opportunities"
-                    />
-                    <Page
-                        id="reportsPage"
-                        title="Reports"
-                    />
+                    <Page id="benchPage" title="Bench Report" />
+                    <Page id="pendingProjectsPage" title="Pending Projects" />
+                    <Page id="pendingOpportunitiesPage" title="Pending Opportunities" />
+                    <Page id="reportsPage" title="Reports" />
                 </pages>
             </NavContainer>
         </tnt:mainContents>

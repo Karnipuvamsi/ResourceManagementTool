@@ -9,9 +9,9 @@
         id="customerDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="true"
-        headerExpanded="true"
+        headerExpanded="false"
         toggleHeaderOnTitleClick="true">
-        
+
         <!-- Optional Page Title -->
         <layout:title>
             <layout:DynamicPageTitle>
@@ -36,7 +36,7 @@
                 search="onFilterSearch"
                 clear="onFilterBarClear"
                 showAdaptFiltersButton="true"
-                showClearButton="true"
+                showClearButton="false"
                 showGoButton="true"
                 showRestoreButton="true"
                         showVariantManagement="true"
@@ -93,7 +93,7 @@
                     liveChange="onCustomerSearch"
                     search="onCustomerSearch" />
             </Toolbar>
-                    <ScrollContainer height="350px" vertical="true" horizontal="false">
+                    <ScrollContainer height="200px" vertical="true" horizontal="false">
                 <mdc:Table
                     id="Customers"
                             header="Customers"
@@ -167,12 +167,7 @@
                                     <core:Item key="" text="Select Country..." />
                                 </items>
                             </Select>
-                            <Label text="City" required="true" />
-                            <Select id="inputCity" selectedKey="{customerModel>/city}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select City..." />
-                                </items>
-                            </Select>
+                            
                         </f:SimpleForm>
                     </VBox>
                     
@@ -212,6 +207,12 @@
                                     <core:Item key="Manufacturing" text="Manufacturing" />
                                     <core:Item key="Retail" text="Retail" />
                                     <core:Item key="Services" text="Services" />
+                                </items>
+                            </Select>
+                            <Label text="City" required="true" />
+                            <Select id="inputCity" selectedKey="{customerModel>/city}" width="100%" required="true">
+                                <items>
+                                    <core:Item key="" text="Select City..." />
                                 </items>
                             </Select>
                         </f:SimpleForm>
