@@ -94,19 +94,19 @@ select from db.Project as p
 where p.status in ('Active', 'Planned');
 
 // Employee Allocation Report View
+// ✅ Shows ALL Active allocations regardless of start/end dates or missing related data
 define view EmployeeAllocationReportView as
-select from db.Employee as e
-inner join db.EmployeeProjectAllocation as epa
+select from db.EmployeeProjectAllocation as epa
+left outer join db.Employee as e
   on e.ohrId = epa.employeeId
-  and epa.status = 'Active'
-inner join db.Project as p
+left outer join db.Project as p
   on epa.projectId = p.sapPId
-inner join db.Opportunity as opp
+left outer join db.Opportunity as opp
   on p.oppId = opp.sapOpportunityId
-inner join db.Customer as c
+left outer join db.Customer as c
   on opp.customerId = c.SAPcustId
 {
-  key e.ohrId as employeeId,
+  key epa.employeeId as employeeId,
   key epa.allocationId,
   
   e.fullName as employeeName,
@@ -121,8 +121,12 @@ inner join db.Customer as c
   epa.allocationPercentage as utilizationPercentage
 }
 where
-  e.lwd is null
-  and e.status not in ('Resigned', 'Inactive Bench', 'Unproductive Bench');
+  epa.status = 'Active';
+// ✅ Shows ALL Active allocations regardless of:
+// - Start date (future dates like tomorrow are fine)
+// - End date (future dates are fine)  
+// - Missing related data (Project, Opportunity, Customer)
+// - Employee status or LWD
 
 // Employee Skill Report View
 define view EmployeeSkillReportView as

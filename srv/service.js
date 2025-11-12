@@ -104,118 +104,86 @@ module.exports = cds.service.impl(async function () {
             }
         }
 
-        // ✅ NEW: Validate demand quantity doesn't exceed project required resources
-        if (req.data.sapPId && req.data.quantity) {
-            try {
-                const sProjectId = req.data.sapPId;
-                const iNewQuantity = parseInt(req.data.quantity, 10) || 0;
+        // ✅ Note: No validation needed - requiredResources will be calculated dynamically from sum of demands
+    });
 
-                // Get project details
-                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
-                if (!oProject) {
-                    throw new Error(`Project ${sProjectId} not found`);
-                }
-
-                const iRequiredResources = oProject.requiredResources || 0;
-
-                // Get all existing demands for this project (excluding the current one being created)
-                const aExistingDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
-                const iCurrentTotal = aExistingDemands.reduce((sum, demand) => {
-                    return sum + (demand.quantity || 0);
-                }, 0);
-
-                const iNewTotal = iCurrentTotal + iNewQuantity;
-
-                console.log(`✅ Demand validation: Project ${sProjectId} - Required: ${iRequiredResources}, Current: ${iCurrentTotal}, New: ${iNewQuantity}, Total: ${iNewTotal}`);
-
-                if (iNewTotal > iRequiredResources) {
-                    const sErrorMessage = `Error validating demand quantity: Total demand quantity (${iNewTotal}) exceeds required resources (${iRequiredResources}) for project ${sProjectId}. Current demands: ${iCurrentTotal}, New demand: ${iNewQuantity}`;
-                    console.error("❌", sErrorMessage);
-                    req.reject(500, sErrorMessage);
-                    return;
-                }
-
-                console.log("✅ Demand quantity validation passed");
-            } catch (oError) {
-                console.error("❌ Error validating demand quantity:", oError);
-                // Reject the request with error message
-                req.reject(500, `Error validating demand quantity: ${oError.message}`);
-                return;
+    // ✅ NEW: Update project resource counts when demand is created
+    this.after('CREATE', Demands, async (req) => {
+        try {
+            const sProjectId = req.data.sapPId;
+            if (sProjectId) {
+                console.log(`✅ Demand created for project ${sProjectId}, updating project resource counts...`);
+                await this._updateProjectResourceCounts(sProjectId);
             }
+        } catch (oError) {
+            console.error("❌ Error updating project resource counts after demand create:", oError);
         }
     });
 
-    // ✅ NEW: Validate demand quantity on UPDATE (similar to CREATE validation)
-    this.before('UPDATE', Demands, async (req) => {
-        // Only validate if quantity or sapPId is being updated
-        if (req.data.quantity !== undefined || req.data.sapPId !== undefined) {
-            try {
-                // Get the demand being updated
+    // ✅ Note: No validation needed - requiredResources will be calculated dynamically from sum of demands
+    // ✅ NEW: Update project resource counts when demand is updated
+    this.after('UPDATE', Demands, async (req) => {
+        try {
+            // Get project ID from updated data or from current demand
+            let sProjectId = req.data.sapPId;
+            if (!sProjectId) {
                 const sDemandId = req.keys?.demandId || req.data.demandId;
-                if (!sDemandId) {
-                    console.warn("⚠️ Cannot validate demand update: demandId not found");
-                    return;
-                }
-
-                // Get current demand to determine project
-                const oCurrentDemand = await SELECT.one.from(Demands).where({ demandId: sDemandId });
-                if (!oCurrentDemand) {
-                    console.warn("⚠️ Demand not found for validation:", sDemandId);
-                    return;
-                }
-
-                // Use updated sapPId if provided, otherwise use current
-                const sProjectId = req.data.sapPId || oCurrentDemand.sapPId;
-                if (!sProjectId) {
-                    console.warn("⚠️ Cannot validate demand: project ID not found");
-                    return;
-                }
-
-                // Get project details
-                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
-                if (!oProject) {
-                    throw new Error(`Project ${sProjectId} not found`);
-                }
-
-                const iRequiredResources = oProject.requiredResources || 0;
-
-                // Get all existing demands for this project (excluding the current one being updated)
-                const aExistingDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
-                const iCurrentDemandQuantity = oCurrentDemand.quantity || 0;
-                const iNewQuantity = req.data.quantity !== undefined ? parseInt(req.data.quantity, 10) || 0 : iCurrentDemandQuantity;
-
-                // Calculate total: sum of all other demands + new quantity
-                const iCurrentTotal = aExistingDemands.reduce((sum, demand) => {
-                    // Exclude the demand being updated
-                    if (demand.demandId === sDemandId) {
-                        return sum;
+                if (sDemandId) {
+                    const oCurrentDemand = await SELECT.one.from(Demands).where({ demandId: sDemandId });
+                    if (oCurrentDemand) {
+                        sProjectId = oCurrentDemand.sapPId;
                     }
-                    return sum + (demand.quantity || 0);
-                }, 0);
-
-                const iNewTotal = iCurrentTotal + iNewQuantity;
-
-                console.log(`✅ Demand UPDATE validation: Project ${sProjectId} - Required: ${iRequiredResources}, Current (others): ${iCurrentTotal}, Updated demand: ${iNewQuantity}, Total: ${iNewTotal}`);
-
-                if (iNewTotal > iRequiredResources) {
-                    const sErrorMessage = `Error validating demand quantity: Total demand quantity (${iNewTotal}) exceeds required resources (${iRequiredResources}) for project ${sProjectId}. Current demands (excluding this): ${iCurrentTotal}, Updated demand: ${iNewQuantity}`;
-                    console.error("❌", sErrorMessage);
-                    req.reject(500, sErrorMessage);
-                    return;
                 }
-
-                console.log("✅ Demand UPDATE quantity validation passed");
-            } catch (oError) {
-                console.error("❌ Error validating demand quantity on UPDATE:", oError);
-                req.reject(500, `Error validating demand quantity: ${oError.message}`);
-                return;
             }
+            
+            if (sProjectId) {
+                console.log(`✅ Demand updated for project ${sProjectId}, updating project resource counts...`);
+                await this._updateProjectResourceCounts(sProjectId);
+            }
+        } catch (oError) {
+            console.error("❌ Error updating project resource counts after demand update:", oError);
+        }
+    });
+
+    // ✅ NEW: Store project ID before demand deletion
+    this.before('DELETE', Demands, async (req) => {
+        try {
+            const sDemandId = req.keys?.demandId;
+            if (sDemandId) {
+                const oDemand = await SELECT.one.from(Demands).where({ demandId: sDemandId });
+                if (oDemand && oDemand.sapPId) {
+                    // Store project ID in request for use in after hook
+                    req._deletedDemandProjectId = oDemand.sapPId;
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error getting project ID before demand delete:", oError);
+        }
+    });
+
+    // ✅ NEW: Update project resource counts when demand is deleted
+    this.after('DELETE', Demands, async (req) => {
+        try {
+            // Get project ID stored in before hook
+            const sProjectId = req._deletedDemandProjectId;
+            if (sProjectId) {
+                console.log(`✅ Demand deleted for project ${sProjectId}, updating project resource counts...`);
+                await this._updateProjectResourceCounts(sProjectId);
+            }
+        } catch (oError) {
+            console.error("❌ Error updating project resource counts after demand delete:", oError);
         }
     });
 
     // ✅ NEW: Set allocationDate and auto-fill startDate/endDate from project when allocation is created
     // ✅ Also validate allocation percentage doesn't exceed 100% total for employee
     this.before('CREATE', Allocations, async (req) => {
+        // ✅ Set default status to 'Active' if not provided
+        if (!req.data.status) {
+            req.data.status = 'Active';
+            console.log("✅ Set default allocation status to 'Active'");
+        }
+        
         // Set allocationDate to current date if not provided
         if (!req.data.allocationDate) {
             req.data.allocationDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -380,17 +348,23 @@ module.exports = cds.service.impl(async function () {
     // ✅ NEW: Update employee statuses after allocation is created
     this.after('CREATE', Allocations, async (req) => {
         try {
-            const sProjectId = req.data.projectId;
-            const sEmployeeId = req.data.employeeId;
+            const sProjectId = req.data.projectId || req.keys?.projectId;
+            const sEmployeeId = req.data.employeeId || req.keys?.employeeId;
+            const sAllocationStatus = req.data.status || 'Active';
 
-            console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}`);
+            console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}`);
 
-            // ✅ CRITICAL: Update project resource counts FIRST (this is the main issue)
+            // ✅ CRITICAL: Update project resource counts FIRST
             if (sProjectId) {
-                console.log(`🔄 Updating project resource counts for ${sProjectId}...`);
-                // Execute update in the same transaction context
-                await this._updateProjectResourceCounts(sProjectId);
-                console.log(`✅ Project resource counts updated for ${sProjectId}`);
+                console.log(`🔄 Updating project resource counts for ${sProjectId} after allocation creation...`);
+                try {
+                    await this._updateProjectResourceCounts(sProjectId);
+                    console.log(`✅ Project resource counts updated successfully for ${sProjectId}`);
+                } catch (oUpdateError) {
+                    console.error(`❌ ERROR updating project resource counts for ${sProjectId}:`, oUpdateError);
+                    console.error(`❌ Error stack:`, oUpdateError.stack);
+                    // Don't throw - continue with other updates
+                }
             } else {
                 console.warn("⚠️ No projectId found in allocation data");
             }
@@ -607,39 +581,13 @@ module.exports = cds.service.impl(async function () {
     });
 
     // ✅ NEW: Validate project update (if requiredResources is updated, ensure ≥ allocatedResources)
+    // ✅ Note: requiredResources is now calculated dynamically from demands
+    // ✅ If user tries to manually update requiredResources, it will be recalculated from demands in the after hook
     this.before('UPDATE', Projects, async (req) => {
-        // If requiredResources is being updated, validate it's not less than current allocatedResources
+        // If requiredResources is being manually updated, warn that it will be recalculated
         if (req.data.requiredResources !== undefined) {
-            try {
-                const sProjectId = req.data.sapPId || req.keys?.sapPId || null;
-                if (!sProjectId) {
-                    console.warn("⚠️ Cannot validate project update: sapPId not found");
-                    return;
-                }
-
-                // Get current project to check allocatedResources
-                const oCurrentProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
-                if (!oCurrentProject) {
-                    console.warn("⚠️ Project not found for validation:", sProjectId);
-                    return;
-                }
-
-                const iNewRequiredResources = parseInt(req.data.requiredResources, 10) || 0;
-                const iCurrentAllocated = oCurrentProject.allocatedResources || 0;
-
-                if (iNewRequiredResources < iCurrentAllocated) {
-                    const sErrorMessage = `Cannot update required resources: New required resources (${iNewRequiredResources}) cannot be less than currently allocated resources (${iCurrentAllocated}) for project ${sProjectId}`;
-                    console.error("❌", sErrorMessage);
-                    req.reject(400, sErrorMessage);
-                    return;
-                }
-
-                console.log(`✅ Project UPDATE validation: ${sProjectId} - New required: ${iNewRequiredResources}, Current allocated: ${iCurrentAllocated}`);
-            } catch (oError) {
-                console.error("❌ Error validating project update:", oError);
-                req.reject(500, `Error validating project update: ${oError.message}`);
-                return;
-            }
+            const sProjectId = req.data.sapPId || req.keys?.sapPId;
+            console.log(`⚠️ Warning: requiredResources is being manually updated for project ${sProjectId}. This will be recalculated from demands in the after hook.`);
         }
     });
 
@@ -698,20 +646,16 @@ module.exports = cds.service.impl(async function () {
                 }
             }
             
-            // ✅ Check if requiredResources was updated
-            const bRequiredResourcesUpdated = req.data.requiredResources !== undefined;
-            
             // ✅ Check if sfdcPId was updated
             const bSfdcPIdUpdated = req.data.sfdcPId !== undefined;
             
             // ✅ Check if project start date was updated
             const bStartDateUpdated = req.data.startDate !== undefined;
             
-            // ✅ If requiredResources was updated, recalculate project resource counts
-            if (bRequiredResourcesUpdated) {
-                console.log(`✅ Project ${sProjectId} requiredResources updated: ${req.data.requiredResources}`);
-                await this._updateProjectResourceCounts(sProjectId);
-            }
+            // ✅ Always recalculate project resource counts on any project update
+            // This ensures requiredResources is always calculated from demands
+            console.log(`✅ Project ${sProjectId} updated, recalculating resource counts from demands...`);
+            await this._updateProjectResourceCounts(sProjectId);
             
             // ✅ Update employee statuses if relevant fields were updated
             if (bSfdcPIdUpdated || bStartDateUpdated) {
@@ -966,9 +910,30 @@ module.exports = cds.service.impl(async function () {
         }
     };
 
+    // ✅ NEW: Helper function to calculate requiredResources from sum of demand quantities
+    // This calculates: requiredResources = sum of all demand quantities for the project
+    this._calculateRequiredResourcesFromDemands = async function(sProjectId) {
+        try {
+            // Get all demands for this project
+            const aDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
+            
+            // Calculate sum of all demand quantities
+            const iRequiredResources = aDemands.reduce((sum, demand) => {
+                return sum + (demand.quantity || 0);
+            }, 0);
+            
+            console.log(`✅ Calculated requiredResources for project ${sProjectId} from demands: ${iRequiredResources}`);
+            return iRequiredResources;
+        } catch (oError) {
+            console.error("❌ Error calculating requiredResources from demands:", oError);
+            return 0;
+        }
+    };
+
     // ✅ NEW: Helper function to update project resource counts (allocatedResources and toBeAllocated)
-    // This counts ALL allocations for the project (regardless of status) and updates:
-    // - allocatedResources = count of all allocations
+    // This counts ONLY ACTIVE allocations for the project and updates:
+    // - requiredResources = sum of all demand quantities (calculated dynamically)
+    // - allocatedResources = count of ACTIVE allocations only
     // - toBeAllocated = requiredResources - allocatedResources
     this._updateProjectResourceCounts = async function(sProjectId) {
         try {
@@ -979,26 +944,38 @@ module.exports = cds.service.impl(async function () {
                 return;
             }
 
-            // ✅ Count ALL allocations for this project (regardless of status)
-            const aAllocations = await SELECT.from(Allocations).where({ projectId: sProjectId });
-            const iAllocatedResources = aAllocations ? aAllocations.length : 0;
+            // ✅ Calculate requiredResources from sum of demand quantities
+            const iRequiredResources = await this._calculateRequiredResourcesFromDemands(sProjectId);
 
-            // Get required resources
-            const iRequiredResources = oProject.requiredResources || 0;
+            // ✅ Count ONLY ACTIVE allocations for this project
+            const aAllocations = await SELECT.from(Allocations).where({ projectId: sProjectId, status: 'Active' });
+            const iAllocatedResources = aAllocations ? aAllocations.length : 0;
 
             // Calculate toBeAllocated
             const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
 
-            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources}, Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
+            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources} (from demands), Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
+            console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for project ${sProjectId}`);
+            if (aAllocations && aAllocations.length > 0) {
+                console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
+            }
 
             // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
             // Don't import from cds.ql - use the service's UPDATE directly
-            const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with({
-                allocatedResources: iAllocatedResources,
-                toBeAllocated: iToBeAllocated
-            });
+            // Update all three fields: requiredResources (from demands), allocatedResources (from active allocations), toBeAllocated (calculated)
+            try {
+                const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with({
+                    requiredResources: iRequiredResources,
+                    allocatedResources: iAllocatedResources,
+                    toBeAllocated: iToBeAllocated
+                });
 
-            console.log(`✅ UPDATE executed for project ${sProjectId}. Result:`, iUpdated);
+                console.log(`✅ UPDATE executed for project ${sProjectId}. Rows updated:`, iUpdated);
+            } catch (oUpdateError) {
+                console.error(`❌ ERROR executing UPDATE for project ${sProjectId}:`, oUpdateError);
+                console.error(`❌ Error details:`, JSON.stringify(oUpdateError, null, 2));
+                throw oUpdateError;
+            }
             
             // ✅ Verify the update by reading back the project
             const oUpdatedProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
@@ -1006,8 +983,8 @@ module.exports = cds.service.impl(async function () {
                 console.log(`✅ Verified update - Project ${sProjectId} now has: allocatedResources=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 
                 // ✅ Double-check: if values don't match, log warning
-                if (oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
-                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
+                if (oUpdatedProject.requiredResources !== iRequiredResources || oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
+                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: required=${iRequiredResources}, allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: required=${oUpdatedProject.requiredResources}, allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 }
             } else {
                 console.warn(`⚠️ Could not verify update for project ${sProjectId}`);
