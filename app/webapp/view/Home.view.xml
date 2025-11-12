@@ -172,7 +172,7 @@
                                 <Text text="{homeCounts>/unproductiveBenchCount}" class="myCardValue" />
                             </VBox>
                             <VBox class="netBenchC Card">
-                                <Text text="On Leave" class="myCardTitle"/>
+                                <Text text="Inactive Bench" class="myCardTitle"/>
                                 <Text text="{homeCounts>/onLeaveCount}" class="myCardValue" />
                             </VBox>
                         </HBox>

@@ -161,10 +161,10 @@
                             <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" />
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
+                            <Label text="State" />
+                            <Input id="inputState" value="{customerModel>/state}" width="100%" placeholder="Enter State" />
                             <Label text="Country" required="true" />
                             <Input id="inputCountry" value="{customerModel>/country}" width="100%" required="true" placeholder="Enter Country" />
-                            <Label text="City" required="true" />
-                            <Input id="inputCity" value="{customerModel>/city}" width="100%" required="true" placeholder="Enter City" />
                         </f:SimpleForm>
                     </VBox>
                     
@@ -185,9 +185,9 @@
                             <Select id="inputStatus" selectedKey="{customerModel>/status}" width="100%" required="true">
                                 <items>
                                     <core:Item key="" text="Select Status..." />
-                                    <core:Item key="A" text="Active" />
-                                    <core:Item key="I" text="Inactive" />
-                                    <core:Item key="P" text="Prospect" />
+                                    <core:Item key="Active" text="Active" />
+                                    <core:Item key="Inactive" text="Inactive" />
+                                    <core:Item key="Prospect" text="Prospect" />
                                 </items>
                             </Select>
                             <Label text="Vertical" required="true" />
@@ -206,6 +206,10 @@
                                     <core:Item key="Services" text="Services" />
                                 </items>
                             </Select>
+                            <Label text="Start Date" />
+                            <DatePicker id="inputStartDate_cus" value="{customerModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
+                            <Label text="End Date" />
+                            <DatePicker id="inputEndDate_cus" value="{customerModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                         </f:SimpleForm>
                     </VBox>
                 </HBox>

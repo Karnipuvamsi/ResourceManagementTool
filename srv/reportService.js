@@ -260,7 +260,7 @@ module.exports = cds.service.impl(async function() {
         
         const totalEmployees = results.length;
         const allocated = results.filter(e => e.status === 'Allocated' || e.status === 'PreAllocated').length;
-        const bench = results.filter(e => e.status === 'UnproductiveBench' || e.status === 'ProductiveBench').length;
+        const bench = results.filter(e => e.status === 'UnproductiveBench' || e.status === 'InactiveBench').length;
         const utilizationPercentage = totalEmployees > 0 ? (allocated / totalEmployees) * 100 : 0;
         
         // Summary by band
@@ -480,7 +480,7 @@ module.exports = cds.service.impl(async function() {
         
         const totalTeamMembers = results.length;
         const allocatedCount = results.filter(e => e.status === 'Allocated' || e.status === 'PreAllocated').length;
-        const benchCount = results.filter(e => e.status === 'UnproductiveBench' || e.status === 'ProductiveBench').length;
+        const benchCount = results.filter(e => e.status === 'UnproductiveBench' || e.status === 'InactiveBench').length;
         const teamUtilization = totalTeamMembers > 0 ? (allocatedCount / totalTeamMembers) * 100 : 0;
         
         // Summary by status

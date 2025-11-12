@@ -209,9 +209,23 @@
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
                                     <Label text="Sales SPOC" required="true" />
-                                    <Input id="inputSalesSPOC_oppr" value="{opportunityModel>/salesSPOC}" width="100%" required="true" />
+                                    <Input 
+                                        id="inputSalesSPOC_oppr" 
+                                        value="{opportunityModel>/salesSPOC}" 
+                                        width="100%" 
+                                        placeholder="Select Sales SPOC"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onEmployeeValueHelpRequest"
+                                        required="true" />
                                     <Label text="Delivery SPOC" required="true" />
-                                    <Input id="inputDeliverySPOC_oppr" value="{opportunityModel>/deliverySPOC}" width="100%" required="true" />
+                                    <Input 
+                                        id="inputDeliverySPOC_oppr" 
+                                        value="{opportunityModel>/deliverySPOC}" 
+                                        width="100%" 
+                                        placeholder="Select Delivery SPOC"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onEmployeeValueHelpRequest"
+                                        required="true" />
                                     <Label text="Expected Start" required="true" />
                                     <DatePicker id="inputExpectedStart_oppr" value="{opportunityModel>/expectedStart}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" required="true" />
                                     <Label text="Expected End" required="true" />

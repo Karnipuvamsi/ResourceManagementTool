@@ -13,9 +13,9 @@ using {managed} from '@sap/cds/common';
 
 
 type CustomerStatusEnum   : String enum {
-    A = 'Active';
-    I = 'Inactive';
-    P = 'Prospect'
+    Active = 'Active';
+    Inactive = 'Inactive';
+    Prospect = 'Prospect'
 }
 
 // ✅ CONVERTED: Vertical entity to enum (fixed values)
@@ -164,7 +164,7 @@ type EmployeeStatusEnum   : String enum {
     Allocated = 'Allocated';
     Resigned = 'Resigned';
     UnproductiveBench = 'Unproductive Bench';
-    ProductiveBench = 'Productive Bench';
+    ProductiveBench = 'Inactive Bench';
 }
 
 type GenderEnum           : String enum {

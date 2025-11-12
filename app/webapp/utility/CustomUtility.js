@@ -480,7 +480,9 @@ sap.ui.define([
                 this.byId("inputProbability_oppr")?.setSelectedKey("");
                 this.byId("inputStage_oppr")?.setSelectedKey("");
                 this.byId("inputSalesSPOC_oppr")?.setValue("");
+                this.byId("inputSalesSPOC_oppr")?.data("selectedId", "");
                 this.byId("inputDeliverySPOC_oppr")?.setValue("");
+                this.byId("inputDeliverySPOC_oppr")?.data("selectedId", "");
                 this.byId("inputExpectedStart_oppr")?.setValue("");
                 this.byId("inputExpectedEnd_oppr")?.setValue("");
                 this.byId("inputTCV_oppr")?.setValue("");
@@ -521,8 +523,50 @@ sap.ui.define([
             this.byId("inputBusinessUnit_oppr")?.setValue(oObj.businessUnit || "");
             this.byId("inputProbability_oppr")?.setSelectedKey(oObj.probability || "");
             this.byId("inputStage_oppr")?.setSelectedKey(oObj.Stage || "");
-            this.byId("inputSalesSPOC_oppr")?.setValue(oObj.salesSPOC || "");
-            this.byId("inputDeliverySPOC_oppr")?.setValue(oObj.deliverySPOC || "");
+            // ✅ Sales SPOC field - load employee name from OHR ID
+            const sSalesSPOCId = oObj.salesSPOC || "";
+            const oSalesSPOCInput = this.byId("inputSalesSPOC_oppr");
+            if (sSalesSPOCId && oSalesSPOCInput) {
+                oSalesSPOCInput.setValue(sSalesSPOCId);
+                oSalesSPOCInput.data("selectedId", sSalesSPOCId);
+                const oModel = this.getView().getModel();
+                if (oModel && /^\d{6,10}$/.test(sSalesSPOCId.trim())) {
+                    const oEmployeeContext = oModel.bindContext(`/Employees('${sSalesSPOCId}')`, null, { deferred: true });
+                    oEmployeeContext.execute().then(() => {
+                        const oEmployee = oEmployeeContext.getObject();
+                        if (oEmployee && oEmployee.fullName) {
+                            oSalesSPOCInput.setValue(oEmployee.fullName);
+                            oSalesSPOCInput.data("selectedId", sSalesSPOCId);
+                        }
+                    }).catch(() => {});
+                }
+            } else if (oSalesSPOCInput) {
+                oSalesSPOCInput.setValue("");
+                oSalesSPOCInput.data("selectedId", "");
+            }
+
+            // ✅ Delivery SPOC field - load employee name from OHR ID
+            const sDeliverySPOCId = oObj.deliverySPOC || "";
+            const oDeliverySPOCInput = this.byId("inputDeliverySPOC_oppr");
+            if (sDeliverySPOCId && oDeliverySPOCInput) {
+                oDeliverySPOCInput.setValue(sDeliverySPOCId);
+                oDeliverySPOCInput.data("selectedId", sDeliverySPOCId);
+                const oModel = this.getView().getModel();
+                if (oModel && /^\d{6,10}$/.test(sDeliverySPOCId.trim())) {
+                    const oEmployeeContext = oModel.bindContext(`/Employees('${sDeliverySPOCId}')`, null, { deferred: true });
+                    oEmployeeContext.execute().then(() => {
+                        const oEmployee = oEmployeeContext.getObject();
+                        if (oEmployee && oEmployee.fullName) {
+                            oDeliverySPOCInput.setValue(oEmployee.fullName);
+                            oDeliverySPOCInput.data("selectedId", sDeliverySPOCId);
+                        }
+                    }).catch(() => {});
+                }
+            } else if (oDeliverySPOCInput) {
+                oDeliverySPOCInput.setValue("");
+                oDeliverySPOCInput.data("selectedId", "");
+            }
+
             this.byId("inputExpectedStart_oppr")?.setValue(oObj.expectedStart || "");
             this.byId("inputExpectedEnd_oppr")?.setValue(oObj.expectedEnd || "");
             this.byId("inputTCV_oppr")?.setValue(oObj.tcv != null ? String(oObj.tcv) : "");
@@ -615,8 +659,11 @@ sap.ui.define([
             this.byId("inputBusinessUnit_oppr")?.setValue(oObj.businessUnit || "");
             this.byId("inputProbability_oppr")?.setSelectedKey(oObj.probability || "");
             this.byId("inputStage_oppr")?.setSelectedKey(oObj.Stage || "");
+            // ✅ Sales SPOC and Delivery SPOC - set OHR ID initially, will load names if needed
             this.byId("inputSalesSPOC_oppr")?.setValue(oObj.salesSPOC || "");
+            this.byId("inputSalesSPOC_oppr")?.data("selectedId", oObj.salesSPOC || "");
             this.byId("inputDeliverySPOC_oppr")?.setValue(oObj.deliverySPOC || "");
+            this.byId("inputDeliverySPOC_oppr")?.data("selectedId", oObj.deliverySPOC || "");
             this.byId("inputExpectedStart_oppr")?.setValue(oObj.expectedStart || "");
             this.byId("inputExpectedEnd_oppr")?.setValue(oObj.expectedEnd || "");
             this.byId("inputTCV_oppr")?.setValue(oObj.tcv || "");
@@ -962,8 +1009,10 @@ sap.ui.define([
                     oCustomerIdInput.setPlaceholder("Auto-generated");
                 }
                 this.byId("inputCustomerName")?.setValue("");
-                this.byId("inputCountry")?.setSelectedKey("");
-                this.byId("inputCity")?.setSelectedKey("");
+                this.byId("inputState")?.setValue("");
+                this.byId("inputCountry")?.setValue("");
+                this.byId("inputStartDate_cus")?.setValue("");
+                this.byId("inputEndDate_cus")?.setValue("");
                 this.byId("inputStatus")?.setSelectedKey("");
                 this.byId("inputVertical")?.setSelectedKey("");
                 return;
@@ -975,60 +1024,13 @@ sap.ui.define([
             this.byId("inputCustomerId")?.setEnabled(false); // Always disabled - key field cannot be changed
             this.byId("inputCustomerId")?.setPlaceholder("");
             this.byId("inputCustomerName")?.setValue(oObj.customerName || "");
+            this.byId("inputState")?.setValue(oObj.state || "");
+            this.byId("inputCountry")?.setValue(oObj.country || "");
+            this.byId("inputStartDate_cus")?.setValue(oObj.startDate || "");
+            this.byId("inputEndDate_cus")?.setValue(oObj.endDate || "");
             
-            const sCountry = oObj.country || "";
-            const sState = oObj.state || "";
-            
-            // ✅ Set Country first
-            this.byId("inputCountry")?.setSelectedKey(sCountry);
-            
-            // ✅ Populate City dropdown based on Country and match state to city format
-            if (sCountry && this.getView()) {
-                const oController = this.getView().getController();
-                if (oController && oController._mCountryToCities) {
-                    const aCities = oController._mCountryToCities[sCountry] || [];
-                    const oCitySelect = this.byId("inputCity");
-                    if (oCitySelect) {
-                        // Clear existing items (except placeholder)
-                        const aItems = oCitySelect.getItems();
-                        aItems.forEach((oItem, iIndex) => {
-                            if (iIndex > 0) {
-                                oCitySelect.removeItem(oItem);
-                            }
-                        });
-                        // Add cities for selected country
-                        aCities.forEach((sCity) => {
-                            oCitySelect.addItem(new sap.ui.core.Item({
-                                key: sCity,
-                                text: sCity
-                            }));
-                        });
-                        
-                        // ✅ Match state to city format (e.g., "Karnataka" -> "Bangalore (Karnataka)")
-                        if (sState) {
-                            const oMatchedCity = aCities.find((sCity) => {
-                                // Extract state from city format "City (State)"
-                                const sMatch = sCity.match(/\(([^)]+)\)/);
-                                return sMatch && sMatch[1] === sState;
-                            });
-                            if (oMatchedCity) {
-                                this.byId("inputCity")?.setSelectedKey(oMatchedCity);
-                            } else {
-                                // Fallback: try to find city that contains state
-                                const oFallbackCity = aCities.find((sCity) => sCity.includes(sState));
-                                if (oFallbackCity) {
-                                    this.byId("inputCity")?.setSelectedKey(oFallbackCity);
-                                }
-                            }
-                        }
-                    }
-                }
-            } else {
-                this.byId("inputCity")?.setSelectedKey("");
-            }
-            // Status enum: backend uses A/I/P, form uses same keys now
+            // ✅ Set Status and Vertical
             this.byId("inputStatus")?.setSelectedKey(oObj.status || "");
-            // ✅ FIXED: Vertical is a Select control, must use setSelectedKey() not setValue()
             this.byId("inputVertical")?.setSelectedKey(oObj.vertical || "");
         },
 
@@ -2851,6 +2853,7 @@ sap.ui.define([
                 "customerUpload": [
                     "customerName",
                     "state", "country", "status", "vertical",
+                    "startDate", "endDate",
                 ],
                 "opportunityUpload": [
                     "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
@@ -2859,7 +2862,7 @@ sap.ui.define([
                 ],
                 "employeeUpload": [
                     "ohrId", "mailid", "fullName",
-                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "city", "lwd", "status",
+                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status",
 
                 ],
                 "projectUpload": [

@@ -3169,8 +3169,10 @@ sap.ui.define([
         onSubmitCustomer: function () {
             const sCustId = this.byId("inputCustomerId").getValue(),
                 sCustName = this.byId("inputCustomerName").getValue(),
-                sCountry = this.byId("inputCountry").getValue(), // ✅ FIXED: Country is now Input (free text)
-                sState = this.byId("inputCity").getValue(), // ✅ FIXED: City is now Input (free text)
+                sState = this.byId("inputState")?.getValue() || "",
+                sCountry = this.byId("inputCountry").getValue(),
+                sStartDate = this.byId("inputStartDate_cus")?.getValue() || "",
+                sEndDate = this.byId("inputEndDate_cus")?.getValue() || "",
                 sStatus = this.byId("inputStatus").getSelectedKey(),
                 sVertical = this.byId("inputVertical").getSelectedKey();
 
@@ -3182,11 +3184,6 @@ sap.ui.define([
             
             if (!sCountry || sCountry.trim() === "") {
                 sap.m.MessageBox.error("Country is required!");
-                return;
-            }
-            
-            if (!sState || sState.trim() === "") {
-                sap.m.MessageBox.error("City is required!");
                 return;
             }
             
@@ -3214,10 +3211,12 @@ sap.ui.define([
                 // For update, build entry with existing Customer ID (for verification) and new values
                 const oUpdateEntry = {
                     "country": sCountry || "",
-                "customerName": sCustName,
+                    "customerName": sCustName,
                     "state": sState || "",
                     "status": sStatus || "",
-                    "vertical": sVertical || ""
+                    "vertical": sVertical || "",
+                    "startDate": sStartDate || null,
+                    "endDate": sEndDate || null
                 };
                 
                 try {
@@ -3280,7 +3279,9 @@ sap.ui.define([
                     "customerName": sCustName,
                     "state": sState || "",
                     "status": sStatus || "",
-                    "vertical": sVertical || ""
+                    "vertical": sVertical || "",
+                    "startDate": sStartDate || null,
+                    "endDate": sEndDate || null
                 };
                 
                 // Validation - ensure required fields are filled
@@ -3290,10 +3291,6 @@ sap.ui.define([
                 }
                 if (!sCountry || sCountry.trim() === "") {
                     sap.m.MessageBox.error("Country is required!");
-                    return;
-                }
-                if (!sState || sState.trim() === "") {
-                    sap.m.MessageBox.error("City is required!");
                     return;
                 }
                 if (!sStatus || sStatus.trim() === "") {
@@ -4010,8 +4007,10 @@ sap.ui.define([
                 this._initializeCustomerIdField();
             }
             this.byId("inputCustomerName")?.setValue("");
-            this.byId("inputCountry")?.setValue(""); // ✅ FIXED: Country is now Input (free text)
-            this.byId("inputCity")?.setValue(""); // ✅ FIXED: City is now Input (free text)
+            this.byId("inputState")?.setValue("");
+            this.byId("inputCountry")?.setValue("");
+            this.byId("inputStartDate_cus")?.setValue("");
+            this.byId("inputEndDate_cus")?.setValue("");
             this.byId("inputStatus")?.setSelectedKey("");
             this.byId("inputVertical")?.setSelectedKey("");
             
@@ -4263,8 +4262,9 @@ sap.ui.define([
                 sBusinessUnit = this.byId("inputBusinessUnit_oppr").getValue(),
                 sProbability = this.byId("inputProbability_oppr").getSelectedKey(),
                 sStage = this.byId("inputStage_oppr").getSelectedKey(),
-                sSalesSPOC = this.byId("inputSalesSPOC_oppr").getValue(),
-                sDeliverySPOC = this.byId("inputDeliverySPOC_oppr").getValue(),
+                // Get SPOC OHR IDs from data attribute (not displayed name)
+                sSalesSPOC = (this.byId("inputSalesSPOC_oppr")?.data("selectedId")) || this.byId("inputSalesSPOC_oppr")?.getValue() || "",
+                sDeliverySPOC = (this.byId("inputDeliverySPOC_oppr")?.data("selectedId")) || this.byId("inputDeliverySPOC_oppr")?.getValue() || "",
                 sExpectedStart = this.byId("inputExpectedStart_oppr").getValue(),
                 sExpectedEnd = this.byId("inputExpectedEnd_oppr").getValue(),
                 sTCV = this.byId("inputTCV_oppr").getValue();
@@ -4530,7 +4530,9 @@ sap.ui.define([
             this.byId("inputProbability_oppr")?.setSelectedKey("");
             this.byId("inputStage_oppr")?.setSelectedKey("");
             this.byId("inputSalesSPOC_oppr")?.setValue("");
+            this.byId("inputSalesSPOC_oppr")?.data("selectedId", "");
             this.byId("inputDeliverySPOC_oppr")?.setValue("");
+            this.byId("inputDeliverySPOC_oppr")?.data("selectedId", "");
             this.byId("inputExpectedStart_oppr")?.setValue("");
             this.byId("inputExpectedEnd_oppr")?.setValue("");
             this.byId("inputTCV_oppr")?.setValue("");
@@ -5963,7 +5965,7 @@ sap.ui.define([
             }
         },
         
-        // ✅ Load On Leave Count (employees with status='Productive Bench')
+        // ✅ Load On Leave Count (employees with status='Inactive Bench')
         _loadOnLeaveCount: async function() {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
             if (!oModel) {
@@ -5976,7 +5978,7 @@ sap.ui.define([
                     new sap.ui.model.Filter({
                         path: "status",
                         operator: sap.ui.model.FilterOperator.EQ,
-                        value1: "Productive Bench"
+                        value1: "Inactive Bench"
                     })
                 );
                 
@@ -6505,12 +6507,16 @@ sap.ui.define([
                 oView.addDependent(this._oEmployeeValueHelpDialog);
             }
             
-            // Check if this is GPM field (from Projects) or Supervisor field (from Employees)
+            // Check which field is requesting value help
             const sInputId = oInput.getId();
             const bIsGPMField = sInputId && sInputId.includes("inputGPM_proj");
+            const bIsSalesSPOC = sInputId && sInputId.includes("inputSalesSPOC_oppr");
+            const bIsDeliverySPOC = sInputId && sInputId.includes("inputDeliverySPOC_oppr");
             
             this._oEmployeeValueHelpDialog._oInputField = oInput;
             this._oEmployeeValueHelpDialog._isGPMField = bIsGPMField;
+            this._oEmployeeValueHelpDialog._isSalesSPOC = bIsSalesSPOC;
+            this._oEmployeeValueHelpDialog._isDeliverySPOC = bIsDeliverySPOC;
             this._oEmployeeValueHelpDialog.open();
         },
 
@@ -7290,8 +7296,10 @@ sap.ui.define([
                 return;
             }
             
-            // Check if this is for GPM field or Supervisor field
+            // Check which field is being updated
             const bIsGPMField = oDialog._isGPMField === true;
+            const bIsSalesSPOC = oDialog._isSalesSPOC === true;
+            const bIsDeliverySPOC = oDialog._isDeliverySPOC === true;
             const sDisplayValue = oEmployee.fullName || oEmployee.ohrId || "";
             const sStoredId = oEmployee.ohrId || "";
             
@@ -7306,21 +7314,35 @@ sap.ui.define([
             oDialog.close();
             
             // ✅ CRITICAL: Update selected row in main table and refresh for instant UI update
-            const oMainTable = bIsGPMField ? this.byId("Projects") : this.byId("Employees");
+            let oMainTable;
+            let sFieldName;
+            let sAssocName;
+            
+            if (bIsGPMField) {
+                oMainTable = this.byId("Projects");
+                sFieldName = "gpm";
+                sAssocName = "to_GPM";
+            } else if (bIsSalesSPOC || bIsDeliverySPOC) {
+                oMainTable = this.byId("Opportunities");
+                sFieldName = bIsSalesSPOC ? "salesSPOC" : "deliverySPOC";
+                sAssocName = null; // Opportunities don't have associations for SPOCs
+            } else {
+                oMainTable = this.byId("Employees");
+                sFieldName = "supervisorOHR";
+                sAssocName = "to_Supervisor";
+            }
             if (oMainTable) {
                 const aSelectedContexts = oMainTable.getSelectedContexts();
                 if (aSelectedContexts && aSelectedContexts.length > 0) {
                     const oMainContext = aSelectedContexts[0];
-                    const sFieldName = bIsGPMField ? "gpm" : "supervisorOHR";
-                    const sAssocName = bIsGPMField ? "to_GPM" : "to_Supervisor";
                     const oModel = oMainTable.getModel();
                     const sPath = oMainContext.getPath();
                     
                     // ✅ STEP 1: Update the context property immediately
                     oMainContext.setProperty(sFieldName, sStoredId);
                     
-                    // ✅ STEP 2: Update the association data immediately for instant UI feedback
-                    if (oMainContext.getObject) {
+                    // ✅ STEP 2: Update the association data immediately for instant UI feedback (only for GPM and Supervisor)
+                    if (sAssocName && oMainContext.getObject) {
                         const oObj = oMainContext.getObject();
                         if (oObj) {
                             oObj[sAssocName] = {
@@ -7330,9 +7352,9 @@ sap.ui.define([
                         }
                     }
                     
-                    // ✅ STEP 3: CRITICAL - Refresh the expanded association binding for this specific row
+                    // ✅ STEP 3: CRITICAL - Refresh the expanded association binding for this specific row (only for GPM and Supervisor)
                     // This forces the table to re-fetch the expanded association data
-                    if (sPath && oModel) {
+                    if (sAssocName && sPath && oModel) {
                         const oExpandedContext = oModel.bindContext(sPath + "/" + sAssocName, null, { deferred: true });
                         oExpandedContext.execute().then(() => {
                             const oAssocData = oExpandedContext.getObject();

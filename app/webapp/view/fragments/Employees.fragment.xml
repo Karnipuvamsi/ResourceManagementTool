@@ -164,7 +164,7 @@
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
                                     <Label text="OHR ID" />
-                                    <Input id="inputOHRId_emp" value="{employeeModel>/ohrId}" width="100%" enabled="false" placeholder="Auto-generated" />
+                                    <Input id="inputOHRId_emp" value="{employeeModel>/ohrId}" width="100%" enabled="false" />
                                     <Label text="Full Name" />
                                     <Input id="inputFullName_emp" value="{employeeModel>/fullName}" width="100%" />
                                     <Label text="Email ID" />
@@ -275,7 +275,7 @@
                                             <core:Item key="Allocated" text="Allocated" />
                                             <core:Item key="Resigned" text="Resigned" />
                                             <core:Item key="Unproductive Bench" text="Unproductive Bench" />
-                                            <core:Item key="Productive Bench" text="Productive Bench" />
+                                            <core:Item key="Inactive Bench" text="Inactive Bench" />
                                         </items>
                                     </Select>
                                     <Label text="Last Working Date" />

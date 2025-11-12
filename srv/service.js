@@ -645,15 +645,58 @@ module.exports = cds.service.impl(async function () {
 
     // ✅ NEW: Update employee statuses when project is updated
     // This handles cases where:
-    // 1. sfdcPId is added/changed
-    // 2. Project start date is updated
-    // 3. requiredResources is updated (recalculate toBeAllocated)
-    // 4. Any other project update that might affect employee statuses
+    // 1. Project status changed to "Closed" → Mark all allocations as Completed
+    // 2. sfdcPId is added/changed
+    // 3. Project start date is updated
+    // 4. requiredResources is updated (recalculate toBeAllocated)
+    // 5. Any other project update that might affect employee statuses
     this.after('UPDATE', Projects, async (req) => {
         try {
             // Get project ID from the key in the request
             const sProjectId = req.data.sapPId || req.keys?.sapPId || null;
             if (!sProjectId) return;
+            
+            // ✅ Check if project status was changed to "Closed" (Case 8)
+            if (req.data.status === 'Closed') {
+                const oCurrentProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                
+                // Only process if project was not already closed
+                if (oCurrentProject && oCurrentProject.status === 'Closed') {
+                    console.log(`✅ Project ${sProjectId} status changed to Closed, marking all allocations as Completed`);
+                    
+                    // Mark all active allocations to this project as Completed
+                    const aProjectAllocations = await SELECT.from(Allocations)
+                        .where({ projectId: sProjectId, status: 'Active' });
+                    
+                    const aAffectedEmployees = new Set();
+                    
+                    if (aProjectAllocations && aProjectAllocations.length > 0) {
+                        for (const oAllocation of aProjectAllocations) {
+                            await UPDATE(Allocations)
+                                .where({ allocationId: oAllocation.allocationId })
+                                .with({ status: 'Completed' });
+                            
+                            if (oAllocation.employeeId) {
+                                aAffectedEmployees.add(oAllocation.employeeId);
+                            }
+                        }
+                        
+                        console.log(`✅ Marked ${aProjectAllocations.length} allocation(s) as Completed for closed project ${sProjectId}`);
+                    }
+                    
+                    // Update employee statuses
+                    for (const sEmployeeId of aAffectedEmployees) {
+                        try {
+                            await this._updateEmployeeStatus(sEmployeeId);
+                        } catch (oError) {
+                            console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
+                        }
+                    }
+                    
+                    // Update project resource counts
+                    await this._updateProjectResourceCounts(sProjectId);
+                }
+            }
             
             // ✅ Check if requiredResources was updated
             const bRequiredResourcesUpdated = req.data.requiredResources !== undefined;
@@ -851,7 +894,7 @@ module.exports = cds.service.impl(async function () {
 
             // ✅ If no active allocations, revert to Bench
             if (!aAllocations || aAllocations.length === 0) {
-                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'ProductiveBench') {
+                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
                     // Default to UnproductiveBench if not already on bench
                     await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
                     console.log(`✅ Employee ${sEmployeeId} has no active allocations, status set to UnproductiveBench`);
@@ -1077,5 +1120,257 @@ module.exports = cds.service.impl(async function () {
             throw oError;
         }
     };
+
+    // ✅ NEW: Check and mark expired allocations as "Completed"
+    // This handles Case 1, 3, 4, 6, 7: Allocation end date passes
+    this._markExpiredAllocationsAsCompleted = async function() {
+        try {
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            console.log("🔄 Checking for expired allocations...");
+
+            // Find all active allocations where endDate has passed
+            const aExpiredAllocations = await SELECT.from(Allocations)
+                .where({ status: 'Active' });
+
+            if (!aExpiredAllocations || aExpiredAllocations.length === 0) {
+                console.log("✅ No active allocations found");
+                return { updated: 0, employees: [] };
+            }
+
+            let iUpdatedCount = 0;
+            const aAffectedEmployees = new Set();
+
+            for (const oAllocation of aExpiredAllocations) {
+                if (!oAllocation.endDate) continue;
+
+                const oEndDate = new Date(oAllocation.endDate);
+                oEndDate.setHours(0, 0, 0, 0);
+
+                // Check if allocation end date has passed
+                if (oEndDate < oToday) {
+                    const sAllocationId = oAllocation.allocationId;
+                    const sEmployeeId = oAllocation.employeeId;
+
+                    console.log(`✅ Marking expired allocation ${sAllocationId} as Completed (ended: ${oAllocation.endDate})`);
+
+                    // Mark allocation as Completed
+                    await UPDATE(Allocations)
+                        .where({ allocationId: sAllocationId })
+                        .with({ status: 'Completed' });
+
+                    iUpdatedCount++;
+                    if (sEmployeeId) {
+                        aAffectedEmployees.add(sEmployeeId);
+                    }
+
+                    // Update project resource counts
+                    if (oAllocation.projectId) {
+                        await this._updateProjectResourceCounts(oAllocation.projectId);
+                    }
+                }
+            }
+
+            // Update employee statuses for all affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    await this._updateEmployeeStatus(sEmployeeId);
+                } catch (oError) {
+                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
+                }
+            }
+
+            console.log(`✅ Marked ${iUpdatedCount} expired allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
+            return { updated: iUpdatedCount, employees: Array.from(aAffectedEmployees) };
+        } catch (oError) {
+            console.error("❌ Error in _markExpiredAllocationsAsCompleted:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Check and mark expired projects and their allocations
+    // This handles Case 2, 3, 5: Project end date passes
+    this._markExpiredProjectsAsClosed = async function() {
+        try {
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            console.log("🔄 Checking for expired projects...");
+
+            // Find all active or planned projects where endDate has passed
+            const aExpiredProjects = await SELECT.from(Projects)
+                .where({ status: { in: ['Active', 'Planned'] } });
+
+            if (!aExpiredProjects || aExpiredProjects.length === 0) {
+                console.log("✅ No active/planned projects found");
+                return { updated: 0, allocations: 0, employees: [] };
+            }
+
+            let iUpdatedProjects = 0;
+            let iUpdatedAllocations = 0;
+            const aAffectedEmployees = new Set();
+
+            for (const oProject of aExpiredProjects) {
+                if (!oProject.endDate) continue;
+
+                const oEndDate = new Date(oProject.endDate);
+                oEndDate.setHours(0, 0, 0, 0);
+
+                // Check if project end date has passed
+                if (oEndDate < oToday) {
+                    const sProjectId = oProject.sapPId;
+
+                    console.log(`✅ Marking expired project ${sProjectId} as Closed (ended: ${oProject.endDate})`);
+
+                    // Mark project as Closed
+                    await UPDATE(Projects)
+                        .where({ sapPId: sProjectId })
+                        .with({ status: 'Closed' });
+
+                    iUpdatedProjects++;
+
+                    // Mark all active allocations to this project as Completed
+                    const aProjectAllocations = await SELECT.from(Allocations)
+                        .where({ projectId: sProjectId, status: 'Active' });
+
+                    if (aProjectAllocations && aProjectAllocations.length > 0) {
+                        for (const oAllocation of aProjectAllocations) {
+                            await UPDATE(Allocations)
+                                .where({ allocationId: oAllocation.allocationId })
+                                .with({ status: 'Completed' });
+
+                            iUpdatedAllocations++;
+                            if (oAllocation.employeeId) {
+                                aAffectedEmployees.add(oAllocation.employeeId);
+                            }
+                        }
+                    }
+
+                    // Update project resource counts
+                    await this._updateProjectResourceCounts(sProjectId);
+                }
+            }
+
+            // Update employee statuses for all affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    await this._updateEmployeeStatus(sEmployeeId);
+                } catch (oError) {
+                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
+                }
+            }
+
+            console.log(`✅ Marked ${iUpdatedProjects} expired project(s) as Closed, ${iUpdatedAllocations} allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
+            return { 
+                updated: iUpdatedProjects, 
+                allocations: iUpdatedAllocations, 
+                employees: Array.from(aAffectedEmployees) 
+            };
+        } catch (oError) {
+            console.error("❌ Error in _markExpiredProjectsAsClosed:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Main function to check and update all expired allocations and projects
+    // This can be called on-demand or scheduled
+    this._checkAndUpdateExpiredItems = async function() {
+        try {
+            console.log("🔄 Starting expired items check...");
+            
+            // First check expired allocations
+            const oAllocationResult = await this._markExpiredAllocationsAsCompleted();
+            
+            // Then check expired projects (this will also mark their allocations)
+            const oProjectResult = await this._markExpiredProjectsAsClosed();
+            
+            const iTotalUpdated = oAllocationResult.updated + oProjectResult.allocations;
+            const aAllEmployees = [...new Set([...oAllocationResult.employees, ...oProjectResult.employees])];
+            
+            console.log(`✅ Expired items check completed: ${iTotalUpdated} items updated, ${aAllEmployees.length} employees affected`);
+            
+            return {
+                allocations: oAllocationResult.updated,
+                projects: oProjectResult.updated,
+                totalAllocations: oAllocationResult.updated + oProjectResult.allocations,
+                employees: aAllEmployees
+            };
+        } catch (oError) {
+            console.error("❌ Error in _checkAndUpdateExpiredItems:", oError);
+            throw oError;
+        }
+    };
+
+
+    // ✅ NEW: On-demand function to check expired items (can be called via API)
+    this.on('checkExpiredItems', async (req) => {
+        try {
+            const oResult = await this._checkAndUpdateExpiredItems();
+            return {
+                success: true,
+                message: `Checked and updated expired items`,
+                ...oResult
+            };
+        } catch (oError) {
+            console.error("❌ Error in checkExpiredItems:", oError);
+            return {
+                success: false,
+                error: oError.message
+            };
+        }
+    });
+
+    // ✅ NEW: Proactive check on Employee READ (lightweight check)
+    // This checks if the employee's allocations have expired when reading a single employee
+    // Note: This runs AFTER the existing before('READ', Employees) handler
+    this.after('READ', Employees, async (req) => {
+        try {
+            // Only check if it's a single employee read (by key)
+            if (req.keys && req.keys.ohrId) {
+                const sEmployeeId = req.keys.ohrId;
+                
+                // Lightweight check: only check this employee's allocations
+                const aActiveAllocations = await SELECT.from(Allocations)
+                    .where({ employeeId: sEmployeeId, status: 'Active' });
+                
+                if (aActiveAllocations && aActiveAllocations.length > 0) {
+                    const oToday = new Date();
+                    oToday.setHours(0, 0, 0, 0);
+                    
+                    let bNeedsUpdate = false;
+                    
+                    for (const oAllocation of aActiveAllocations) {
+                        if (oAllocation.endDate) {
+                            const oEndDate = new Date(oAllocation.endDate);
+                            oEndDate.setHours(0, 0, 0, 0);
+                            
+                            if (oEndDate < oToday) {
+                                // Mark as Completed
+                                await UPDATE(Allocations)
+                                    .where({ allocationId: oAllocation.allocationId })
+                                    .with({ status: 'Completed' });
+                                
+                                bNeedsUpdate = true;
+                                
+                                // Update project resource counts
+                                if (oAllocation.projectId) {
+                                    await this._updateProjectResourceCounts(oAllocation.projectId);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (bNeedsUpdate) {
+                        // Update employee status
+                        await this._updateEmployeeStatus(sEmployeeId);
+                    }
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error in Employee READ after hook:", oError);
+            // Don't fail the read, just log the error
+        }
+    });
 
 });

@@ -27,7 +27,7 @@ select from db.Employee as e {
         // Calculate days on bench
         cast(
             case 
-                when e.status in ('Unproductive Bench', 'Productive Bench') 
+                when e.status in ('Unproductive Bench', 'Inactive Bench') 
                 then days_between(current_date, coalesce(
                     (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
                      where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
@@ -38,7 +38,7 @@ select from db.Employee as e {
             as Integer
         ) as daysOnBench
 }
-where e.status in ('Unproductive Bench', 'Productive Bench');
+where e.status in ('Unproductive Bench', 'Inactive Bench');
 
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as
@@ -73,19 +73,19 @@ select from db.Project as p
         p.startDate,
         p.endDate,
         p.status,
-        opp.tcv as totalRevenue,
+  opp.tcv as totalRevenue,
         opp.probability,
         // Calculate weighted revenue based on probability
-        cast(
+  cast(
             case opp.probability
                 when '0%-ProposalStage' then opp.tcv * 0.0
                 when '33%-SoWSent' then opp.tcv * 0.33
                 when '85%-SoWSigned' then opp.tcv * 0.85
                 when '100%-PurchaseOrderReceived' then opp.tcv * 1.0
                 else opp.tcv * 0.5
-            end
-            as Decimal(15,2)
-        ) as weightedRevenue,
+    end
+    as Decimal(15,2)
+  ) as weightedRevenue,
         c.customerName as customer,
         c.vertical,
         cast(year(p.startDate) as String) as startYear,
@@ -122,7 +122,7 @@ inner join db.Customer as c
 }
 where
   e.lwd is null
-  and e.status not in ('Resigned', 'Productive Bench', 'Unproductive Bench');
+  and e.status not in ('Resigned', 'Inactive Bench', 'Unproductive Bench');
 
 // Employee Skill Report View
 define view EmployeeSkillReportView as
@@ -141,9 +141,9 @@ select from db.Skills as s {
             (select count(distinct es2.employeeId) from db.EmployeeSkill as es2
              join db.Employee as e2 on es2.employeeId = e2.ohrId
              where es2.skillId = s.id 
-               and e2.status in ('Unproductive Bench', 'Productive Bench'))
+               and e2.status in ('Unproductive Bench', 'Inactive Bench'))
             as Integer
-        ) as availableEmployees,
+  ) as availableEmployees,
         // Count allocated employees
         cast(
             (select count(distinct es3.employeeId) from db.EmployeeSkill as es3

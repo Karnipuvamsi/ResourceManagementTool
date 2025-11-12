@@ -18,7 +18,7 @@ sap.ui.define([
     GenericTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
         const mEnumFields = {
             "Customers": {
-                "status": { values: ["A", "I", "P"], labels: ["Active", "Inactive", "Prospect"] },
+                "status": { values: ["Active", "Inactive", "Prospect"], labels: ["Active", "Inactive", "Prospect"] },
                 "vertical": { 
                     values: ["BFS", "CapitalMarkets", "CPG", "Healthcare", "HighTech", "Insurance", "LifeSciences", "Manufacturing", "Retail", "Services"],
                     labels: ["BFS", "Capital Markets", "CPG", "Healthcare", "High Tech", "Insurance", "Life Sciences", "Manufacturing", "Retail", "Services"]
