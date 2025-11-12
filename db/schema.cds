@@ -239,6 +239,7 @@ entity Employee {
         city              : String;
         lwd               : Date;
         status            : EmployeeStatusEnum;
+        empallocpercentage:Integer64;
     
     // Self-referential associations (Supervisor-Subordinate hierarchy)
     to_Supervisor         : Association to one Employee

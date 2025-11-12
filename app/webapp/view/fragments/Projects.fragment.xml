@@ -110,7 +110,7 @@
                             liveChange="onProjectSearch"
                             search="onProjectSearch" />
                     </Toolbar>
-                    <ScrollContainer height="350px" vertical="true" horizontal="false">
+                    <ScrollContainer height="220px" vertical="true" horizontal="false">
                         <mdc:Table
                             id="Projects"
                             header="Projects"

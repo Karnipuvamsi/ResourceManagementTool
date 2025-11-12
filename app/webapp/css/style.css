@@ -72,4 +72,25 @@
 .projectsEndingC {background: linear-gradient(45deg, #6d4c41, #4e342e) !important;color: #fff;}
  
  .sapMSplitContainerHideMode>.sapMSplitContainerDetail .sapUiResponsiveMargin, .sapUiResponsiveMargin{margin:0px !important;}
- .extraSpace {height:20px !important;}
+ .extraSpace {height:20px !important;}h2{ padding-left:20px  !important;}
+
+ /* to add space before h2 page heading  */
+h2{ padding-left:20px  !important;}
+ 
+/* to reduce space between h2 heading and filter */
+.sapFDynamicPageHeaderContent
+{margin-top:-20px !important; width:90% !important; padding-left:20px !important;}
+ 
+/* to reduce space between filter and table */
+#container-glassboard---Home--customerDynamicPage-contentFitContainer,
+#container-glassboard---Home--opportunityDynamicPage-contentFitContainer,
+#container-glassboard---Home--projectDynamicPage-contentFitContainer,
+#container-glassboard---Home--employeeDynamicPage-contentFitContainer,
+#container-glassboard---Home--resDynamicPage-contentFitContainer
+{ margin-top:-35px !important;}
+
+.sapUiLayoutGrid > .sapMText {width: 180px; display: inline-block;}
+.customGrid .sapMText {width: 180px; display: inline-block;text-align: left;}
+.customTitleStyle { font-size: 14px; padding-left: 30px !important;}
+ 
+ 

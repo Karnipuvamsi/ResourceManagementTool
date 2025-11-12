@@ -301,49 +301,114 @@ sap.ui.define([
                                     content: "<div style='border-top:2px solid #007cc0; margin:15px 0;'></div>"
                                 }));
                             }
-
-
                             vbox.addItem(new sap.m.Title({
                                 text: `OHR ID: ${ohrId}, Name: ${name}`,
                                 level: "H4", // You can use H3 or H5 based on visual preference
                                 titleStyle: "H4" // Optional: ensures consistent styling
-                            }));
+                            }).addStyleClass("customTitleStyle"));
+                            const oTable = new sap.m.Table({
+                                inset: false,
+                                columns: [
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                                ]
+                            });
+
 
                             const employeeAllocations = allAllocations.filter(a => a.employeeId === ohrId);
 
+                            // if (employeeAllocations.length === 0) {
+                            //     vbox.addItem(new sap.m.Text({
+                            //         text: "No allocation record.",
+                            //         design: "Italic"
+                            //     }));
+                            // } else {
+                            //     employeeAllocations.forEach(allocation => {
+                            //         const projectId = allocation.projectId;
+                            //         const projectName = allocation.to_Project?.projectName || "N/A";
+                            //         const startDate = formatDate(allocation.startDate);
+                            //         const endDate = formatDate(allocation.endDate);
+                            //         const percent = allocation.allocationPercentage;
+                            //         // const allocationPanel = new sap.m.Panel({
+                            //         //     expandable: false, // Removed headerText
+                            //         //     content: [
+                            //         //         new sap.ui.layout.form.SimpleForm({
+                            //         //             editable: false,
+                            //         //             layout: "ResponsiveGridLayout",
+                            //         //             content: [
+                            //         //                 new sap.m.Text({ text: `Project ID: ${projectId}` }),
+                            //         //                 new sap.m.Text({ text: `Project Name: ${projectName}` }),
+                            //         //                 new sap.m.Text({ text: `Start Date: ${startDate}` }),
+                            //         //                 new sap.m.Text({ text: `End Date: ${endDate}` }),
+                            //         //                 new sap.m.Text({ text: `Allocation %: ${percent}` })
+                            //         //             ]
+                            //         //         })
+                            //         //     ],
+                            //         //     class: "sapUiSmallMarginBottom"
+                            //         // });
+                            //         // Add row dynamically
+                            //         oTable.addItem(new sap.m.ColumnListItem({
+                            //             cells: [
+                            //                 new sap.m.Text({ text: projectId, textAlign: "Begin" }),
+                            //                 new sap.m.Text({ text: projectName, textAlign: "Begin" }),
+                            //                 new sap.m.Text({ text: startDate, textAlign: "Begin" }),
+                            //                 new sap.m.Text({ text: endDate, textAlign: "Begin" }),
+                            //                 new sap.m.Text({ text: percent, textAlign: "Begin" })
+                            //             ]
+                            //         }));
+                            //         const allocationPanel = new sap.m.Panel({
+                            //             content: [oTable]
+                            //         }).addStyleClass("sapUiSmallMarginBottom");
+
+                            //         vbox.addItem(allocationPanel);
+                            //     });
+                            // }
                             if (employeeAllocations.length === 0) {
                                 vbox.addItem(new sap.m.Text({
                                     text: "No allocation record.",
                                     design: "Italic"
                                 }));
                             } else {
+                                // Create one table for all allocations of this employee
+                                const oTable = new sap.m.Table({
+                                    inset: false,
+                                    columns: [
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                                    ]
+                                });
+
+                                // Add rows for each allocation
                                 employeeAllocations.forEach(allocation => {
                                     const projectId = allocation.projectId;
                                     const projectName = allocation.to_Project?.projectName || "N/A";
                                     const startDate = formatDate(allocation.startDate);
                                     const endDate = formatDate(allocation.endDate);
                                     const percent = allocation.allocationPercentage;
-                                    const allocationPanel = new sap.m.Panel({
-                                        expandable: false, // Removed headerText
-                                        content: [
-                                            new sap.ui.layout.form.SimpleForm({
-                                                editable: false,
-                                                layout: "ResponsiveGridLayout",
-                                                content: [
-                                                    new sap.m.Text({ text: `Project ID: ${projectId}` }),
-                                                    new sap.m.Text({ text: `Project Name: ${projectName}` }),
-                                                    new sap.m.Text({ text: `Start Date: ${startDate}` }),
-                                                    new sap.m.Text({ text: `End Date: ${endDate}` }),
-                                                    new sap.m.Text({ text: `Allocation %: ${percent}` })
-                                                ]
-                                            })
-                                        ],
-                                        class: "sapUiSmallMarginBottom"
-                                    });
 
-
-                                    vbox.addItem(allocationPanel);
+                                    oTable.addItem(new sap.m.ColumnListItem({
+                                        cells: [
+                                            new sap.m.Text({ text: projectId }),
+                                            new sap.m.Text({ text: projectName }),
+                                            new sap.m.Text({ text: startDate }),
+                                            new sap.m.Text({ text: endDate }),
+                                            new sap.m.Text({ text: percent })
+                                        ]
+                                    }));
                                 });
+
+                                // Add the table inside one panel
+                                const allocationPanel = new sap.m.Panel({
+                                    content: [oTable]
+                                }).addStyleClass("sapUiSmallMarginBottom");
+
+                                vbox.addItem(allocationPanel);
                             }
                         });
                     }).catch(err => {
