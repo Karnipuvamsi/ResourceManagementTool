@@ -222,6 +222,130 @@ sap.ui.define([
             // Expand Opportunity association for Project table
             oBindingInfo.parameters.$expand = "to_Opportunity";
         }
+        
+        // ✅ Process filters: group by field, combine same field with OR, different fields with AND
+        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
+            const oModel = oTable.getModel();
+            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            
+            const fnMakeCaseInsensitive = (aFilters) => {
+                if (!aFilters || !Array.isArray(aFilters)) return aFilters;
+                return aFilters.map((oFilter) => {
+                    if (!oFilter || !oFilter.getPath) return oFilter;
+                    const sFilterPath = oFilter.getPath();
+                    let bIsString = false;
+                    try {
+                        if (oMetaModel) {
+                            const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sFilterPath}`);
+                            if (oProp && oProp.$Type === "Edm.String") bIsString = true;
+                        }
+                    } catch (e) {}
+                    if (bIsString) {
+                        try {
+                            return new sap.ui.model.Filter({
+                                path: sFilterPath,
+                                operator: oFilter.getOperator(),
+                                value1: oFilter.getValue1(),
+                                value2: oFilter.getValue2(),
+                                caseSensitive: false,
+                                filters: oFilter.getFilters ? fnMakeCaseInsensitive(oFilter.getFilters()) : undefined,
+                                and: oFilter.getFilters ? (oFilter.getAnd ? oFilter.getAnd() : true) : undefined
+                            });
+                        } catch (e) {
+                            return oFilter;
+                        }
+                    }
+                    if (oFilter.getFilters && oFilter.getFilters()) {
+                        const aNewNested = fnMakeCaseInsensitive(oFilter.getFilters());
+                        if (aNewNested !== oFilter.getFilters()) {
+                            try {
+                                return new sap.ui.model.Filter({
+                                    path: sFilterPath,
+                                    operator: oFilter.getOperator(),
+                                    value1: oFilter.getValue1(),
+                                    value2: oFilter.getValue2(),
+                                    filters: aNewNested,
+                                    and: oFilter.getAnd ? oFilter.getAnd() : true
+                                });
+                            } catch (e) {
+                                return oFilter;
+                            }
+                        }
+                    }
+                    return oFilter;
+                });
+            };
+            
+            const fnOptimizeFilters = (vFilters) => {
+                if (!vFilters) return null;
+                if (!Array.isArray(vFilters)) {
+                    if (vFilters.getFilters && vFilters.getFilters()) {
+                        const aNested = vFilters.getFilters();
+                        const oOptimized = fnOptimizeFilters(aNested);
+                        if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
+                            return new sap.ui.model.Filter({
+                                filters: oOptimized,
+                                and: vFilters.getAnd ? vFilters.getAnd() : true
+                            });
+                        }
+                    }
+                    return vFilters;
+                }
+                if (vFilters.length === 0) return null;
+                let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
+                const mFiltersByPath = {};
+                const aOtherFilters = [];
+                aProcessedFilters.forEach((oFilter) => {
+                    if (!oFilter) return;
+                    if (oFilter.getFilters && oFilter.getFilters()) {
+                        const aNested = oFilter.getFilters();
+                        const oOptimizedNested = fnOptimizeFilters(aNested);
+                        if (oOptimizedNested) {
+                            aOtherFilters.push(new sap.ui.model.Filter({
+                                filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
+                                and: oFilter.getAnd ? oFilter.getAnd() : true
+                            }));
+                        }
+                        return;
+                    }
+                    if (!oFilter.getPath) {
+                        aOtherFilters.push(oFilter);
+                        return;
+                    }
+                    const sPath = oFilter.getPath();
+                    if (!mFiltersByPath[sPath]) mFiltersByPath[sPath] = [];
+                    const sValue1 = String(oFilter.getValue1() || "");
+                    const sValue2 = String(oFilter.getValue2() || "");
+                    const sOperator = String(oFilter.getOperator() || "");
+                    const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
+                    const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
+                        const sExistingValue1 = String(oExistingFilter.getValue1() || "");
+                        const sExistingValue2 = String(oExistingFilter.getValue2() || "");
+                        const sExistingOperator = String(oExistingFilter.getOperator() || "");
+                        return sFilterKey === `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
+                    });
+                    if (!bIsDuplicate) mFiltersByPath[sPath].push(oFilter);
+                });
+                const aOptimizedFilters = [];
+                Object.keys(mFiltersByPath).forEach((sPath) => {
+                    const aFieldFilters = mFiltersByPath[sPath];
+                    if (aFieldFilters.length === 1) {
+                        aOptimizedFilters.push(aFieldFilters[0]);
+                    } else if (aFieldFilters.length > 1) {
+                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                            filters: aFieldFilters,
+                            and: false
+                        }));
+                    }
+                });
+                aOtherFilters.forEach((oFilter) => aOptimizedFilters.push(oFilter));
+                if (aOptimizedFilters.length === 0) return null;
+                if (aOptimizedFilters.length === 1) return aOptimizedFilters[0];
+                return new sap.ui.model.Filter({ filters: aOptimizedFilters, and: true });
+            };
+            const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
+            oBindingInfo.filters = oOptimizedFilter || null;
+        }
 
         console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
         console.log("[GenericDelegate] Table payload:", oTable.getPayload());

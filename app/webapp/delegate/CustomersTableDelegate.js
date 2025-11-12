@@ -217,7 +217,7 @@ sap.ui.define([
             $count: true
         });
         
-        // ✅ Make all string filters case-insensitive by recreating them
+        // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
@@ -295,7 +295,121 @@ sap.ui.define([
                 });
             };
             
-            oBindingInfo.filters = fnMakeCaseInsensitive(oBindingInfo.filters);
+            // ✅ NEW: Group filters by path and combine same-field filters with OR
+            const fnOptimizeFilters = (vFilters) => {
+                if (!vFilters) return null;
+                
+                // Handle single Filter object
+                if (!Array.isArray(vFilters)) {
+                    // If it's a single filter with nested filters, process those
+                    if (vFilters.getFilters && vFilters.getFilters()) {
+                        const aNested = vFilters.getFilters();
+                        const oOptimized = fnOptimizeFilters(aNested);
+                        if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
+                            return new sap.ui.model.Filter({
+                                filters: oOptimized,
+                                and: vFilters.getAnd ? vFilters.getAnd() : true
+                            });
+                        }
+                    }
+                    return vFilters;
+                }
+                
+                if (vFilters.length === 0) return null;
+                
+                // First, make filters case-insensitive
+                let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
+                
+                // Group filters by path (field name)
+                const mFiltersByPath = {};
+                const aOtherFilters = []; // Filters without a path (nested/complex filters)
+                
+                aProcessedFilters.forEach((oFilter) => {
+                    if (!oFilter) return;
+                    
+                    // Handle nested filters recursively
+                    if (oFilter.getFilters && oFilter.getFilters()) {
+                        const aNested = oFilter.getFilters();
+                        const oOptimizedNested = fnOptimizeFilters(aNested);
+                        if (oOptimizedNested) {
+                            aOtherFilters.push(new sap.ui.model.Filter({
+                                filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
+                                and: oFilter.getAnd ? oFilter.getAnd() : true
+                            }));
+                        }
+                        return;
+                    }
+                    
+                    if (!oFilter.getPath) {
+                        aOtherFilters.push(oFilter);
+                        return;
+                    }
+                    
+                    const sPath = oFilter.getPath();
+                    if (!mFiltersByPath[sPath]) {
+                        mFiltersByPath[sPath] = [];
+                    }
+                    
+                    // Check for duplicates before adding
+                    const sValue1 = String(oFilter.getValue1() || "");
+                    const sValue2 = String(oFilter.getValue2() || "");
+                    const sOperator = String(oFilter.getOperator() || "");
+                    const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
+                    
+                    // Check if this exact filter already exists
+                    const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
+                        const sExistingValue1 = String(oExistingFilter.getValue1() || "");
+                        const sExistingValue2 = String(oExistingFilter.getValue2() || "");
+                        const sExistingOperator = String(oExistingFilter.getOperator() || "");
+                        const sExistingKey = `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
+                        return sFilterKey === sExistingKey;
+                    });
+                    
+                    if (!bIsDuplicate) {
+                        mFiltersByPath[sPath].push(oFilter);
+                    }
+                });
+                
+                // Build optimized filter array
+                const aOptimizedFilters = [];
+                
+                // For each field, combine multiple values with OR
+                Object.keys(mFiltersByPath).forEach((sPath) => {
+                    const aFieldFilters = mFiltersByPath[sPath];
+                    if (aFieldFilters.length === 1) {
+                        // Single filter for this field, add as-is
+                        aOptimizedFilters.push(aFieldFilters[0]);
+                    } else if (aFieldFilters.length > 1) {
+                        // Multiple filters for same field, combine with OR
+                        const oOrFilter = new sap.ui.model.Filter({
+                            filters: aFieldFilters,
+                            and: false // OR logic
+                        });
+                        aOptimizedFilters.push(oOrFilter);
+                    }
+                });
+                
+                // Add other filters (nested/complex) as-is
+                aOtherFilters.forEach((oFilter) => {
+                    aOptimizedFilters.push(oFilter);
+                });
+                
+                // Return optimized filters
+                if (aOptimizedFilters.length === 0) {
+                    return null;
+                } else if (aOptimizedFilters.length === 1) {
+                    return aOptimizedFilters[0];
+                } else {
+                    // Multiple field groups, combine them with AND
+                    return new sap.ui.model.Filter({
+                        filters: aOptimizedFilters,
+                        and: true // AND logic between different fields
+                    });
+                }
+            };
+            
+            const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
+            oBindingInfo.filters = oOptimizedFilter || null;
         }
 
         console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);

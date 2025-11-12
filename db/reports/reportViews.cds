@@ -27,7 +27,7 @@ select from db.Employee as e {
         // Calculate days on bench
         cast(
             case 
-                when e.status in ('Unproductive Bench', 'Inactive Bench') 
+                when e.status in ('Unproductive Bench', 'Productive Bench') 
                 then days_between(current_date, coalesce(
                     (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
                      where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
@@ -38,7 +38,7 @@ select from db.Employee as e {
             as Integer
         ) as daysOnBench
 }
-where e.status in ('Unproductive Bench', 'Inactive Bench');
+where e.status in ('Unproductive Bench', 'Productive Bench');
 
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as
@@ -94,19 +94,19 @@ select from db.Project as p
 where p.status in ('Active', 'Planned');
 
 // Employee Allocation Report View
-// ✅ Shows ALL Active allocations regardless of start/end dates or missing related data
 define view EmployeeAllocationReportView as
-select from db.EmployeeProjectAllocation as epa
-left outer join db.Employee as e
+select from db.Employee as e
+inner join db.EmployeeProjectAllocation as epa
   on e.ohrId = epa.employeeId
-left outer join db.Project as p
+  and epa.status = 'Active'
+inner join db.Project as p
   on epa.projectId = p.sapPId
-left outer join db.Opportunity as opp
+inner join db.Opportunity as opp
   on p.oppId = opp.sapOpportunityId
-left outer join db.Customer as c
+inner join db.Customer as c
   on opp.customerId = c.SAPcustId
 {
-  key epa.employeeId as employeeId,
+  key e.ohrId as employeeId,
   key epa.allocationId,
   
   e.fullName as employeeName,
@@ -121,12 +121,8 @@ left outer join db.Customer as c
   epa.allocationPercentage as utilizationPercentage
 }
 where
-  epa.status = 'Active';
-// ✅ Shows ALL Active allocations regardless of:
-// - Start date (future dates like tomorrow are fine)
-// - End date (future dates are fine)  
-// - Missing related data (Project, Opportunity, Customer)
-// - Employee status or LWD
+  e.lwd is null
+  and e.status not in ('Resigned', 'Productive Bench', 'Unproductive Bench');
 
 // Employee Skill Report View
 define view EmployeeSkillReportView as
@@ -145,7 +141,7 @@ select from db.Skills as s {
             (select count(distinct es2.employeeId) from db.EmployeeSkill as es2
              join db.Employee as e2 on es2.employeeId = e2.ohrId
              where es2.skillId = s.id 
-               and e2.status in ('Unproductive Bench', 'Inactive Bench'))
+               and e2.status in ('Unproductive Bench', 'Productive Bench'))
             as Integer
   ) as availableEmployees,
         // Count allocated employees

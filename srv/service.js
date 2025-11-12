@@ -233,31 +233,27 @@ module.exports = cds.service.impl(async function () {
         }
         
         // ✅ Validate total allocation percentage for employee doesn't exceed 100%
-        // ✅ CRITICAL: This validation runs for each allocation in a batch, but they don't see each other
-        // So we need to check existing allocations in the database
+        // ✅ NEW APPROACH: Use empallocpercentage field instead of querying all allocations
         if (req.data.employeeId) {
             try {
                 const sEmployeeId = req.data.employeeId;
                 const iNewPercentage = req.data.allocationPercentage || 100;
                 
-                // ✅ Get all active allocations for this employee from database
-                // Note: This won't see other allocations in the same batch, but that's okay
-                // because batch items are processed sequentially and each validation is independent
-                const aExistingAllocations = await SELECT.from(Allocations)
-                    .where({ employeeId: sEmployeeId, status: 'Active' });
+                // ✅ Get employee's current allocation percentage from field
+                const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                if (!oEmployee) {
+                    req.reject(400, `Employee ${sEmployeeId} not found`);
+                    return;
+                }
                 
-                // Calculate current total percentage from existing allocations
-                const iCurrentTotal = aExistingAllocations.reduce((sum, alloc) => {
-                    return sum + (alloc.allocationPercentage || 0);
-                }, 0);
-                
+                // Get current percentage from field (default to 0 if null/undefined)
+                const iCurrentTotal = oEmployee.empallocpercentage || 0;
                 const iNewTotal = iCurrentTotal + iNewPercentage;
                 
-                console.log(`✅ Allocation percentage validation: Employee ${sEmployeeId} - Current total: ${iCurrentTotal}%, New: ${iNewPercentage}%, Total: ${iNewTotal}%`);
-                console.log(`✅ Existing allocations for employee ${sEmployeeId}:`, aExistingAllocations.map(a => `${a.projectId}:${a.allocationPercentage}%`).join(", "));
+                console.log(`✅ Allocation percentage validation (field-based): Employee ${sEmployeeId} - Current: ${iCurrentTotal}%, New: ${iNewPercentage}%, Total: ${iNewTotal}%`);
                 
                 if (iNewTotal > 100) {
-                    const sErrorMessage = `Cannot create allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Current allocations: ${iCurrentTotal}%, New allocation: ${iNewPercentage}%`;
+                    const sErrorMessage = `Cannot create allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Current allocation: ${iCurrentTotal}%, New allocation: ${iNewPercentage}%`;
                     console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
@@ -351,10 +347,33 @@ module.exports = cds.service.impl(async function () {
             const sProjectId = req.data.projectId || req.keys?.projectId;
             const sEmployeeId = req.data.employeeId || req.keys?.employeeId;
             const sAllocationStatus = req.data.status || 'Active';
+            const iAllocationPercentage = req.data.allocationPercentage || 100;
 
-            console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}`);
+            console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}, Percentage: ${iAllocationPercentage}%`);
 
-            // ✅ CRITICAL: Update project resource counts FIRST
+            // ✅ NEW: Update employee's allocation percentage field (regardless of status)
+            if (sEmployeeId && iAllocationPercentage > 0) {
+                try {
+                    const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                    if (oEmployee) {
+                        const iCurrentPercentage = oEmployee.empallocpercentage || 0;
+                        const iNewPercentage = iCurrentPercentage + iAllocationPercentage;
+                        
+                        await UPDATE(Employees)
+                            .where({ ohrId: sEmployeeId })
+                            .with({ empallocpercentage: iNewPercentage });
+                        
+                        console.log(`✅ Updated employee ${sEmployeeId} allocation percentage: ${iCurrentPercentage}% + ${iAllocationPercentage}% = ${iNewPercentage}%`);
+                    } else {
+                        console.warn(`⚠️ Employee ${sEmployeeId} not found for percentage update`);
+                    }
+                } catch (oPercentError) {
+                    console.error(`❌ ERROR updating employee allocation percentage for ${sEmployeeId}:`, oPercentError);
+                    // Don't throw - continue with other updates
+                }
+            }
+
+            // ✅ CRITICAL: Update project resource counts
             if (sProjectId) {
                 console.log(`🔄 Updating project resource counts for ${sProjectId} after allocation creation...`);
                 try {
@@ -388,7 +407,27 @@ module.exports = cds.service.impl(async function () {
     // ✅ NEW: Validate allocation update (if projectId changes, validate new project)
     // ✅ Also validate allocation percentage if it's being updated
     // ✅ Also validate if employeeId changes (need to check percentage for new employee)
+    // ✅ Also store old allocation data for percentage calculation in after hook
     this.before('UPDATE', Allocations, async (req) => {
+        // ✅ Store old allocation data first (needed for percentage calculation in after hook)
+        try {
+            const sAllocationId = req.keys?.allocationId || req.data.allocationId;
+            if (sAllocationId) {
+                const oOldAllocation = await SELECT.one.from(Allocations).where({ allocationId: sAllocationId });
+                if (oOldAllocation) {
+                    req._oldAllocation = {
+                        employeeId: oOldAllocation.employeeId,
+                        allocationPercentage: oOldAllocation.allocationPercentage || 0,
+                        status: oOldAllocation.status || 'Active'
+                    };
+                    console.log(`✅ Stored old allocation data before update: Employee ${oOldAllocation.employeeId}, Percentage: ${oOldAllocation.allocationPercentage}%, Status: ${oOldAllocation.status}`);
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error storing old allocation data before update:", oError);
+            // Don't throw - continue with validation
+        }
+        
         // ✅ Get employeeId (could be changing or staying the same)
         const sEmployeeId = req.data.employeeId || req.keys?.employeeId;
         const bEmployeeIdChanged = req.data.employeeId !== undefined && req.data.employeeId !== req.keys?.employeeId;
@@ -397,28 +436,32 @@ module.exports = cds.service.impl(async function () {
         if (bEmployeeIdChanged && req.data.employeeId) {
             try {
                 const sNewEmployeeId = req.data.employeeId;
-                const iNewPercentage = req.data.allocationPercentage !== undefined ? parseInt(req.data.allocationPercentage, 10) : 100;
+                // Use stored old allocation data
+                const iAllocationPercentage = req.data.allocationPercentage !== undefined 
+                    ? parseInt(req.data.allocationPercentage, 10) 
+                    : (req._oldAllocation?.allocationPercentage || 100);
                 
-                // Get all active allocations for the NEW employee
-                const aNewEmployeeAllocations = await SELECT.from(Allocations)
-                    .where({ employeeId: sNewEmployeeId, status: 'Active' });
+                // ✅ NEW APPROACH: Use empallocpercentage field for new employee
+                const oNewEmployee = await SELECT.one.from(Employees).where({ ohrId: sNewEmployeeId });
+                if (!oNewEmployee) {
+                    req.reject(400, `Employee ${sNewEmployeeId} not found`);
+                    return;
+                }
                 
-                // Calculate total for new employee (excluding current allocation since it's moving)
-                const iNewEmployeeTotal = aNewEmployeeAllocations.reduce((sum, alloc) => {
-                    // Exclude the allocation being moved (by allocationId)
-                    const sAllocationId = req.keys?.allocationId;
-                    if (sAllocationId && alloc.allocationId === sAllocationId) {
-                        return sum;
-                    }
-                    return sum + (alloc.allocationPercentage || 0);
-                }, 0);
+                // Get new employee's current percentage (excluding this allocation if it was already assigned to them)
+                let iNewEmployeeTotal = oNewEmployee.empallocpercentage || 0;
                 
-                const iNewTotal = iNewEmployeeTotal + iNewPercentage;
+                // If allocation was already assigned to this employee and was Active, subtract it first
+                if (req._oldAllocation && req._oldAllocation.employeeId === sNewEmployeeId && req._oldAllocation.status === 'Active') {
+                    iNewEmployeeTotal = Math.max(0, iNewEmployeeTotal - (req._oldAllocation.allocationPercentage || 0));
+                }
                 
-                console.log(`✅ Allocation employeeId change validation: Moving to employee ${sNewEmployeeId} - Other allocations: ${iNewEmployeeTotal}%, This allocation: ${iNewPercentage}%, Total: ${iNewTotal}%`);
+                const iNewTotal = iNewEmployeeTotal + iAllocationPercentage;
+                
+                console.log(`✅ Allocation employeeId change validation (field-based): Moving to employee ${sNewEmployeeId} - Current: ${iNewEmployeeTotal}%, This allocation: ${iAllocationPercentage}%, Total: ${iNewTotal}%`);
                 
                 if (iNewTotal > 100) {
-                    const sErrorMessage = `Cannot move allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sNewEmployeeId}. Other allocations: ${iNewEmployeeTotal}%, This allocation: ${iNewPercentage}%`;
+                    const sErrorMessage = `Cannot move allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sNewEmployeeId}. Current allocation: ${iNewEmployeeTotal}%, This allocation: ${iAllocationPercentage}%`;
                     console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
@@ -450,30 +493,30 @@ module.exports = cds.service.impl(async function () {
                         req.data.allocationPercentage = iNewPercentage;
                     }
                     
-                    // Get allocation being updated
-                    const sAllocationId = req.keys?.allocationId || req.data.allocationId;
-                    const oCurrentAllocation = sAllocationId ? await SELECT.one.from(Allocations).where({ allocationId: sAllocationId }) : null;
-                    const iCurrentPercentage = oCurrentAllocation?.allocationPercentage || 0;
+                    // ✅ NEW APPROACH: Use empallocpercentage field and stored old allocation data
+                    const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                    if (!oEmployee) {
+                        req.reject(400, `Employee ${sEmployeeId} not found`);
+                        return;
+                    }
                     
-                    // Get all other active allocations for this employee (excluding the current one being updated)
-                    const aOtherAllocations = await SELECT.from(Allocations)
-                        .where({ employeeId: sEmployeeId, status: 'Active' });
+                    // Use stored old allocation data
+                    const iCurrentPercentage = req._oldAllocation?.allocationPercentage || 0;
                     
-                    // Calculate total from other allocations (excluding current)
-                    const iOtherTotal = aOtherAllocations.reduce((sum, alloc) => {
-                        // Exclude the allocation being updated
-                        if (sAllocationId && alloc.allocationId === sAllocationId) {
-                            return sum;
-                        }
-                        return sum + (alloc.allocationPercentage || 0);
-                    }, 0);
+                    // Calculate: current employee total - old allocation percentage + new allocation percentage
+                    let iEmployeeTotal = oEmployee.empallocpercentage || 0;
                     
-                    const iNewTotal = iOtherTotal + iNewPercentage;
+                    // If old allocation was Active, subtract its percentage
+                    if (req._oldAllocation && req._oldAllocation.status === 'Active') {
+                        iEmployeeTotal = Math.max(0, iEmployeeTotal - iCurrentPercentage);
+                    }
                     
-                    console.log(`✅ Allocation percentage UPDATE validation: Employee ${sEmployeeId} - Other allocations: ${iOtherTotal}%, Updated: ${iNewPercentage}%, Total: ${iNewTotal}%`);
+                    const iNewTotal = iEmployeeTotal + iNewPercentage;
+                    
+                    console.log(`✅ Allocation percentage UPDATE validation (field-based): Employee ${sEmployeeId} - Current total: ${iEmployeeTotal}%, Old allocation: ${iCurrentPercentage}%, New allocation: ${iNewPercentage}%, New total: ${iNewTotal}%`);
                     
                     if (iNewTotal > 100) {
-                        const sErrorMessage = `Cannot update allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Other allocations: ${iOtherTotal}%, Updated allocation: ${iNewPercentage}%`;
+                        const sErrorMessage = `Cannot update allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Current total: ${iEmployeeTotal}%, Updated allocation: ${iNewPercentage}%`;
                         console.error("❌", sErrorMessage);
                         req.reject(400, sErrorMessage);
                         return;
@@ -531,8 +574,70 @@ module.exports = cds.service.impl(async function () {
     this.after('UPDATE', Allocations, async (req) => {
         try {
             const sEmployeeId = req.data.employeeId || req.keys?.employeeId || null;
+            const sOldEmployeeId = req._oldAllocation?.employeeId || req.keys?.employeeId || null;
             const sOldProjectId = req.keys?.projectId || null;
             const sNewProjectId = req.data.projectId || req.keys?.projectId || null;
+            const sAllocationId = req.keys?.allocationId || req.data.allocationId;
+            
+            // ✅ Get old and new values from stored data and request
+            const iOldPercentage = req._oldAllocation?.allocationPercentage || 0;
+            const sOldStatus = req._oldAllocation?.status || 'Active';
+            const iNewPercentage = req.data.allocationPercentage !== undefined ? parseInt(req.data.allocationPercentage, 10) : iOldPercentage;
+            const sNewStatus = req.data.status || sOldStatus;
+            const bEmployeeIdChanged = sOldEmployeeId && sEmployeeId && sOldEmployeeId !== sEmployeeId;
+
+            // ✅ NEW: Update employee allocation percentage field (regardless of status)
+            if (sOldEmployeeId || sEmployeeId) {
+                try {
+                    // If employee changed, update both old and new employees
+                    if (bEmployeeIdChanged) {
+                        // Update old employee: subtract old allocation percentage
+                        if (sOldEmployeeId && iOldPercentage > 0) {
+                            const oOldEmployee = await SELECT.one.from(Employees).where({ ohrId: sOldEmployeeId });
+                            if (oOldEmployee) {
+                                const iOldEmpTotal = oOldEmployee.empallocpercentage || 0;
+                                const iNewOldEmpTotal = Math.max(0, iOldEmpTotal - iOldPercentage);
+                                await UPDATE(Employees)
+                                    .where({ ohrId: sOldEmployeeId })
+                                    .with({ empallocpercentage: iNewOldEmpTotal });
+                                console.log(`✅ Updated old employee ${sOldEmployeeId} allocation percentage: ${iOldEmpTotal}% - ${iOldPercentage}% = ${iNewOldEmpTotal}%`);
+                            }
+                        }
+                        
+                        // Update new employee: add new allocation percentage
+                        if (sEmployeeId && iNewPercentage > 0) {
+                            const oNewEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                            if (oNewEmployee) {
+                                const iNewEmpTotal = oNewEmployee.empallocpercentage || 0;
+                                const iNewNewEmpTotal = iNewEmpTotal + iNewPercentage;
+                                await UPDATE(Employees)
+                                    .where({ ohrId: sEmployeeId })
+                                    .with({ empallocpercentage: iNewNewEmpTotal });
+                                console.log(`✅ Updated new employee ${sEmployeeId} allocation percentage: ${iNewEmpTotal}% + ${iNewPercentage}% = ${iNewNewEmpTotal}%`);
+                            }
+                        }
+                    } else if (sEmployeeId) {
+                        // Same employee - adjust percentage based on old vs new (regardless of status)
+                        const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                        if (oEmployee) {
+                            let iEmployeeTotal = oEmployee.empallocpercentage || 0;
+                            
+                            // Subtract old percentage and add new percentage
+                            iEmployeeTotal = Math.max(0, iEmployeeTotal - iOldPercentage);
+                            iEmployeeTotal = iEmployeeTotal + iNewPercentage;
+                            
+                            await UPDATE(Employees)
+                                .where({ ohrId: sEmployeeId })
+                                .with({ empallocpercentage: iEmployeeTotal });
+                            
+                            console.log(`✅ Updated employee ${sEmployeeId} allocation percentage: ${oEmployee.empallocpercentage}% → ${iEmployeeTotal}% (old: ${iOldPercentage}%, new: ${iNewPercentage}%)`);
+                        }
+                    }
+                } catch (oPercentError) {
+                    console.error(`❌ ERROR updating employee allocation percentage:`, oPercentError);
+                    // Don't throw - continue with other updates
+                }
+            }
 
             // ✅ Update project resource counts if projectId changed
             if (sOldProjectId && sNewProjectId && sOldProjectId !== sNewProjectId) {
@@ -560,11 +665,55 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    // ✅ NEW: Store allocation data before deletion (needed for percentage update)
+    this.before('DELETE', Allocations, async (req) => {
+        try {
+            const sAllocationId = req.keys?.allocationId;
+            if (sAllocationId) {
+                // Store allocation data in request context for use in after hook
+                const oAllocation = await SELECT.one.from(Allocations).where({ allocationId: sAllocationId });
+                if (oAllocation) {
+                    req._deletedAllocation = {
+                        employeeId: oAllocation.employeeId,
+                        allocationPercentage: oAllocation.allocationPercentage || 0,
+                        status: oAllocation.status || 'Active'
+                    };
+                    console.log(`✅ Stored allocation data before deletion: Employee ${oAllocation.employeeId}, Percentage: ${oAllocation.allocationPercentage}%, Status: ${oAllocation.status}`);
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error storing allocation data before deletion:", oError);
+            // Don't throw - continue with deletion
+        }
+    });
+
     // ✅ NEW: Update employee statuses when allocation is deleted
     this.after('DELETE', Allocations, async (req) => {
         try {
-            const sEmployeeId = req.keys?.employeeId || null;
+            const sEmployeeId = req._deletedAllocation?.employeeId || req.keys?.employeeId || null;
             const sProjectId = req.keys?.projectId || null;
+            const iDeletedPercentage = req._deletedAllocation?.allocationPercentage || 0;
+            const sDeletedStatus = req._deletedAllocation?.status || 'Active';
+
+            // ✅ NEW: Update employee allocation percentage field (regardless of status)
+            if (sEmployeeId && iDeletedPercentage > 0) {
+                try {
+                    const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                    if (oEmployee) {
+                        const iCurrentPercentage = oEmployee.empallocpercentage || 0;
+                        const iNewPercentage = Math.max(0, iCurrentPercentage - iDeletedPercentage);
+                        
+                        await UPDATE(Employees)
+                            .where({ ohrId: sEmployeeId })
+                            .with({ empallocpercentage: iNewPercentage });
+                        
+                        console.log(`✅ Updated employee ${sEmployeeId} allocation percentage after deletion: ${iCurrentPercentage}% - ${iDeletedPercentage}% = ${iNewPercentage}%`);
+                    }
+                } catch (oPercentError) {
+                    console.error(`❌ ERROR updating employee allocation percentage after deletion:`, oPercentError);
+                    // Don't throw - continue with other updates
+                }
+            }
 
             // ✅ Update project resource counts
             if (sProjectId) {
