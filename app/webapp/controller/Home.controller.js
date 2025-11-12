@@ -3751,6 +3751,12 @@ sap.ui.define([
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "gender",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
 
                         const oCombinedFilter = new sap.ui.model.Filter({
                             filters: aFilters,
@@ -3784,6 +3790,130 @@ sap.ui.define([
                 }, 200);
             }
         },
+        //newly added ressearch
+        // ✅ NEW: Search function for Employee table
+        onResSearchField: function (oEvent) {
+            const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            const oTable = this.byId("Res");
+
+            if (!oTable) {
+                console.warn("Employee table not available");
+                return;
+            }
+
+            let iRetryCount = 0;
+            const MAX_RETRIES = 5;
+
+            const fnApplySearch = () => {
+                if (iRetryCount >= MAX_RETRIES) {
+                    console.warn("Max retries reached for employee search");
+                    return;
+                }
+
+                iRetryCount++;
+
+                try {
+                    let oBinding = this._getRowBinding(oTable);
+                    if (!oBinding) {
+                        oBinding = oTable.getBinding("items") || oTable.getBinding("rows");
+                    }
+                    if (!oBinding) {
+                        const oModel = oTable.getModel();
+                        if (oModel && oModel.bindList) {
+                            oBinding = oModel.bindList("/Employees");
+                        }
+                    }
+
+                    if (!oBinding) {
+                        setTimeout(() => {
+                            fnApplySearch();
+                        }, 300);
+                        return;
+                    }
+
+                    iRetryCount = 0;
+
+                    if (sQuery && sQuery.trim() !== "") {
+                        const sQueryTrimmed = sQuery.trim();
+                        const aFilters = [];
+
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "ohrId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "fullName",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "mailid",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "role",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "location",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "city",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "gender",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+
+                        const oCombinedFilter = new sap.ui.model.Filter({
+                            filters: aFilters,
+                            and: false
+                        });
+
+                        oBinding.filter([oCombinedFilter]);
+                        console.log("✅ Employee search filter applied (case-insensitive):", sQueryTrimmed);
+                    } else {
+                        oBinding.filter([]);
+                        console.log("✅ Employee search filter cleared");
+                    }
+                } catch (e) {
+                    console.error("Error applying employee search filter:", e);
+                }
+            };
+
+            if (oTable.initialized && typeof oTable.initialized === "function") {
+                oTable.initialized().then(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 100);
+                }).catch(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 300);
+                });
+            } else {
+                setTimeout(() => {
+                    fnApplySearch();
+                }, 200);
+            }
+        },
+
+
 
         // ✅ NEW: Search function for Opportunity table
         onOpportunitySearch: function (oEvent) {
@@ -3911,6 +4041,116 @@ sap.ui.define([
         onProjectSearch: function (oEvent) {
             const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
             const oTable = this.byId("Projects");
+
+            if (!oTable) {
+                console.warn("Project table not available");
+                return;
+            }
+
+            let iRetryCount = 0;
+            const MAX_RETRIES = 5;
+
+            const fnApplySearch = () => {
+                if (iRetryCount >= MAX_RETRIES) {
+                    console.warn("Max retries reached for project search");
+                    return;
+                }
+
+                iRetryCount++;
+
+                try {
+                    let oBinding = this._getRowBinding(oTable);
+                    if (!oBinding) {
+                        oBinding = oTable.getBinding("items") || oTable.getBinding("rows");
+                    }
+                    if (!oBinding) {
+                        const oModel = oTable.getModel();
+                        if (oModel && oModel.bindList) {
+                            oBinding = oModel.bindList("/Projects");
+                        }
+                    }
+
+                    if (!oBinding) {
+                        setTimeout(() => {
+                            fnApplySearch();
+                        }, 300);
+                        return;
+                    }
+
+                    iRetryCount = 0;
+
+                    if (sQuery && sQuery.trim() !== "") {
+                        const sQueryTrimmed = sQuery.trim();
+                        const aFilters = [];
+
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "sapPId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "sfdcPId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "projectName",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "gpm",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "oppId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+
+                        const oCombinedFilter = new sap.ui.model.Filter({
+                            filters: aFilters,
+                            and: false
+                        });
+
+                        oBinding.filter([oCombinedFilter]);
+                        console.log("✅ Project search filter applied (case-insensitive):", sQueryTrimmed);
+                    } else {
+                        oBinding.filter([]);
+                        console.log("✅ Project search filter cleared");
+                    }
+                } catch (e) {
+                    console.error("Error applying project search filter:", e);
+                }
+            };
+
+            if (oTable.initialized && typeof oTable.initialized === "function") {
+                oTable.initialized().then(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 100);
+                }).catch(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 300);
+                });
+            } else {
+                setTimeout(() => {
+                    fnApplySearch();
+                }, 200);
+            }
+        },
+        //for allocation screen project search
+        // ✅ NEW: Search function for Project table
+        onAllocationSearch: function (oEvent) {
+            const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            const oTable = this.byId("Allocations");
 
             if (!oTable) {
                 console.warn("Project table not available");

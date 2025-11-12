@@ -94,6 +94,12 @@
                     <core:Item key="projects" text="Projects" />
                 </Select>
                 <ToolbarSpacer />
+                 <SearchField
+                    id="ResSearchField"
+                    width="300px"
+                    placeholder="Search employees..."
+                    liveChange="onResSearchField"
+                    search="onResSearchField" />
             </Toolbar>
             <ScrollContainer height="220px" vertical="true" horizontal="false">
                 <mdc:Table

@@ -110,6 +110,12 @@
                     <core:Item key="projects" text="Projects" />
                 </Select>
                 <ToolbarSpacer />
+                  <SearchField
+                    id="allocationSearchField"
+                    width="300px"
+                    placeholder="Search Projects..."
+                    liveChange="onAllocationSearch"
+                    search="onAllocationSearch" />
             </Toolbar>
             <ScrollContainer height="380px" vertical="true" horizontal="false">
                 <mdc:Table
