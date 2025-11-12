@@ -1,7 +1,12 @@
 const cds = require('@sap/cds');
+const { UPDATE } = cds.ql;
 
 module.exports = cds.service.impl(async function () {
     const { Opportunities, Customers, Projects, Employees, Demands, Allocations } = this.entities;
+    
+    // ✅ CRITICAL: Module-level Map to store allocation data between before/after hooks
+    // This is needed because req._allocationData doesn't persist in batch operations
+    const mAllocationData = new Map();
 
 
     this.before('CREATE', Opportunities, async (req) => {
@@ -268,6 +273,28 @@ module.exports = cds.service.impl(async function () {
             }
         }
         
+        // ✅ CRITICAL: Store allocation data for use in after hook (batch operations don't have req.data in after hook)
+        // Store in both req._allocationData (for single operations) and module-level Map (for batch operations)
+        const oAllocationData = {
+            employeeId: req.data.employeeId,
+            projectId: req.data.projectId,
+            allocationPercentage: req.data.allocationPercentage || 100,
+            status: req.data.status || 'Active',
+            allocationId: req.data.allocationId // May be undefined if not provided
+        };
+        req._allocationData = oAllocationData;
+        
+        // ✅ Also store in module-level Map using allocationId as key (if available) or employeeId+projectId
+        const sMapKey = oAllocationData.allocationId || `${oAllocationData.employeeId}_${oAllocationData.projectId}_${Date.now()}`;
+        mAllocationData.set(sMapKey, oAllocationData);
+        console.log("✅ Stored allocation data for after hook (key:", sMapKey, "):", JSON.stringify(oAllocationData, null, 2));
+        
+        // ✅ Clean up old entries (keep only last 100 entries to prevent memory leak)
+        if (mAllocationData.size > 100) {
+            const aKeys = Array.from(mAllocationData.keys());
+            aKeys.slice(0, aKeys.length - 100).forEach(sKey => mAllocationData.delete(sKey));
+        }
+        
         // ✅ NEW: Validate allocation dates against project dates and auto-fill if needed
         // ✅ Also validate that allocatedResources + 1 ≤ requiredResources
         if (req.data.projectId) {
@@ -344,33 +371,81 @@ module.exports = cds.service.impl(async function () {
     // ✅ NEW: Update employee statuses after allocation is created
     this.after('CREATE', Allocations, async (req) => {
         try {
-            // ✅ Handle batch operations - req.data might be an array or undefined
-            // In batch operations, we need to get data from the result or keys
-            let oAllocationData = req.data;
+            console.log("🔵 [after CREATE Allocations] Hook triggered");
             
-            // If req.data is undefined or an array, try to get from result or keys
-            if (!oAllocationData || Array.isArray(oAllocationData)) {
-                // Try to get from result (for batch operations)
-                if (req.result && !Array.isArray(req.result)) {
-                    oAllocationData = req.result;
-                } else if (req.keys) {
-                    // Fallback to keys if available
-                    oAllocationData = req.keys;
-                } else if (Array.isArray(req.result) && req.result.length > 0) {
-                    // If result is an array, use the first item
-                    oAllocationData = req.result[0];
-                } else {
-                    console.warn("⚠️ No allocation data found in req.data, req.result, or req.keys");
-                    return; // Exit early if no data available
+            // ✅ CRITICAL: In batch operations, req.data/req.result/req.keys are often undefined
+            // We need to fetch the allocation from the database using the keys
+            let oAllocationData = null;
+            
+            // ✅ METHOD 1: Try to get from module-level Map using allocationId from keys
+            if (req.keys && req.keys.allocationId) {
+                const sMapKey = req.keys.allocationId;
+                oAllocationData = mAllocationData.get(sMapKey);
+                if (oAllocationData) {
+                    console.log("✅ Using stored allocation data from module-level Map (key:", sMapKey, ")");
+                    // Clean up - remove from Map after use
+                    mAllocationData.delete(sMapKey);
                 }
             }
             
-            const sProjectId = oAllocationData.projectId || req.keys?.projectId;
-            const sEmployeeId = oAllocationData.employeeId || req.keys?.employeeId;
+            // ✅ METHOD 2: Try to get from req._allocationData (for single operations)
+            if (!oAllocationData && req._allocationData) {
+                oAllocationData = req._allocationData;
+                console.log("✅ Using stored allocation data from req._allocationData");
+            }
+            
+            // ✅ METHOD 3: Try to fetch from database using allocationId from keys
+            if (!oAllocationData && req.keys && req.keys.allocationId) {
+                try {
+                    console.log(`🔵 Fetching allocation from database using allocationId: ${req.keys.allocationId}`);
+                    oAllocationData = await SELECT.one.from(Allocations).where({ allocationId: req.keys.allocationId });
+                    if (oAllocationData) {
+                        console.log("✅ Successfully fetched allocation from database using allocationId");
+                    }
+                } catch (oFetchError) {
+                    console.error("❌ Error fetching allocation from database using allocationId:", oFetchError);
+                }
+            }
+            
+            // ✅ METHOD 4: Try req.data, req.result, or req.keys directly
+            if (!oAllocationData) {
+                oAllocationData = req.data || req.result || req.keys;
+                if (oAllocationData) {
+                    console.log("✅ Using req.data/req.result/req.keys directly");
+                }
+            }
+            
+            // ✅ METHOD 5: Last resort - search module-level Map for matching employeeId+projectId
+            if (!oAllocationData) {
+                // Try to find in Map by searching all entries (should be recent)
+                for (const [sKey, oStoredData] of mAllocationData.entries()) {
+                    // Check if this entry matches (we'll use the most recent one)
+                    oAllocationData = oStoredData;
+                    console.log("✅ Using allocation data from module-level Map (found by search, key:", sKey, ")");
+                    mAllocationData.delete(sKey); // Clean up
+                    break;
+                }
+            }
+            
+            if (!oAllocationData) {
+                console.error("❌ No allocation data available in after hook - cannot update employee percentage");
+                console.error("❌ req.keys:", req.keys ? JSON.stringify(req.keys) : "undefined");
+                console.error("❌ req._allocationData:", req._allocationData ? JSON.stringify(req._allocationData) : "undefined");
+                return;
+            }
+            
+            const sProjectId = oAllocationData.projectId;
+            const sEmployeeId = oAllocationData.employeeId;
             const sAllocationStatus = oAllocationData.status || 'Active';
             const iAllocationPercentage = oAllocationData.allocationPercentage || 100;
 
             console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}, Percentage: ${iAllocationPercentage}%`);
+            
+            // ✅ Validate we have required data
+            if (!sEmployeeId) {
+                console.error("❌ No employeeId found in allocation data");
+                return;
+            }
 
             // ✅ NEW: Update employee's allocation percentage field (regardless of status)
             if (sEmployeeId && iAllocationPercentage > 0) {
@@ -380,9 +455,11 @@ module.exports = cds.service.impl(async function () {
                         const iCurrentPercentage = oEmployee.empallocpercentage || 0;
                         const iNewPercentage = iCurrentPercentage + iAllocationPercentage;
                         
-                        await UPDATE(Employees)
+                        // ✅ Use UPDATE from cds.ql for proper UPDATE operation
+                        // Use cds.run() to ensure proper execution
+                        await cds.run(UPDATE(Employees)
                             .where({ ohrId: sEmployeeId })
-                            .with({ empallocpercentage: iNewPercentage });
+                            .with({ empallocpercentage: iNewPercentage }));
                         
                         console.log(`✅ Updated employee ${sEmployeeId} allocation percentage: ${iCurrentPercentage}% + ${iAllocationPercentage}% = ${iNewPercentage}%`);
                     } else {
@@ -390,6 +467,7 @@ module.exports = cds.service.impl(async function () {
                     }
                 } catch (oPercentError) {
                     console.error(`❌ ERROR updating employee allocation percentage for ${sEmployeeId}:`, oPercentError);
+                    console.error(`❌ Error stack:`, oPercentError.stack);
                     // Don't throw - continue with other updates
                 }
             }

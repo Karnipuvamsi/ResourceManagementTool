@@ -128,7 +128,7 @@
                     p13nMode="Column,Sort,Filter,Group"
                     selectionMode="Multi"
                     delegate='{
-                        "name": "glassboard/delegate/ResourcesTableDelegate",
+                        "name": "glassboard/delegate/EmployeesTableDelegate",
                         "payload": {
                             "collectionPath": "Employees"
                         }

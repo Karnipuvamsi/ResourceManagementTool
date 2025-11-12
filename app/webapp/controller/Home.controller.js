@@ -2672,11 +2672,18 @@ sap.ui.define([
                     this.byId("startDate")?.setValue("");
                     this.byId("endDate")?.setValue("");
                     
-                    // ✅ CRITICAL: Refresh tables - filter will be applied automatically by delegate
+                    // ✅ CRITICAL: Refresh tables and re-apply filters
                     if (oResTable && oResTable.rebind) {
-                        // Just rebind - the delegate will automatically apply the allocation filter
                         oResTable.rebind();
-                        console.log("✅ Res table rebound - allocation filter will be applied automatically by delegate");
+                        // Re-apply allocation filter after rebind
+                        setTimeout(() => {
+                            const oResBinding = oResTable.getRowBinding && oResTable.getRowBinding();
+                            if (oResBinding) {
+                                const oAllocationFilter = this._getAllocationFilter();
+                                oResBinding.filter([oAllocationFilter]);
+                                console.log("✅ Re-applied allocation filter (empallocpercentage <= 95% and status != Resigned) after allocation");
+                            }
+                        }, 300);
                     }
                     
                     // ✅ CRITICAL: Refresh Projects table to update allocation counts (allocatedResources, toBeAllocated)
@@ -2852,7 +2859,7 @@ sap.ui.define([
         
         // ✅ NEW: Allocate Resource handler - opens allocation dialog
         onAllocateRes: function () {
-            console.log("🔵 onAllocateRes called - Opening allocate dialog"); 
+            console.log("Open allocate dialog"); 
             
             if (!this._oAllocateDialog) {
                 Fragment.load({
@@ -2860,19 +2867,12 @@ sap.ui.define([
                     name: "glassboard.view.fragments.AllocateDialog",
                     controller: this
                 }).then(function (oDialog) {
-                    console.log("✅ AllocateDialog fragment loaded successfully");
                     this._oAllocateDialog = oDialog;
                     this.getView().addDependent(this._oAllocateDialog);
                     this._oAllocateDialog.open();
-                    console.log("✅ AllocateDialog opened");
-                }.bind(this)).catch(function (oError) {
-                    console.error("❌ Error loading AllocateDialog fragment:", oError);
-                    sap.m.MessageBox.error("Failed to open allocation dialog. Please try again.");
                 }.bind(this));
             } else {
-                console.log("✅ Using existing AllocateDialog instance");
                 this._oAllocateDialog.open();
-                console.log("✅ AllocateDialog opened");
             }
         },
         
@@ -3075,21 +3075,18 @@ sap.ui.define([
         _createAllocationsForValidEmployees: function (aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aAllEmployees) {
             const aAllocationData = [];
             
-            // ✅ CRITICAL: Don't update employee percentages on frontend - let backend handle it
-            // This prevents race conditions where percentage is updated before allocation is validated
+            // ✅ IMPORTANT: Do NOT update empallocpercentage on frontend
+            // The backend's after('CREATE', Allocations) hook will handle it after validation
+            // This prevents race condition where validation uses the updated value instead of original
             for (let i = 0; i < aValidEmployees.length; i++) {
                 const oEmployee = aValidEmployees[i];
                 const sAllocationId = this._generateUUID();
 
-                // Get employee's current allocation percentage (default to 0 if missing)
+                // Get employee's current allocation percentage for logging only
                 const iEmpAllocPercentage = oEmployee.empallocpercentage ? parseInt(oEmployee.empallocpercentage, 10) : 0;
-                // Calculate combined allocation percentage
                 const iCombinedPercentage = iEmpAllocPercentage + iPercentage;
                 
-                console.log(`✅ Employee ${oEmployee.ohrId} (${oEmployee.fullName}): Current = ${iEmpAllocPercentage}%, Entered = ${iPercentage}%, Combined = ${iCombinedPercentage}%`);
-
-                // ✅ REMOVED: Frontend employee percentage update - backend will handle it in after('CREATE', Allocations) hook
-                // This prevents race conditions where percentage is updated before allocation validation
+                console.log(`✅ Employee ${oEmployee.ohrId} (${oEmployee.fullName}): Current = ${iEmpAllocPercentage}%, Entering = ${iPercentage}%, Will be = ${iCombinedPercentage}%`);
 
                 const oAllocData = {
                     allocationId: sAllocationId,
@@ -3109,7 +3106,7 @@ sap.ui.define([
             }
             
             console.log(`✅ Creating ${aAllocationData.length} allocation(s) from AllocateDialog with ${iPercentage}% each...`);
-            console.log(`✅ Employee percentages will be updated by backend after allocations are created`);
+            console.log(`✅ Backend will update empallocpercentage for each employee after validation`);
             
             // ✅ Use the same function for creating multiple allocations (pass aValidEmployees, not aAllEmployees)
             this._createMultipleAllocationsFromAllocateDialog(aAllocationData, oModel, aValidEmployees, oResTable);

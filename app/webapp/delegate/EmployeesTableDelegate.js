@@ -221,14 +221,68 @@ sap.ui.define([
         if (sCollectionPath === "Employees") {
             // Expand Supervisor association for Employee table
             oBindingInfo.parameters.$expand = "to_Supervisor";
-            // ✅ Note: Allocation filter (empallocpercentage <= 95% and status != "Resigned") is handled by ResourcesTableDelegate for Res table
+            
+            // ✅ NEW: For Res table (Employees in Allocation Overview), ALWAYS apply base allocation filter
+            // Filter: empallocpercentage <= 95 AND status != "Resigned"
+            const sTableId = oTable.getId ? oTable.getId() : "";
+            const oPayload = oTable.getPayload ? oTable.getPayload() : {};
+            const sPayloadCollection = oPayload.collectionPath ? oPayload.collectionPath.replace(/^\//, "") : "";
+            
+            // Res table uses "Employees" collection and has "Res" in its ID
+            // Check table ID (could be full ID like "container-glassboard---Home--Res" or just "Res")
+            const bIsResTable = sCollectionPath === "Employees" && 
+                               (sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res");
+            
+            console.log("[EmployeesTableDelegate] Checking Res table - TableId:", sTableId, "CollectionPath:", sCollectionPath, "IsResTable:", bIsResTable);
+            
+            if (bIsResTable) {
+                const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
+                const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
+                const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+                
+                // Initialize filters array if it doesn't exist
+                if (!oBindingInfo.filters) {
+                    oBindingInfo.filters = [];
+                }
+                
+                // Convert to array if it's a single filter
+                let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
+                
+                // Check if allocation filter is already present
+                const bHasAllocationFilter = aFilters.some(f => {
+                    if (!f) return false;
+                    if (f.getFilters && f.getFilters().length === 2) {
+                        const aSubFilters = f.getFilters();
+                        return aSubFilters.some(sf => 
+                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                        ) && aSubFilters.some(sf => 
+                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                        );
+                    }
+                    return false;
+                });
+                
+                // Add allocation filter if not already present
+                if (!bHasAllocationFilter) {
+                    aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
+                    aFilters.push(oAllocationFilter);
+                    oBindingInfo.filters = aFilters.length === 1 ? aFilters[0] : aFilters;
+                    console.log("[EmployeesTableDelegate] ✅ Applied base allocation filter (empallocpercentage <= 95% and status != Resigned) for Res table");
+                }
+            }
         }
         
-        // ✅ Process filters: group by field, combine same field with OR, different fields with AND
-        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
+        // ✅ Make all string filters case-insensitive by recreating them
+        // Handle both array and single filter cases
+        if (oBindingInfo.filters) {
+            // If filters is not an array, convert it to array for processing
+            if (!Array.isArray(oBindingInfo.filters)) {
+                oBindingInfo.filters = [oBindingInfo.filters];
+            }
+            
+            if (Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-            const sCollectionPath = sPath.replace(/^\//, "");
             
             const fnMakeCaseInsensitive = (aFilters) => {
                 if (!aFilters || !Array.isArray(aFilters)) return aFilters;
@@ -306,9 +360,7 @@ sap.ui.define([
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
                 
-                // Handle single Filter object
                 if (!Array.isArray(vFilters)) {
-                    // If it's a single filter with nested filters, process those
                     if (vFilters.getFilters && vFilters.getFilters()) {
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
@@ -324,17 +376,28 @@ sap.ui.define([
                 
                 if (vFilters.length === 0) return null;
                 
-                // First, make filters case-insensitive
                 let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
-                
-                // Group filters by path (field name)
                 const mFiltersByPath = {};
-                const aOtherFilters = []; // Filters without a path (nested/complex filters)
+                const aOtherFilters = [];
+                let oAllocationFilter = null; // Store allocation filter separately
                 
                 aProcessedFilters.forEach((oFilter) => {
                     if (!oFilter) return;
                     
-                    // Handle nested filters recursively
+                    // ✅ NEW: Preserve allocation filter (empallocpercentage <= 95 and status != "Resigned")
+                    if (oFilter.getFilters && oFilter.getFilters().length === 2) {
+                        const aSubFilters = oFilter.getFilters();
+                        const bIsAllocationFilter = aSubFilters.some(sf => 
+                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                        ) && aSubFilters.some(sf => 
+                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                        );
+                        if (bIsAllocationFilter) {
+                            oAllocationFilter = oFilter; // Preserve allocation filter
+                            return; // Don't process it further
+                        }
+                    }
+                    
                     if (oFilter.getFilters && oFilter.getFilters()) {
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
@@ -357,13 +420,11 @@ sap.ui.define([
                         mFiltersByPath[sPath] = [];
                     }
                     
-                    // Check for duplicates before adding
                     const sValue1 = String(oFilter.getValue1() || "");
                     const sValue2 = String(oFilter.getValue2() || "");
                     const sOperator = String(oFilter.getOperator() || "");
                     const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
                     
-                    // Check if this exact filter already exists
                     const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
                         const sExistingValue1 = String(oExistingFilter.getValue1() || "");
                         const sExistingValue2 = String(oExistingFilter.getValue2() || "");
@@ -377,37 +438,34 @@ sap.ui.define([
                     }
                 });
                 
-                // Build optimized filter array
                 const aOptimizedFilters = [];
                 
-                // For each field, combine multiple values with OR
                 Object.keys(mFiltersByPath).forEach((sPath) => {
                     const aFieldFilters = mFiltersByPath[sPath];
                     if (aFieldFilters.length === 1) {
-                        // Single filter for this field, add as-is
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        // Multiple filters for same field, combine with OR
-                        const oOrFilter = new sap.ui.model.Filter({
+                        aOptimizedFilters.push(new sap.ui.model.Filter({
                             filters: aFieldFilters,
                             and: false // OR logic
-                        });
-                        aOptimizedFilters.push(oOrFilter);
+                        }));
                     }
                 });
                 
-                // Add other filters (nested/complex) as-is
                 aOtherFilters.forEach((oFilter) => {
                     aOptimizedFilters.push(oFilter);
                 });
                 
-                // Return optimized filters
+                // ✅ NEW: Always add allocation filter at the end (if it exists)
+                if (oAllocationFilter) {
+                    aOptimizedFilters.push(oAllocationFilter);
+                }
+                
                 if (aOptimizedFilters.length === 0) {
                     return null;
                 } else if (aOptimizedFilters.length === 1) {
                     return aOptimizedFilters[0];
                 } else {
-                    // Multiple field groups, combine them with AND
                     return new sap.ui.model.Filter({
                         filters: aOptimizedFilters,
                         and: true // AND logic between different fields
@@ -417,6 +475,7 @@ sap.ui.define([
             
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
+            }
         }
 
         console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
