@@ -221,50 +221,130 @@ sap.ui.define([
         if (sCollectionPath === "Projects") {
             // Expand Opportunity association for Project table
             oBindingInfo.parameters.$expand = "to_Opportunity";
+        } else if (sCollectionPath === "Employees") {
+            // Expand Supervisor association for Employee table (used in Res table)
+            oBindingInfo.parameters.$expand = "to_Supervisor";
+        }
+        
+        // ✅ NEW: For Res table (Employees in Allocation Overview), ALWAYS apply base allocation filter
+        // Filter: empallocpercentage <= 95 AND status != "Resigned"
+        // Check if this is the Res table by checking collection path and table ID or payload
+        const sTableId = oTable.getId ? oTable.getId() : "";
+        const oPayload = oTable.getPayload ? oTable.getPayload() : {};
+        const sPayloadCollection = oPayload.collectionPath ? oPayload.collectionPath.replace(/^\//, "") : "";
+        
+        // Res table uses "Employees" collection and has "Res" in its ID
+        const bIsResTable = (sCollectionPath === "Employees" || sPayloadCollection === "Employees") && 
+                           (sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res"));
+        
+        if (bIsResTable) {
+            const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
+            const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
+            const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+            
+            // Initialize filters array if it doesn't exist
+            if (!oBindingInfo.filters) {
+                oBindingInfo.filters = [];
+            }
+            
+            // Convert to array if it's a single filter
+            let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
+            
+            // Check if allocation filter is already present
+            const bHasAllocationFilter = aFilters.some(f => {
+                if (!f) return false;
+                if (f.getFilters && f.getFilters().length === 2) {
+                    const aSubFilters = f.getFilters();
+                    return aSubFilters.some(sf => 
+                        sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                    ) && aSubFilters.some(sf => 
+                        sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                    );
+                }
+                return false;
+            });
+            
+            // Add allocation filter if not already present
+            if (!bHasAllocationFilter) {
+                aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
+                aFilters.push(oAllocationFilter);
+                // ✅ Keep as array - optimization logic will handle conversion to single filter if needed
+                oBindingInfo.filters = aFilters;
+                console.log("[ResourcesTableDelegate] ✅ Applied base allocation filter (empallocpercentage <= 95% and status != Resigned)");
+            } else {
+                // ✅ Ensure filters remain as array even if allocation filter already exists
+                if (!Array.isArray(oBindingInfo.filters)) {
+                    oBindingInfo.filters = [oBindingInfo.filters];
+                }
+            }
         }
         
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            const sCollectionPath = sPath.replace(/^\//, "");
             
             const fnMakeCaseInsensitive = (aFilters) => {
                 if (!aFilters || !Array.isArray(aFilters)) return aFilters;
+                
                 return aFilters.map((oFilter) => {
                     if (!oFilter || !oFilter.getPath) return oFilter;
+                    
                     const sFilterPath = oFilter.getPath();
+                    // Check if this is a string property
                     let bIsString = false;
                     try {
                         if (oMetaModel) {
                             const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sFilterPath}`);
-                            if (oProp && oProp.$Type === "Edm.String") bIsString = true;
+                            if (oProp && oProp.$Type === "Edm.String") {
+                                bIsString = true;
+                            }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        // If we can't determine, skip modification
+                    }
+                    
+                    // Recreate filter with caseSensitive: false for string filters
                     if (bIsString) {
                         try {
-                            return new sap.ui.model.Filter({
+                            const sOperator = oFilter.getOperator();
+                            const vValue1 = oFilter.getValue1();
+                            const vValue2 = oFilter.getValue2();
+                            const aNestedFilters = oFilter.getFilters ? oFilter.getFilters() : null;
+                            const bAnd = oFilter.getAnd ? oFilter.getAnd() : true;
+                            
+                            // Recreate the filter with caseSensitive: false
+                            const oNewFilter = new sap.ui.model.Filter({
                                 path: sFilterPath,
-                                operator: oFilter.getOperator(),
-                                value1: oFilter.getValue1(),
-                                value2: oFilter.getValue2(),
+                                operator: sOperator,
+                                value1: vValue1,
+                                value2: vValue2,
                                 caseSensitive: false,
-                                filters: oFilter.getFilters ? fnMakeCaseInsensitive(oFilter.getFilters()) : undefined,
-                                and: oFilter.getFilters ? (oFilter.getAnd ? oFilter.getAnd() : true) : undefined
+                                filters: aNestedFilters ? fnMakeCaseInsensitive(aNestedFilters) : undefined,
+                                and: aNestedFilters ? bAnd : undefined
                             });
+                            
+                            return oNewFilter;
                         } catch (e) {
+                            console.warn("[ResourcesTableDelegate] Could not recreate filter with caseSensitive:", e);
                             return oFilter;
                         }
                     }
+                    
+                    // Recursively process nested filters
                     if (oFilter.getFilters && oFilter.getFilters()) {
-                        const aNewNested = fnMakeCaseInsensitive(oFilter.getFilters());
-                        if (aNewNested !== oFilter.getFilters()) {
+                        const aNestedFilters = oFilter.getFilters();
+                        const aNewNestedFilters = fnMakeCaseInsensitive(aNestedFilters);
+                        if (aNewNestedFilters !== aNestedFilters) {
+                            // Recreate filter with updated nested filters
                             try {
                                 return new sap.ui.model.Filter({
                                     path: sFilterPath,
                                     operator: oFilter.getOperator(),
                                     value1: oFilter.getValue1(),
                                     value2: oFilter.getValue2(),
-                                    filters: aNewNested,
+                                    filters: aNewNestedFilters,
                                     and: oFilter.getAnd ? oFilter.getAnd() : true
                                 });
                             } catch (e) {
@@ -272,13 +352,18 @@ sap.ui.define([
                             }
                         }
                     }
+                    
                     return oFilter;
                 });
             };
             
+            // ✅ NEW: Group filters by path and combine same-field filters with OR
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
+                
+                // Handle single Filter object
                 if (!Array.isArray(vFilters)) {
+                    // If it's a single filter with nested filters, process those
                     if (vFilters.getFilters && vFilters.getFilters()) {
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
@@ -291,12 +376,35 @@ sap.ui.define([
                     }
                     return vFilters;
                 }
+                
                 if (vFilters.length === 0) return null;
+                
+                // First, make filters case-insensitive
                 let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
+                
+                // Group filters by path (field name)
                 const mFiltersByPath = {};
-                const aOtherFilters = [];
+                const aOtherFilters = []; // Filters without a path (nested/complex filters)
+                let oAllocationFilter = null; // Store allocation filter separately
+                
                 aProcessedFilters.forEach((oFilter) => {
                     if (!oFilter) return;
+                    
+                    // ✅ NEW: Preserve allocation filter (empallocpercentage <= 95 and status != "Resigned")
+                    if (oFilter.getFilters && oFilter.getFilters().length === 2) {
+                        const aSubFilters = oFilter.getFilters();
+                        const bIsAllocationFilter = aSubFilters.some(sf => 
+                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                        ) && aSubFilters.some(sf => 
+                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                        );
+                        if (bIsAllocationFilter) {
+                            oAllocationFilter = oFilter; // Preserve allocation filter
+                            return; // Don't process it further
+                        }
+                    }
+                    
+                    // Handle nested filters recursively
                     if (oFilter.getFilters && oFilter.getFilters()) {
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
@@ -308,47 +416,86 @@ sap.ui.define([
                         }
                         return;
                     }
+                    
                     if (!oFilter.getPath) {
                         aOtherFilters.push(oFilter);
                         return;
                     }
+                    
                     const sPath = oFilter.getPath();
-                    if (!mFiltersByPath[sPath]) mFiltersByPath[sPath] = [];
+                    if (!mFiltersByPath[sPath]) {
+                        mFiltersByPath[sPath] = [];
+                    }
+                    
+                    // Check for duplicates before adding
                     const sValue1 = String(oFilter.getValue1() || "");
                     const sValue2 = String(oFilter.getValue2() || "");
                     const sOperator = String(oFilter.getOperator() || "");
                     const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
+                    
+                    // Check if this exact filter already exists
                     const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
                         const sExistingValue1 = String(oExistingFilter.getValue1() || "");
                         const sExistingValue2 = String(oExistingFilter.getValue2() || "");
                         const sExistingOperator = String(oExistingFilter.getOperator() || "");
-                        return sFilterKey === `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
+                        const sExistingKey = `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
+                        return sFilterKey === sExistingKey;
                     });
-                    if (!bIsDuplicate) mFiltersByPath[sPath].push(oFilter);
+                    
+                    if (!bIsDuplicate) {
+                        mFiltersByPath[sPath].push(oFilter);
+                    }
                 });
+                
+                // Build optimized filter array
                 const aOptimizedFilters = [];
+                
+                // For each field, combine multiple values with OR
                 Object.keys(mFiltersByPath).forEach((sPath) => {
                     const aFieldFilters = mFiltersByPath[sPath];
                     if (aFieldFilters.length === 1) {
+                        // Single filter for this field, add as-is
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                        // Multiple filters for same field, combine with OR
+                        const oOrFilter = new sap.ui.model.Filter({
                             filters: aFieldFilters,
-                            and: false
-                        }));
+                            and: false // OR logic
+                        });
+                        aOptimizedFilters.push(oOrFilter);
                     }
                 });
-                aOtherFilters.forEach((oFilter) => aOptimizedFilters.push(oFilter));
-                if (aOptimizedFilters.length === 0) return null;
-                if (aOptimizedFilters.length === 1) return aOptimizedFilters[0];
-                return new sap.ui.model.Filter({ filters: aOptimizedFilters, and: true });
+                
+                // Add other filters (nested/complex) as-is
+                aOtherFilters.forEach((oFilter) => {
+                    aOptimizedFilters.push(oFilter);
+                });
+                
+                // ✅ NEW: Always add allocation filter at the end (if it exists)
+                if (oAllocationFilter) {
+                    aOptimizedFilters.push(oAllocationFilter);
+                }
+                
+                // Return optimized filters
+                if (aOptimizedFilters.length === 0) {
+                    return null;
+                } else if (aOptimizedFilters.length === 1) {
+                    return aOptimizedFilters[0];
+                } else {
+                    // Multiple field groups, combine them with AND
+                    return new sap.ui.model.Filter({
+                        filters: aOptimizedFilters,
+                        and: true // AND logic between different fields
+                    });
+                }
             };
+            
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
         }
-
-        console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[GenericDelegate] Table payload:", oTable.getPayload());
+        
+        console.log("[ResourcesTableDelegate] updateBindingInfo - path:", sPath, "filters:", oBindingInfo.filters);
+        console.log("[ResourcesTableDelegate] Table payload:", oTable.getPayload());
     };
 
     GenericTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {

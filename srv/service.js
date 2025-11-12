@@ -344,10 +344,31 @@ module.exports = cds.service.impl(async function () {
     // ✅ NEW: Update employee statuses after allocation is created
     this.after('CREATE', Allocations, async (req) => {
         try {
-            const sProjectId = req.data.projectId || req.keys?.projectId;
-            const sEmployeeId = req.data.employeeId || req.keys?.employeeId;
-            const sAllocationStatus = req.data.status || 'Active';
-            const iAllocationPercentage = req.data.allocationPercentage || 100;
+            // ✅ Handle batch operations - req.data might be an array or undefined
+            // In batch operations, we need to get data from the result or keys
+            let oAllocationData = req.data;
+            
+            // If req.data is undefined or an array, try to get from result or keys
+            if (!oAllocationData || Array.isArray(oAllocationData)) {
+                // Try to get from result (for batch operations)
+                if (req.result && !Array.isArray(req.result)) {
+                    oAllocationData = req.result;
+                } else if (req.keys) {
+                    // Fallback to keys if available
+                    oAllocationData = req.keys;
+                } else if (Array.isArray(req.result) && req.result.length > 0) {
+                    // If result is an array, use the first item
+                    oAllocationData = req.result[0];
+                } else {
+                    console.warn("⚠️ No allocation data found in req.data, req.result, or req.keys");
+                    return; // Exit early if no data available
+                }
+            }
+            
+            const sProjectId = oAllocationData.projectId || req.keys?.projectId;
+            const sEmployeeId = oAllocationData.employeeId || req.keys?.employeeId;
+            const sAllocationStatus = oAllocationData.status || 'Active';
+            const iAllocationPercentage = oAllocationData.allocationPercentage || 100;
 
             console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}, Percentage: ${iAllocationPercentage}%`);
 

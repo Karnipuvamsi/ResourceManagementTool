@@ -256,7 +256,13 @@ sap.ui.define([
             }
             // Enable Allocate button for Res table when employee is selected
             if (config.allocate) {
-                this.byId(config.allocate)?.setEnabled(bHasSelection);
+                const oAllocateButton = this.byId(config.allocate);
+                if (oAllocateButton) {
+                    oAllocateButton.setEnabled(bHasSelection);
+                    console.log(`✅ [onSelectionChange] ${config.allocate} button enabled:`, bHasSelection, "for table:", sTableId);
+                } else {
+                    console.warn(`⚠️ [onSelectionChange] Button ${config.allocate} not found for table:`, sTableId);
+                }
             }
             if (sTableId === "Res") {
                 const aSelectedContexts = oTable.getSelectedContexts();
@@ -2606,35 +2612,7 @@ sap.ui.define([
             if (oTable && typeof oTable.rebind === "function") {
                 oTable.rebind();
                 console.log(`✅ Table '${sTableId}' rebound on filter search (isolated for ${sFilterBarId})`);
-                
-                // ✅ NEW: For Res table, apply allocation filter (empallocpercentage <= 95 and status != "Resigned") after rebind
-                if (sTableId === "Res" && this._getAllocationFilter) {
-                    setTimeout(() => {
-                        const oBinding = oTable.getRowBinding && oTable.getRowBinding();
-                        if (oBinding) {
-                            const oAllocationFilter = this._getAllocationFilter();
-                            const aCurrentFilters = oBinding.getFilters() || [];
-                            // Check if allocation filter is already in the filters
-                            const bHasAllocationFilter = aCurrentFilters.some(f => {
-                                if (f.getFilters && f.getFilters().length === 2) {
-                                    const aSubFilters = f.getFilters();
-                                    return aSubFilters.some(sf => 
-                                        sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                                    ) && aSubFilters.some(sf => 
-                                        sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                                    );
-                                }
-                                return false;
-                            });
-                            if (!bHasAllocationFilter) {
-                                // Combine existing filters with allocation filter
-                                const aCombinedFilters = [...aCurrentFilters, oAllocationFilter];
-                                oBinding.filter(aCombinedFilters);
-                                console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) after filter bar Go button");
-                            }
-                        }
-                    }, 500);
-                }
+                // ✅ Note: For Res table, the allocation filter is automatically applied by EmployeesTableDelegate in updateBindingInfo()
             } else if (oTable && typeof oTable.bindRows === "function") {
                 oTable.bindRows();
                 console.log(`✅ Table '${sTableId}' rebind fallback called (bindRows) - isolated`);

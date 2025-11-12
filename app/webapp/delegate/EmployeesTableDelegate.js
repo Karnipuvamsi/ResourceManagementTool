@@ -221,20 +221,14 @@ sap.ui.define([
         if (sCollectionPath === "Employees") {
             // Expand Supervisor association for Employee table
             oBindingInfo.parameters.$expand = "to_Supervisor";
-            
-            // ✅ CRITICAL: Check if this is the Res table and apply Bench filter
-            const sTableId = oTable.getId();
-            if (sTableId && sTableId.includes("Res")) {
-                // Store flag that this is Res table - filter will be applied in controller
-                // We can't apply filter here directly, but we can set a flag
-                console.log("[EmployeesTableDelegate] Res table detected, Bench filter should be applied");
-            }
+            // ✅ Note: Allocation filter (empallocpercentage <= 95% and status != "Resigned") is handled by ResourcesTableDelegate for Res table
         }
         
-        // ✅ Make all string filters case-insensitive by recreating them
+        // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+            const sCollectionPath = sPath.replace(/^\//, "");
             
             const fnMakeCaseInsensitive = (aFilters) => {
                 if (!aFilters || !Array.isArray(aFilters)) return aFilters;
@@ -312,7 +306,9 @@ sap.ui.define([
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
                 
+                // Handle single Filter object
                 if (!Array.isArray(vFilters)) {
+                    // If it's a single filter with nested filters, process those
                     if (vFilters.getFilters && vFilters.getFilters()) {
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
@@ -328,13 +324,17 @@ sap.ui.define([
                 
                 if (vFilters.length === 0) return null;
                 
+                // First, make filters case-insensitive
                 let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
+                
+                // Group filters by path (field name)
                 const mFiltersByPath = {};
-                const aOtherFilters = [];
+                const aOtherFilters = []; // Filters without a path (nested/complex filters)
                 
                 aProcessedFilters.forEach((oFilter) => {
                     if (!oFilter) return;
                     
+                    // Handle nested filters recursively
                     if (oFilter.getFilters && oFilter.getFilters()) {
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
@@ -357,11 +357,13 @@ sap.ui.define([
                         mFiltersByPath[sPath] = [];
                     }
                     
+                    // Check for duplicates before adding
                     const sValue1 = String(oFilter.getValue1() || "");
                     const sValue2 = String(oFilter.getValue2() || "");
                     const sOperator = String(oFilter.getOperator() || "");
                     const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
                     
+                    // Check if this exact filter already exists
                     const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
                         const sExistingValue1 = String(oExistingFilter.getValue1() || "");
                         const sExistingValue2 = String(oExistingFilter.getValue2() || "");
@@ -375,29 +377,37 @@ sap.ui.define([
                     }
                 });
                 
+                // Build optimized filter array
                 const aOptimizedFilters = [];
                 
+                // For each field, combine multiple values with OR
                 Object.keys(mFiltersByPath).forEach((sPath) => {
                     const aFieldFilters = mFiltersByPath[sPath];
                     if (aFieldFilters.length === 1) {
+                        // Single filter for this field, add as-is
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                        // Multiple filters for same field, combine with OR
+                        const oOrFilter = new sap.ui.model.Filter({
                             filters: aFieldFilters,
                             and: false // OR logic
-                        }));
+                        });
+                        aOptimizedFilters.push(oOrFilter);
                     }
                 });
                 
+                // Add other filters (nested/complex) as-is
                 aOtherFilters.forEach((oFilter) => {
                     aOptimizedFilters.push(oFilter);
                 });
                 
+                // Return optimized filters
                 if (aOptimizedFilters.length === 0) {
                     return null;
                 } else if (aOptimizedFilters.length === 1) {
                     return aOptimizedFilters[0];
                 } else {
+                    // Multiple field groups, combine them with AND
                     return new sap.ui.model.Filter({
                         filters: aOptimizedFilters,
                         and: true // AND logic between different fields
