@@ -28,7 +28,13 @@ sap.ui.define([
                 Employees: { conditions: {}, items: [] },
                 Demands: { conditions: {}, items: [] },
                 Allocations: { conditions: {}, items: [] },
-                Resources: { conditions: {}, items: [] }
+                Resources: { conditions: {}, items: [] },
+                EmployeeBenchReport: { conditions: {}, items: [] },
+                EmployeeProbableReleaseReport: { conditions: {}, items: [] },
+                RevenueForecastReport: { conditions: {}, items: [] },
+                EmployeeAllocationReport: { conditions: {}, items: [] },
+                EmployeeSkillReport: { conditions: {}, items: [] },
+                ProjectsNearingCompletionReport: { conditions: {}, items: [] }
             });
             this.getView().setModel(oFilterModel, "filterModel");
             
@@ -96,6 +102,62 @@ sap.ui.define([
 
             // ✅ Populate Country dropdown in Customers fragment when loaded
             this._populateCountryDropdown();
+            
+            // ✅ Initialize home counts model
+            const oHomeCountsModel = new sap.ui.model.json.JSONModel({
+                totalHeadCount: 0,
+                allocatedCount: 0,
+                preAllocatedCount: 0,
+                unproductiveBenchCount: 0,
+                onLeaveCount: 0,
+                benchCount: 0
+            });
+            this.getView().setModel(oHomeCountsModel, "homeCounts");
+        },
+        
+        onAfterRendering: function() {
+            // ✅ Load all home screen counts after view is rendered
+            // Wait a bit to ensure OData model is fully initialized
+            let nRetries = 0;
+            const nMaxRetries = 10;
+            
+            const fnLoadCounts = () => {
+                nRetries++;
+                const oModel = this.getView().getModel("default") || this.getView().getModel();
+                if (oModel && oModel.getMetaModel) {
+                    try {
+                        const oMetaModel = oModel.getMetaModel();
+                        // Try to access metadata to ensure it's loaded
+                        if (oMetaModel && oMetaModel.requestObject) {
+                            // Metadata is available, load counts
+                            console.log("✅ OData model and metadata ready, loading counts...");
+                            this._loadHomeCounts();
+                        } else {
+                            // Metadata not ready yet, retry
+                            if (nRetries < nMaxRetries) {
+                                setTimeout(fnLoadCounts, 500);
+                            } else {
+                                console.error("❌ Max retries reached, metadata not available");
+                            }
+                        }
+                    } catch (e) {
+                        // Metadata not ready, retry
+                        if (nRetries < nMaxRetries) {
+                            setTimeout(fnLoadCounts, 500);
+                        } else {
+                            console.error("❌ Max retries reached, error accessing metadata:", e);
+                        }
+                    }
+                } else {
+                    // Model not ready yet, retry
+                    if (nRetries < nMaxRetries) {
+                        setTimeout(fnLoadCounts, 500);
+                    } else {
+                        console.error("❌ Max retries reached, OData model not available");
+                    }
+                }
+            };
+            setTimeout(fnLoadCounts, 1000);
         },
 
         onSideNavButtonPress() {
@@ -120,10 +182,12 @@ sap.ui.define([
                 // ✅ REMOVED: verticals: "verticalsPage", (Vertical is now an enum, not an entity)
                 overview: "allocationPage",
                 requirements: "requirementsPage",
-                bench: "benchPage",
-                pendingProjects: "pendingProjectsPage",
-                pendingOpportunities: "pendingOpportunitiesPage",
-                reports: "reportsPage"
+                employeeBenchReport: "employeeBenchReportPage",
+                employeeProbableReleaseReport: "employeeProbableReleaseReportPage",
+                revenueForecastReport: "revenueForecastReportPage",
+                employeeAllocationReport: "employeeAllocationReportPage",
+                employeeSkillReport: "employeeSkillReportPage",
+                projectsNearingCompletionReport: "projectsNearingCompletionReportPage"
             };
 
             const sPageId = pageMap[sKey];
@@ -462,43 +526,18 @@ sap.ui.define([
                     // Reset segmented button to "less" state for this fragment
                     this._resetSegmentedButtonForFragment("SAPIdStatuses");
                 }.bind(this));
-            } else if (sKey === "reports") {
-                // Check if already loaded to prevent duplicate IDs
-                if (this._bReportsLoaded) {
-                    console.log("[Reports] Fragment already loaded, skipping");
-                    return;
-                }
-                
-                this._bReportsLoaded = true;
-                const oReportsPage = this.getView().byId(sPageId);
-                
-                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oReportsPage && oReportsPage.getContent) {
-                    const aExistingContent = oReportsPage.getContent();
-                    if (aExistingContent && aExistingContent.length > 0) {
-                        console.log("[Reports] Removing existing content to prevent duplicate IDs");
-                        aExistingContent.forEach((oContent) => {
-                            if (oContent && oContent.destroy) {
-                                oContent.destroy();
-                            }
-                        });
-                        oReportsPage.removeAllContent();
-                    }
-                }
-
-                Fragment.load({
-                    id: this.getView().getId(),
-                    name: "glassboard.view.fragments.Reports",
-                    controller: this
-                }).then(function (oFragment) {
-                    oReportsPage.addContent(oFragment);
-
-                    if (oLogButton) {
-                        oLogButton.setVisible(false);
-                    }
-                }.bind(this)).catch(function (oError) {
-                    console.error("[Reports] Error loading fragment:", oError);
-                });
+            } else if (sKey === "employeeBenchReport") {
+                this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
+            } else if (sKey === "employeeProbableReleaseReport") {
+                this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
+            } else if (sKey === "revenueForecastReport") {
+                this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+            } else if (sKey === "employeeAllocationReport") {
+                this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
+            } else if (sKey === "employeeSkillReport") {
+                this._loadReportFragment(sPageId, "EmployeeSkillReport", "EmployeeSkillReport", oLogButton);
+            } else if (sKey === "projectsNearingCompletionReport") {
+                this._loadReportFragment(sPageId, "ProjectsNearingCompletionReport", "ProjectsNearingCompletionReport", oLogButton);
             } else if (sKey === "employees") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeesLoaded) {
@@ -668,26 +707,26 @@ sap.ui.define([
 
                     // Initialize table-specific functionality
                     this.initializeTable("Res").then(() => {
-                        // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
+                        // ✅ CRITICAL: Apply Unproductive Bench filter to Res table after initialization
                         // Use multiple retries to ensure binding is ready
                         const fnApplyBenchFilter = () => {
                             const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
                             if (oResBinding) {
-                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                 oResBinding.filter([oBenchFilter]);
-                                console.log("✅ Res table filtered to show only UnproductiveBench employees");
+                                console.log("✅ Res table filtered to show only Unproductive Bench employees");
                                 
                                 // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
                                 oResBinding.attachDataReceived(() => {
                                     const oCurrentFilters = oResBinding.getFilters();
                                     const bHasBenchFilter = oCurrentFilters && oCurrentFilters.some(f => 
-                                        f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "UnproductiveBench"
+                                        f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "Unproductive Bench"
                                     );
                                     if (!bHasBenchFilter) {
                                         const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
                                         aFilters.push(oBenchFilter);
                                         oResBinding.filter(aFilters);
-                                        console.log("✅ Re-applied UnproductiveBench filter after dataReceived");
+                                        console.log("✅ Re-applied Unproductive Bench filter after dataReceived");
                                     }
                                 });
                                 
@@ -721,7 +760,11 @@ sap.ui.define([
         },
         // Reset all tables to "show-less" state
         _resetAllTablesToShowLess: function () {
-            const aTableIds = ["Customers", "Opportunities", "Projects", "SAPIdStatuses", "Employees", "Allocations"]; // ✅ REMOVED: "Verticals"
+            const aTableIds = [
+                "Customers", "Opportunities", "Projects", "SAPIdStatuses", "Employees", "Allocations",
+                "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
+                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable"
+            ];
 
             aTableIds.forEach((sTableId) => {
                 const oTable = this.byId(sTableId);
@@ -752,6 +795,123 @@ sap.ui.define([
             });
         },
         // Reset segmented button for a specific fragment
+        // ✅ NEW: Helper function to load report fragments
+        _loadReportFragment: function (sPageId, sFragmentName, sTableId, oLogButton) {
+            const sFlagName = "_b" + sFragmentName + "Loaded";
+            
+            // Check if already loaded to prevent duplicate IDs
+            if (this[sFlagName]) {
+                console.log(`[${sFragmentName}] Fragment already loaded, skipping`);
+                return;
+            }
+            
+            this[sFlagName] = true;
+            const oReportPage = this.getView().byId(sPageId);
+            
+            // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+            if (oReportPage && oReportPage.getContent) {
+                const aExistingContent = oReportPage.getContent();
+                if (aExistingContent && aExistingContent.length > 0) {
+                    console.log(`[${sFragmentName}] Removing existing content to prevent duplicate IDs`);
+                    aExistingContent.forEach((oContent) => {
+                        if (oContent && oContent.destroy) {
+                            oContent.destroy();
+                        }
+                    });
+                    oReportPage.removeAllContent();
+                }
+            }
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments." + sFragmentName,
+                controller: this
+            }).then(function (oFragment) {
+                oReportPage.addContent(oFragment);
+
+                // Wait a bit for the fragment to be fully rendered
+                setTimeout(function() {
+                    const oTable = this.byId(sTableId + "Table");
+                    // Get FilterBar ID based on fragment name (camelCase)
+                    let sFilterBarId = "";
+                    if (sTableId === "EmployeeBenchReport") {
+                        sFilterBarId = "employeeBenchReportFilterBar";
+                    } else if (sTableId === "EmployeeProbableReleaseReport") {
+                        sFilterBarId = "employeeProbableReleaseReportFilterBar";
+                    } else if (sTableId === "RevenueForecastReport") {
+                        sFilterBarId = "revenueForecastReportFilterBar";
+                    } else if (sTableId === "EmployeeAllocationReport") {
+                        sFilterBarId = "employeeAllocationReportFilterBar";
+                    } else if (sTableId === "EmployeeSkillReport") {
+                        sFilterBarId = "employeeSkillReportFilterBar";
+                    } else if (sTableId === "ProjectsNearingCompletionReport") {
+                        sFilterBarId = "projectsNearingCompletionReportFilterBar";
+                    }
+                    const oFilterBar = sFilterBarId ? this.byId(sFilterBarId) : null;
+                    
+                    if (oTable) {
+                        // Ensure table starts with show-less state (default)
+                        oTable.removeStyleClass("show-more");
+                        oTable.addStyleClass("show-less");
+                        
+                        // Ensure the table has the correct model
+                        const oModel = this.getOwnerComponent().getModel();
+                        if (oModel) {
+                            oTable.setModel(oModel);
+                        }
+
+                        // Initialize table-specific functionality
+                        this.initializeTable(sTableId + "Table").then(function() {
+                            console.log(`[${sFragmentName}] Table initialized successfully`);
+                            // Force rebind to ensure data loads
+                            if (oTable.rebind) {
+                                oTable.rebind();
+                            }
+                        }.bind(this)).catch(function(oErr) {
+                            console.error(`[${sFragmentName}] Error initializing table:`, oErr);
+                        });
+                    } else {
+                        console.error(`[${sFragmentName}] Table not found: ${sTableId}Table`);
+                    }
+                    
+                    // Set default filter fields for report FilterBar
+                    if (oFilterBar) {
+                        // Define default filters for each report
+                        let aDefaultFields = [];
+                        if (sTableId === "EmployeeBenchReport") {
+                            aDefaultFields = ["employeeName", "status", "location"];
+                        } else if (sTableId === "EmployeeProbableReleaseReport") {
+                            aDefaultFields = ["employeeName", "currentProject", "daysToRelease"];
+                        } else if (sTableId === "RevenueForecastReport") {
+                            aDefaultFields = ["projectName", "customer", "status"];
+                        } else if (sTableId === "EmployeeAllocationReport") {
+                            aDefaultFields = ["employeeName", "currentProject", "customer"];
+                        } else if (sTableId === "EmployeeSkillReport") {
+                            aDefaultFields = ["skillName", "category"];
+                        } else if (sTableId === "ProjectsNearingCompletionReport") {
+                            aDefaultFields = ["projectName", "completionRisk", "customer"];
+                        }
+                        
+                        if (aDefaultFields.length > 0) {
+                            // Set default filters with retries (same pattern as main entities)
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oFilterBar, aDefaultFields);
+                            }, 1000);
+                            setTimeout(() => {
+                                this._setDefaultFilterFields(oFilterBar, aDefaultFields);
+                            }, 2000);
+                        }
+                    }
+                }.bind(this), 100);
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+            }.bind(this)).catch(function (oError) {
+                console.error(`[${sFragmentName}] Error loading fragment:`, oError);
+            });
+        },
+
         _resetSegmentedButtonForFragment: function (sTableId) {
             // Find segmented button within the specific table's fragment
             const oTable = this.byId(sTableId);
@@ -1054,26 +1214,26 @@ sap.ui.define([
                         }
                         
                         this.initializeTable("Res").then(() => {
-                            // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
+                            // ✅ CRITICAL: Apply Unproductive Bench filter to Res table after initialization
                             // Use multiple retries to ensure binding is ready
                             const fnApplyBenchFilter = () => {
                                 const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
                                 if (oResBinding) {
-                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                     oResBinding.filter([oBenchFilter]);
-                                    console.log("✅ Res table filtered to show only UnproductiveBench employees");
+                                    console.log("✅ Res table filtered to show only Unproductive Bench employees");
                                     
                                     // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
                                     oResBinding.attachDataReceived(() => {
                                         const oCurrentFilters = oResBinding.getFilters();
                                         const bHasBenchFilter = oCurrentFilters && oCurrentFilters.some(f => 
-                                            f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "UnproductiveBench"
+                                            f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "Unproductive Bench"
                                         );
                                         if (!bHasBenchFilter) {
                                             const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
                                             aFilters.push(oBenchFilter);
                                             oResBinding.filter(aFilters);
-                                            console.log("✅ Re-applied UnproductiveBench filter after dataReceived");
+                                            console.log("✅ Re-applied Unproductive Bench filter after dataReceived");
                                         }
                                     });
                                     
@@ -1520,25 +1680,25 @@ sap.ui.define([
                         }
                         
                         this.initializeTable("Res").then(() => {
-                            // ✅ CRITICAL: Apply UnproductiveBench filter to Res table after initialization
+                            // ✅ CRITICAL: Apply Unproductive Bench filter to Res table after initialization
                             const fnApplyBenchFilter = () => {
                                 const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
                                 if (oResBinding) {
-                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                     oResBinding.filter([oBenchFilter]);
-                                    console.log("✅ Res table filtered to show only UnproductiveBench employees");
+                                    console.log("✅ Res table filtered to show only Unproductive Bench employees");
                                     
                                     // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
                                     oResBinding.attachDataReceived(() => {
                                         const oCurrentFilters = oResBinding.getFilters();
                                         const bHasBenchFilter = oCurrentFilters && oCurrentFilters.some(f => 
-                                            f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "UnproductiveBench"
+                                            f.getPath() === "status" && f.getOperator() === "EQ" && f.getValue1() === "Unproductive Bench"
                                         );
                                         if (!bHasBenchFilter) {
                                             const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
                                             aFilters.push(oBenchFilter);
                                             oResBinding.filter(aFilters);
-                                            console.log("✅ Re-applied UnproductiveBench filter after dataReceived");
+                                            console.log("✅ Re-applied Unproductive Bench filter after dataReceived");
                                         }
                                     });
                                     
@@ -1799,9 +1959,9 @@ sap.ui.define([
             
             const oBinding = oTable.getBinding("items");
             if (oBinding) {
-                // ✅ CRITICAL: Always include UnproductiveBench status filter (for allocation), add search filter on top
+                // ✅ CRITICAL: Always include Unproductive Bench status filter (for allocation), add search filter on top
                 const aFilters = [
-                    new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench")
+                    new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench")
                 ];
                 
                 if (sQuery) {
@@ -2297,15 +2457,15 @@ sap.ui.define([
                         console.log("✅ Refreshed Projects table to update resource counts");
                     }, 800);
                     
-                    // ✅ CRITICAL: Refresh Find Resources table and re-apply UnproductiveBench filter
+                    // ✅ CRITICAL: Refresh Find Resources table and re-apply Unproductive Bench filter
                     const oFindResourcesTable = this.byId("findResourcesTable");
                     if (oFindResourcesTable && oFindResourcesTable.getBinding) {
                         setTimeout(() => {
                             const oBinding = oFindResourcesTable.getBinding("items");
                             if (oBinding) {
-                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                 oBinding.filter([oBenchFilter]);
-                                console.log("✅ Re-applied UnproductiveBench filter to Find Resources table after allocation");
+                                console.log("✅ Re-applied Unproductive Bench filter to Find Resources table after allocation");
                             }
                         }, 300);
                     }
@@ -2409,13 +2569,13 @@ sap.ui.define([
                     // ✅ CRITICAL: Refresh tables and re-apply filters
                     if (oResTable && oResTable.rebind) {
                         oResTable.rebind();
-                        // Re-apply UnproductiveBench filter after rebind
+                        // Re-apply Unproductive Bench filter after rebind
                         setTimeout(() => {
                             const oResBinding = oResTable.getRowBinding && oResTable.getRowBinding();
                             if (oResBinding) {
-                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                 oResBinding.filter([oBenchFilter]);
-                                console.log("✅ Re-applied UnproductiveBench filter after allocation");
+                                console.log("✅ Re-applied Unproductive Bench filter after allocation");
                             }
                         }, 300);
                     }
@@ -2531,15 +2691,15 @@ sap.ui.define([
                                 console.log("✅ Refreshed Projects table to update resource counts");
                             }, 800);
                             
-                            // ✅ CRITICAL: Refresh Find Resources table and re-apply UnproductiveBench filter
+                            // ✅ CRITICAL: Refresh Find Resources table and re-apply Unproductive Bench filter
                             const oFindResourcesTable = this.byId("findResourcesTable");
                             if (oFindResourcesTable && oFindResourcesTable.getBinding) {
                                 setTimeout(() => {
                                     const oBinding = oFindResourcesTable.getBinding("items");
                                     if (oBinding) {
-                                        const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench");
+                                        const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
                                         oBinding.filter([oBenchFilter]);
-                                        console.log("✅ Re-applied UnproductiveBench filter to Find Resources table after allocation");
+                                        console.log("✅ Re-applied Unproductive Bench filter to Find Resources table after allocation");
                                     }
                                 }, 300);
                             }
@@ -2787,21 +2947,21 @@ sap.ui.define([
                 return;
             }
             
-            // Apply search filter to table - always include UnproductiveBench filter
+            // Apply search filter to table - always include Unproductive Bench filter
             const oBinding = oTable.getRowBinding && oTable.getRowBinding();
             if (oBinding) {
-                // ✅ CRITICAL: Always include UnproductiveBench status filter (for allocation)
+                // ✅ CRITICAL: Always include Unproductive Bench status filter (for allocation)
                 const aFilters = [
-                    new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "UnproductiveBench")
+                    new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench")
                 ];
                 
                 if (sQuery && sQuery.trim() !== "") {
-                    // Add search filter on top of UnproductiveBench filter
+                    // Add search filter on top of Unproductive Bench filter
                     aFilters.push(new sap.ui.model.Filter("fullName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
                 }
                 
                 oBinding.filter(aFilters);
-                console.log("✅ Res search filter applied with UnproductiveBench filter, query:", sQuery);
+                console.log("✅ Res search filter applied with Unproductive Bench filter, query:", sQuery);
             } else {
                 console.warn("⚠️ Res binding not ready for search filter");
             }
@@ -5650,6 +5810,205 @@ sap.ui.define([
         
         // ✅ REMOVED: onFilterBarClear function - Clear button removed from all FilterBars
         
+        // ✅ Load all home screen counts dynamically
+        _loadHomeCounts: async function() {
+            console.log("🔄 Loading all home screen counts...");
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData model not available for loading counts");
+                return;
+            }
+            console.log("✅ OData model found, starting count calculations...");
+            
+            try {
+                await Promise.all([
+                    this._loadTotalHeadCount(),
+                    this._loadAllocatedCount(),
+                    this._loadPreAllocatedCount(),
+                    this._loadUnproductiveBenchCount(),
+                    this._loadOnLeaveCount()
+                ]);
+                // Calculate Bench Count
+                this._calculateBenchCount();
+                console.log("✅ All home screen counts loaded successfully");
+            } catch (error) {
+                console.error("❌ Error loading home screen counts:", error);
+                console.error("Error details:", error.message, error.stack);
+            }
+        },
+        
+        // ✅ Load Total Head Count (all employees excluding Resigned)
+        _loadTotalHeadCount: async function() {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData V4 model not found for Total Head Count");
+                return;
+            }
+            
+            try {
+                console.log("🔄 Fetching Total Head Count from /Employees...");
+                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+                    new sap.ui.model.Filter({
+                        path: "status",
+                        operator: sap.ui.model.FilterOperator.NE,
+                        value1: "Resigned"
+                    })
+                );
+                
+                const aContexts = await oListBinding.requestContexts(0, 10000);
+                const totalCount = aContexts.length;
+                
+                console.log("📊 Total Head Count fetched:", totalCount, "contexts:", aContexts.length);
+                
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/totalHeadCount", totalCount);
+                    console.log("✅ Total Head Count updated in model:", oHomeCountsModel.getProperty("/totalHeadCount"));
+                } else {
+                    console.error("❌ homeCounts model not found!");
+                }
+            } catch (error) {
+                console.error("❌ Error loading Total Head Count:", error);
+                console.error("Error details:", error.message, error.stack);
+            }
+        },
+        
+        // ✅ Load Allocated Count (employees with status='Allocated')
+        _loadAllocatedCount: async function() {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData V4 model not found for Allocated Count");
+                return;
+            }
+            
+            try {
+                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+                    new sap.ui.model.Filter({
+                        path: "status",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: "Allocated"
+                    })
+                );
+                
+                const aContexts = await oListBinding.requestContexts(0, 10000);
+                const allocatedCount = aContexts.length;
+                
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/allocatedCount", allocatedCount);
+                }
+                console.log("✅ Allocated Count:", allocatedCount);
+            } catch (error) {
+                console.error("❌ Error loading Allocated Count:", error);
+            }
+        },
+        
+        // ✅ Load Pre Allocated Count (employees with status='Pre Allocated')
+        _loadPreAllocatedCount: async function() {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData V4 model not found for Pre Allocated Count");
+                return;
+            }
+            
+            try {
+                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+                    new sap.ui.model.Filter({
+                        path: "status",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: "Pre Allocated"
+                    })
+                );
+                
+                const aContexts = await oListBinding.requestContexts(0, 10000);
+                const preAllocatedCount = aContexts.length;
+                
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/preAllocatedCount", preAllocatedCount);
+                }
+                console.log("✅ Pre Allocated Count:", preAllocatedCount);
+            } catch (error) {
+                console.error("❌ Error loading Pre Allocated Count:", error);
+            }
+        },
+        
+        // ✅ Load Unproductive Bench Count (employees with status='Unproductive Bench')
+        _loadUnproductiveBenchCount: async function() {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData V4 model not found for Unproductive Bench Count");
+                return;
+            }
+            
+            try {
+                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+                    new sap.ui.model.Filter({
+                        path: "status",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: "Unproductive Bench"
+                    })
+                );
+                
+                const aContexts = await oListBinding.requestContexts(0, 10000);
+                const unproductiveBenchCount = aContexts.length;
+                
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/unproductiveBenchCount", unproductiveBenchCount);
+                }
+                console.log("✅ Unproductive Bench Count:", unproductiveBenchCount);
+            } catch (error) {
+                console.error("❌ Error loading Unproductive Bench Count:", error);
+            }
+        },
+        
+        // ✅ Load On Leave Count (employees with status='Productive Bench')
+        _loadOnLeaveCount: async function() {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) {
+                console.error("❌ OData V4 model not found for On Leave Count");
+                return;
+            }
+            
+            try {
+                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+                    new sap.ui.model.Filter({
+                        path: "status",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: "Productive Bench"
+                    })
+                );
+                
+                const aContexts = await oListBinding.requestContexts(0, 10000);
+                const onLeaveCount = aContexts.length;
+                
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/onLeaveCount", onLeaveCount);
+                }
+                console.log("✅ On Leave Count:", onLeaveCount);
+            } catch (error) {
+                console.error("❌ Error loading On Leave Count:", error);
+            }
+        },
+        
+        // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
+        _calculateBenchCount: function() {
+            const oHomeCountsModel = this.getView().getModel("homeCounts");
+            if (!oHomeCountsModel) {
+                return;
+            }
+            
+            const oData = oHomeCountsModel.getData();
+            const benchCount = (oData.preAllocatedCount || 0) + 
+                             (oData.unproductiveBenchCount || 0) + 
+                             (oData.onLeaveCount || 0);
+            
+            oHomeCountsModel.setProperty("/benchCount", benchCount);
+            console.log("✅ Bench Count calculated:", benchCount);
+        },
+        
         // ✅ NEW: Set default filters for each entity
         _setDefaultFilters: function() {
             const oFilterModel = this.getView().getModel("filterModel");
@@ -5675,6 +6034,18 @@ sap.ui.define([
                 sFragmentName = "Opportunities";
             } else if (sFilterBarId.includes("employeeFilterBar")) {
                 sFragmentName = "Employees";
+            } else if (sFilterBarId.includes("employeeBenchReportFilterBar")) {
+                sFragmentName = "EmployeeBenchReport";
+            } else if (sFilterBarId.includes("employeeProbableReleaseReportFilterBar")) {
+                sFragmentName = "EmployeeProbableReleaseReport";
+            } else if (sFilterBarId.includes("revenueForecastReportFilterBar")) {
+                sFragmentName = "RevenueForecastReport";
+            } else if (sFilterBarId.includes("employeeAllocationReportFilterBar")) {
+                sFragmentName = "EmployeeAllocationReport";
+            } else if (sFilterBarId.includes("employeeSkillReportFilterBar")) {
+                sFragmentName = "EmployeeSkillReport";
+            } else if (sFilterBarId.includes("projectsNearingCompletionReportFilterBar")) {
+                sFragmentName = "ProjectsNearingCompletionReport";
             }
             
             const oFilterModel = this.getView().getModel("filterModel");

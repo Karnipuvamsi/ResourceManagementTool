@@ -107,24 +107,34 @@
 
                     <tnt:NavigationListGroup text="Reports">
                         <tnt:NavigationListItem
-                            key="bench"
-                            text="Bench"
+                            key="employeeBenchReport"
+                            text="Employee Bench Report"
                             icon="sap-icon://group"
                         />
                         <tnt:NavigationListItem
-                            key="pendingProjects"
-                            text="Pending Projects"
-                            icon="sap-icon://pending"
+                            key="employeeProbableReleaseReport"
+                            text="Employee Probable Release Report"
+                            icon="sap-icon://calendar"
                         />
                         <tnt:NavigationListItem
-                            key="pendingOpportunities"
-                            text="Pending Opportunities"
-                            icon="sap-icon://initiative"
+                            key="revenueForecastReport"
+                            text="Revenue Forecast Report"
+                            icon="sap-icon://money-bills"
                         />
                         <tnt:NavigationListItem
-                            key="reports"
-                            text="Reports"
-                            icon="sap-icon://business-objects-experience"
+                            key="employeeAllocationReport"
+                            text="Employee Allocation Report"
+                            icon="sap-icon://employee-approvals"
+                        />
+                        <tnt:NavigationListItem
+                            key="employeeSkillReport"
+                            text="Employee Skill Report"
+                            icon="sap-icon://competencies"
+                        />
+                        <tnt:NavigationListItem
+                            key="projectsNearingCompletionReport"
+                            text="Projects Nearing Completion Report"
+                            icon="sap-icon://complete"
                         />
                     </tnt:NavigationListGroup>
                 </tnt:NavigationList>
@@ -141,29 +151,29 @@
                         <HBox id="_IDGenHBox7" justifyContent="Start" alignItems="Start">
                             <VBox id="_IDGenVBox170" class="benchC Card">
                                 <Text id="_IDGenText95" text="Total Head Count" class="myCardTitle"/>
-                                <Text id="_IDGenText160" text="1190" class="myCardValue"/>
+                                <Text id="_IDGenText160" text="{homeCounts>/totalHeadCount}" class="myCardValue"/>
                             </VBox>
                             <VBox id="_IDGenVBox10" class="allocatedC Card">
                                 <Text id="_IDGenText9" text="Allocated Count" class="myCardTitle"/>
-                                <Text id="_IDGenText10" text="995" class="myCardValue"/>
+                                <Text id="_IDGenText10" text="{homeCounts>/allocatedCount}" class="myCardValue"/>
                             </VBox>
                             <VBox id="_IDGenVBox510" class="totalHeadC Card">
                                 <Text id="_IDGenText59" text="Bench Count" class="myCardTitle"/>
-                                <Text id="_IDGenText150" text="195" class="myCardValue"/>
+                                <Text id="_IDGenText150" text="{homeCounts>/benchCount}" class="myCardValue"/>
                             </VBox>
                         </HBox>
                         <HBox justifyContent="Start" alignItems="Start">
                             <VBox class="unallocatedBenchC Card">
-                                <Text text="Unallocated Bench" class="myCardTitle" />
-                                <Text text="120" class="myCardValue" />
+                                <Text text="Pre Allocated" class="myCardTitle" />
+                                <Text text="{homeCounts>/preAllocatedCount}" class="myCardValue" />
                             </VBox>
                             <VBox class="unproductiveBenchC Card">
                                 <Text text="Unproductive Bench" class="myCardTitle" />
-                                <Text text="45" class="myCardValue" />
+                                <Text text="{homeCounts>/unproductiveBenchCount}" class="myCardValue" />
                             </VBox>
                             <VBox class="netBenchC Card">
-                                <Text text="Net Bench" class="myCardTitle"/>
-                                <Text text="30" class="myCardValue" />
+                                <Text text="On Leave" class="myCardTitle"/>
+                                <Text text="{homeCounts>/onLeaveCount}" class="myCardValue" />
                             </VBox>
                         </HBox>
                         <HBox justifyContent="Start" alignItems="Start">
@@ -205,20 +215,29 @@
                         showHeader="false"
                     />
                     <!-- <Page id="requirementsPage" title="Requirements" /> -->
+                    <!-- Report Pages -->
                     <Page
-                        id="benchPage"
+                        id="employeeBenchReportPage"
                         showHeader="false"
                     />
                     <Page
-                        id="pendingProjectsPage"
+                        id="employeeProbableReleaseReportPage"
                         showHeader="false"
                     />
                     <Page
-                        id="pendingOpportunitiesPage"
+                        id="revenueForecastReportPage"
                         showHeader="false"
                     />
                     <Page
-                        id="reportsPage"
+                        id="employeeAllocationReportPage"
+                        showHeader="false"
+                    />
+                    <Page
+                        id="employeeSkillReportPage"
+                        showHeader="false"
+                    />
+                    <Page
+                        id="projectsNearingCompletionReportPage"
                         showHeader="false"
                     />
                 </pages>

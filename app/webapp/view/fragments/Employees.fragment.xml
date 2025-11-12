@@ -7,9 +7,9 @@
     <layout:DynamicPage
         id="employeeDynamicPage"
         fitContent="false"
-        preserveHeaderStateOnScroll="true"
+        preserveHeaderStateOnScroll="false"
         headerExpanded="true"
-        toggleHeaderOnTitleClick="true">
+        toggleHeaderOnTitleClick="false">
         
         <!-- Optional Page Title -->
         <layout:title>
@@ -22,8 +22,8 @@
         
         <!-- ========== FILTERBAR ========== -->
         <layout:header>
-            <layout:DynamicPageHeader pinnable="true">
-                <VBox class="sapUiSmallMargin">
+            <layout:DynamicPageHeader pinnable="false">
+                <VBox class="sapUiTinyMargin">
                     <mdc:FilterBar
                         id="employeeFilterBar"
                         delegate='{
@@ -274,8 +274,8 @@
                                             <core:Item key="PreAllocated" text="Pre Allocated" />
                                             <core:Item key="Allocated" text="Allocated" />
                                             <core:Item key="Resigned" text="Resigned" />
-                                            <core:Item key="UnproductiveBench" text="Unproductive Bench" />
-                                            <core:Item key="ProductiveBench" text="Productive Bench" />
+                                            <core:Item key="Unproductive Bench" text="Unproductive Bench" />
+                                            <core:Item key="Productive Bench" text="Productive Bench" />
                                         </items>
                                     </Select>
                                     <Label text="Last Working Date" />

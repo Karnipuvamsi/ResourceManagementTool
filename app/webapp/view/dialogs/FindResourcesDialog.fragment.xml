@@ -29,7 +29,7 @@
                         filters: [{
                             path: 'status',
                             operator: 'EQ',
-                            value1: 'UnproductiveBench'
+                            value1: 'Unproductive Bench'
                         }],
                         sorter: [{
                             path: 'fullName',

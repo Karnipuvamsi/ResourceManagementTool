@@ -1,0 +1,140 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+                         xmlns="sap.m"
+                         xmlns:f="sap.ui.layout.form"
+                         xmlns:mdc="sap.ui.mdc"
+                         xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="employeeProbableReleaseReportDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="false"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="false">
+        
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Employee Probable Release Report" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="false">
+                <VBox class="sapUiTinyMargin">
+                    <mdc:FilterBar
+                        id="employeeProbableReleaseReportFilterBar"
+                        delegate='{
+                            "name": "glassboard/delegate/EmployeeProbableReleaseReportFilterBarDelegate",
+                            "payload": {
+                                "collectionPath": "EmployeeProbableReleaseReport"
+                            }
+                        }'
+                        search="onFilterSearch"
+                        showAdaptFiltersButton="true"
+                        showGoButton="true"
+                        showRestoreButton="true"
+                        showVariantManagement="true"
+                        variantBackreference="employeeProbableReleaseReportFilterBar"
+                        filterConditions="{filterModel>/EmployeeProbableReleaseReport/conditions}"
+                        p13nMode="Item,Value">
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Employee Name Filter -->
+                            <mdc:FilterField
+                                id="filterProbableReleaseEmployeeName"
+                                label="Employee Name"
+                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/employeeName}"
+                                propertyKey="employeeName"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Current Project Filter -->
+                            <mdc:FilterField
+                                id="filterProbableReleaseCurrentProject"
+                                label="Current Project"
+                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/currentProject}"
+                                propertyKey="currentProject"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Days To Release Filter -->
+                            <mdc:FilterField
+                                id="filterProbableReleaseDaysToRelease"
+                                label="Days To Release"
+                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/daysToRelease}"
+                                propertyKey="daysToRelease"
+                                maxConditions="-1"
+                                required="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <layout:content>
+            <VBox class="sapUiSmallMargin">
+                <Panel class="sapUiResponsiveMargin" expandable="false">
+                    <ScrollContainer height="600px" vertical="true" horizontal="false">
+                        <mdc:Table
+                            id="EmployeeProbableReleaseReportTable"
+                            header="Employee Probable Release Report"
+                            class="verticalsTable rowDetailToggleTable"
+                            autoBindOnInit="true"
+                            busyIndicatorDelay="0"
+                            width="100%"
+                            p13nMode="Column,Sort,Filter,Group"
+                            selectionMode="None"
+                            delegate='{
+                                "name": "glassboard/delegate/EmployeeProbableReleaseReportTableDelegate",
+                                "payload": {
+                                    "collectionPath": "EmployeeProbableReleaseReport"
+                                }
+                            }'
+                            showRowCount="true"
+                            threshold="1000"
+                            enableExport="true"
+                            enableAutoColumnWidth="false"
+                            filter="employeeProbableReleaseReportFilterBar"
+                            filterConditions="{filterModel>/EmployeeProbableReleaseReport/conditions}">
+                            
+                            <mdc:type>
+                                <mdct:ResponsiveTableType />
+                            </mdc:type>
+                            <mdc:actions>
+                                <SegmentedButton 
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
+                                    <items>
+                                        <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
+                                        <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
+                                    </items>
+                                </SegmentedButton>
+                            </mdc:actions>
+                        </mdc:Table>
+                    </ScrollContainer>
+                </Panel>
+            </VBox>
+        </layout:content>
+    </layout:DynamicPage>
+</core:FragmentDefinition>
+

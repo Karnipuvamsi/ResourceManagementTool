@@ -1,0 +1,141 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+                         xmlns="sap.m"
+                         xmlns:f="sap.ui.layout.form"
+                         xmlns:mdc="sap.ui.mdc"
+                         xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="revenueForecastReportDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="false"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="false">
+        
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Revenue Forecast Report" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="false">
+                <VBox class="sapUiTinyMargin">
+                    <mdc:FilterBar
+                        id="revenueForecastReportFilterBar"
+                        delegate='{
+                            "name": "glassboard/delegate/RevenueForecastReportFilterBarDelegate",
+                            "payload": {
+                                "collectionPath": "RevenueForecastReport"
+                            }
+                        }'
+                        search="onFilterSearch"
+                        showAdaptFiltersButton="true"
+                        showGoButton="true"
+                        showRestoreButton="true"
+                        showVariantManagement="true"
+                        variantBackreference="revenueForecastReportFilterBar"
+                        filterConditions="{filterModel>/RevenueForecastReport/conditions}"
+                        p13nMode="Item,Value">
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Project Name Filter -->
+                            <mdc:FilterField
+                                id="filterRevenueForecastProjectName"
+                                label="Project Name"
+                                conditions="{filterModel>/RevenueForecastReport/conditions/projectName}"
+                                propertyKey="projectName"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Customer Filter -->
+                            <mdc:FilterField
+                                id="filterRevenueForecastCustomer"
+                                label="Customer"
+                                conditions="{filterModel>/RevenueForecastReport/conditions/customer}"
+                                propertyKey="customer"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Status Filter -->
+                            <mdc:FilterField
+                                id="filterRevenueForecastStatus"
+                                label="Status"
+                                conditions="{filterModel>/RevenueForecastReport/conditions/status}"
+                                propertyKey="status"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <layout:content>
+            <VBox class="sapUiSmallMargin">
+                <Panel class="sapUiResponsiveMargin" expandable="false">
+                    <ScrollContainer height="600px" vertical="true" horizontal="false">
+                        <mdc:Table
+                            id="RevenueForecastReportTable"
+                            header="Revenue Forecast Report"
+                            class="verticalsTable rowDetailToggleTable"
+                            autoBindOnInit="true"
+                            busyIndicatorDelay="0"
+                            width="100%"
+                            p13nMode="Column,Sort,Filter,Group"
+                            selectionMode="None"
+                            delegate='{
+                                "name": "glassboard/delegate/RevenueForecastReportTableDelegate",
+                                "payload": {
+                                    "collectionPath": "RevenueForecastReport"
+                                }
+                            }'
+                            showRowCount="true"
+                            threshold="1000"
+                            enableExport="true"
+                            enableAutoColumnWidth="false"
+                            filter="revenueForecastReportFilterBar"
+                            filterConditions="{filterModel>/RevenueForecastReport/conditions}">
+                            
+                            <mdc:type>
+                                <mdct:ResponsiveTableType />
+                            </mdc:type>
+                            <mdc:actions>
+                                <SegmentedButton 
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
+                                    <items>
+                                        <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
+                                        <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
+                                    </items>
+                                </SegmentedButton>
+                            </mdc:actions>
+                        </mdc:Table>
+                    </ScrollContainer>
+                </Panel>
+            </VBox>
+        </layout:content>
+    </layout:DynamicPage>
+</core:FragmentDefinition>
+

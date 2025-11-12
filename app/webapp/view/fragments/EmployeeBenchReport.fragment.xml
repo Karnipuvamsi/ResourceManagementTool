@@ -1,0 +1,141 @@
+<core:FragmentDefinition xmlns:core="sap.ui.core"
+                         xmlns="sap.m"
+                         xmlns:f="sap.ui.layout.form"
+                         xmlns:mdc="sap.ui.mdc"
+                         xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:layout="sap.f">
+    <layout:DynamicPage
+        id="employeeBenchReportDynamicPage"
+        fitContent="false"
+        preserveHeaderStateOnScroll="false"
+        headerExpanded="true"
+        toggleHeaderOnTitleClick="false">
+        
+        <layout:title>
+            <layout:DynamicPageTitle>
+                <layout:heading>
+                    <Title text="Employee Bench Report" level="H2" />
+                </layout:heading>
+            </layout:DynamicPageTitle>
+        </layout:title>
+        
+        <layout:header>
+            <layout:DynamicPageHeader pinnable="false">
+                <VBox class="sapUiTinyMargin">
+                    <mdc:FilterBar
+                        id="employeeBenchReportFilterBar"
+                        delegate='{
+                            "name": "glassboard/delegate/EmployeeBenchReportFilterBarDelegate",
+                            "payload": {
+                                "collectionPath": "EmployeeBenchReport"
+                            }
+                        }'
+                        search="onFilterSearch"
+                        showAdaptFiltersButton="true"
+                        showGoButton="true"
+                        showRestoreButton="true"
+                        showVariantManagement="true"
+                        variantBackreference="employeeBenchReportFilterBar"
+                        filterConditions="{filterModel>/EmployeeBenchReport/conditions}"
+                        p13nMode="Item,Value">
+                        <!-- Static filter items - Default filters -->
+                        <mdc:filterItems>
+                            <!-- Employee Name Filter -->
+                            <mdc:FilterField
+                                id="filterEmployeeBenchEmployeeName"
+                                label="Employee Name"
+                                conditions="{filterModel>/EmployeeBenchReport/conditions/employeeName}"
+                                propertyKey="employeeName"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Status Filter -->
+                            <mdc:FilterField
+                                id="filterEmployeeBenchStatus"
+                                label="Status"
+                                conditions="{filterModel>/EmployeeBenchReport/conditions/status}"
+                                propertyKey="status"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Location Filter -->
+                            <mdc:FilterField
+                                id="filterEmployeeBenchLocation"
+                                label="Location"
+                                conditions="{filterModel>/EmployeeBenchReport/conditions/location}"
+                                propertyKey="location"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                        </mdc:filterItems>
+                    </mdc:FilterBar>
+                </VBox>
+            </layout:DynamicPageHeader>
+        </layout:header>
+        
+        <layout:content>
+            <VBox class="sapUiSmallMargin">
+                <Panel class="sapUiResponsiveMargin" expandable="false">
+                    <ScrollContainer height="600px" vertical="true" horizontal="false">
+                        <mdc:Table
+                            id="EmployeeBenchReportTable"
+                            header="Employee Bench Report"
+                            class="verticalsTable rowDetailToggleTable"
+                            autoBindOnInit="true"
+                            busyIndicatorDelay="0"
+                            width="100%"
+                            p13nMode="Column,Sort,Filter,Group"
+                            selectionMode="None"
+                            delegate='{
+                                "name": "glassboard/delegate/EmployeeBenchReportTableDelegate",
+                                "payload": {
+                                    "collectionPath": "EmployeeBenchReport"
+                                }
+                            }'
+                            showRowCount="true"
+                            threshold="1000"
+                            enableExport="true"
+                            enableAutoColumnWidth="false"
+                            filter="employeeBenchReportFilterBar"
+                            filterConditions="{filterModel>/EmployeeBenchReport/conditions}">
+                            
+                            <mdc:type>
+                                <mdct:ResponsiveTableType />
+                            </mdc:type>
+                            <mdc:actions>
+                                <SegmentedButton 
+                                    selectedKey="less"
+                                    selectionChange="onToggleRowDetail"
+                                    tooltip="Toggle Row Details">
+                                    <items>
+                                        <SegmentedButtonItem key="more" icon="sap-icon://detail-more" tooltip="Show More"/>
+                                        <SegmentedButtonItem key="less" icon="sap-icon://detail-less" tooltip="Show Less"/>
+                                    </items>
+                                </SegmentedButton>
+                            </mdc:actions>
+                        </mdc:Table>
+                    </ScrollContainer>
+                </Panel>
+            </VBox>
+        </layout:content>
+    </layout:DynamicPage>
+</core:FragmentDefinition>
+

@@ -1,16 +1,20 @@
-// RESOURCE MANAGEMENT TOOL - REPORT VIEWS
-// Report Views for Analytics and Reporting
+// ============================================
+// RESOURCE ALLOCATION SYSTEM - REPORT VIEWS
+// ============================================
+// Version: 2.0 - Updated based on actual schema
+// Date: November 2025
+
+namespace com.company.resourceallocation.reports;
 
 using {db} from '../schema';
-
-namespace reports;
 
 // ============================================
 // MANDATORY REPORT VIEWS
 // ============================================
 
 // Employee Bench Report View
-view EmployeeBenchReportView as select from db.Employee as e {
+define view EmployeeBenchReportView as
+select from db.Employee as e {
     key e.ohrId,
         e.fullName as employeeName,
         e.band,
@@ -21,31 +25,36 @@ view EmployeeBenchReportView as select from db.Employee as e {
         e.mailid as email,
         e.status,
         // Calculate days on bench
-        case 
-            when e.status in ('UnproductiveBench', 'ProductiveBench') 
-            then days_between(current_date, coalesce(
-                (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
-                 where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
-                e.doj
-            ))
-            else 0
-        end as daysOnBench
+        cast(
+            case 
+                when e.status in ('Unproductive Bench', 'Productive Bench') 
+                then days_between(current_date, coalesce(
+                    (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
+                     where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
+                    e.doj
+                ))
+                else 0
+            end
+            as Integer
+        ) as daysOnBench
 }
-where e.status in ('UnproductiveBench', 'ProductiveBench');
+where e.status in ('Unproductive Bench', 'Productive Bench');
 
 // Employee Probable Release Report View
-view EmployeeProbableReleaseView as select from db.Employee as e
-    join db.EmployeeProjectAllocation as epa on e.ohrId = epa.employeeId
-    join db.Project as p on epa.projectId = p.sapPId
-    join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
-    join db.Customer as c on opp.customerId = c.SAPcustId {
+define view EmployeeProbableReleaseView as
+select from db.Employee as e
+    inner join db.EmployeeProjectAllocation as epa on e.ohrId = epa.employeeId
+    inner join db.Project as p on epa.projectId = p.sapPId
+    inner join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
+    inner join db.Customer as c on opp.customerId = c.SAPcustId {
     key e.ohrId,
+    key epa.allocationId,
         e.fullName as employeeName,
         e.band,
         p.projectName as currentProject,
         c.customerName as customer,
         epa.endDate as releaseDate,
-        days_between(epa.endDate, current_date) as daysToRelease,
+        cast(days_between(epa.endDate, current_date) as Integer) as daysToRelease,
         e.skills,
         e.location,
         epa.status as allocationStatus
@@ -54,7 +63,8 @@ where epa.status = 'Active'
   and epa.endDate >= current_date;
 
 // Revenue Forecast Report View
-view RevenueForecastView as select from db.Project as p
+define view RevenueForecastView as
+select from db.Project as p
     join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
     join db.Customer as c on opp.customerId = c.SAPcustId {
     key p.sapPId,
@@ -66,64 +76,88 @@ view RevenueForecastView as select from db.Project as p
         opp.tcv as totalRevenue,
         opp.probability,
         // Calculate weighted revenue based on probability
-        case opp.probability
-            when '0%-ProposalStage' then opp.tcv * 0.0
-            when '33%-SoWSent' then opp.tcv * 0.33
-            when '85%-SoWSigned' then opp.tcv * 0.85
-            when '100%-PurchaseOrderReceived' then opp.tcv * 1.0
-            else opp.tcv * 0.5
-        end as weightedRevenue,
+        cast(
+            case opp.probability
+                when '0%-ProposalStage' then opp.tcv * 0.0
+                when '33%-SoWSent' then opp.tcv * 0.33
+                when '85%-SoWSigned' then opp.tcv * 0.85
+                when '100%-PurchaseOrderReceived' then opp.tcv * 1.0
+                else opp.tcv * 0.5
+            end
+            as Decimal(15,2)
+        ) as weightedRevenue,
         c.customerName as customer,
         c.vertical,
-        year(p.startDate) as startYear,
-        month(p.startDate) as startMonth
+        cast(year(p.startDate) as String) as startYear,
+        cast(month(p.startDate) as String) as startMonth
 }
 where p.status in ('Active', 'Planned');
 
 // Employee Allocation Report View
-view EmployeeAllocationReportView as select from db.Employee as e
-    left outer join db.EmployeeProjectAllocation as epa on e.ohrId = epa.employeeId 
-        and epa.status = 'Active'
-    left outer join db.Project as p on epa.projectId = p.sapPId
-    left outer join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
-    left outer join db.Customer as c on opp.customerId = c.SAPcustId {
-    key e.ohrId,
-        e.fullName as employeeName,
-        e.band,
-        e.employeeType,
-        e.status,
-        p.projectName as currentProject,
-        c.customerName as customer,
-        epa.startDate as allocationStartDate,
-        epa.endDate as allocationEndDate,
-        days_between(epa.endDate, current_date) as daysRemaining,
-        epa.allocationPercentage as utilizationPercentage
+define view EmployeeAllocationReportView as
+select from db.Employee as e
+inner join db.EmployeeProjectAllocation as epa
+  on e.ohrId = epa.employeeId
+  and epa.status = 'Active'
+inner join db.Project as p
+  on epa.projectId = p.sapPId
+inner join db.Opportunity as opp
+  on p.oppId = opp.sapOpportunityId
+inner join db.Customer as c
+  on opp.customerId = c.SAPcustId
+{
+  key e.ohrId as employeeId,
+  key epa.allocationId,
+  
+  e.fullName as employeeName,
+  e.band,
+  e.employeeType,
+  e.status,
+  p.projectName as currentProject,
+  c.customerName as customer,
+  epa.startDate as allocationStartDate,
+  epa.endDate as allocationEndDate,
+  cast(days_between(epa.endDate, current_date) as Integer) as daysRemaining,
+  epa.allocationPercentage as utilizationPercentage
 }
-where e.status != 'Resigned' or e.status is null;
+where
+  e.lwd is null
+  and e.status not in ('Resigned', 'Productive Bench', 'Unproductive Bench');
 
 // Employee Skill Report View
-view EmployeeSkillReportView as select from db.Skills as s {
+define view EmployeeSkillReportView as
+select from db.Skills as s {
     key id,
         name as skillName,
         category,
         // Count employees with this skill
-        (select count(distinct employeeId) as cnt from db.EmployeeSkill as es
-         where es.skillId = s.id) as totalEmployees,
+        cast(
+            (select count(distinct employeeId) from db.EmployeeSkill as es
+             where es.skillId = s.id)
+            as Integer
+        ) as totalEmployees,
         // Count available employees (on bench)
-        (select count(distinct es2.employeeId) as cnt from db.EmployeeSkill as es2
-         join db.Employee as e2 on es2.employeeId = e2.ohrId
-         where es2.skillId = s.id 
-           and e2.status in ('UnproductiveBench', 'ProductiveBench')) as availableEmployees,
+        cast(
+            (select count(distinct es2.employeeId) from db.EmployeeSkill as es2
+             join db.Employee as e2 on es2.employeeId = e2.ohrId
+             where es2.skillId = s.id 
+               and e2.status in ('Unproductive Bench', 'Productive Bench'))
+            as Integer
+        ) as availableEmployees,
         // Count allocated employees
-        (select count(distinct es3.employeeId) as cnt from db.EmployeeSkill as es3
-         join db.Employee as e3 on es3.employeeId = e3.ohrId
-         join db.EmployeeProjectAllocation as epa3 on e3.ohrId = epa3.employeeId
-         where es3.skillId = s.id 
-           and epa3.status = 'Active') as allocatedEmployees
+        cast(
+            (select count(distinct es3.employeeId) from db.EmployeeSkill as es3
+             join db.Employee as e3 on es3.employeeId = e3.ohrId
+             join db.EmployeeProjectAllocation as epa3 on e3.ohrId = epa3.employeeId
+             where es3.skillId = s.id 
+               and epa3.status = 'Active')
+            as Integer
+        ) as allocatedEmployees
 };
 
 // Projects Nearing Completion Report View
-view ProjectsNearingCompletionView as select from db.Project as p
+define view ProjectsNearingCompletionView as
+select from db.Project as p
     join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
     join db.Customer as c on opp.customerId = c.SAPcustId
     left outer join db.Employee as e on p.gpm = e.ohrId {
@@ -132,18 +166,24 @@ view ProjectsNearingCompletionView as select from db.Project as p
         p.projectName,
         p.projectType,
         p.endDate as completionDate,
-        days_between(p.endDate, current_date) as daysToCompletion,
+        cast(days_between(p.endDate, current_date) as Integer) as daysToCompletion,
         p.status,
         // Calculate completion risk
-        case 
-            when days_between(p.endDate, current_date) <= 30 then 'Critical'
-            when days_between(p.endDate, current_date) <= 60 then 'High'
-            when days_between(p.endDate, current_date) <= 90 then 'Medium'
-            else 'Low'
-        end as completionRisk,
+        cast(
+            case 
+                when days_between(p.endDate, current_date) <= 30 then 'Critical'
+                when days_between(p.endDate, current_date) <= 60 then 'High'
+                when days_between(p.endDate, current_date) <= 90 then 'Medium'
+                else 'Low'
+            end
+            as String
+        ) as completionRisk,
         // Count employees on project
-        (select count(*) as cnt from db.EmployeeProjectAllocation as epa
-         where epa.projectId = p.sapPId and epa.status = 'Active') as employeeCount,
+        cast(
+            (select count(*) from db.EmployeeProjectAllocation as epa
+             where epa.projectId = p.sapPId and epa.status = 'Active')
+            as Integer
+        ) as employeeCount,
         e.fullName as projectManager,
         e.mailid as projectManagerEmail,
         c.customerName as customer
@@ -169,7 +209,7 @@ view SupervisorTeamAllocationView as select from db.Employee as e
         e.supervisorOHR,
         p.projectName as currentProject,
         epa.allocationPercentage as allocationPercentage,
-        days_between(epa.endDate, current_date) as daysRemainingOnProject
+        cast(days_between(epa.endDate, current_date) as Integer) as daysRemainingOnProject
 }
 where e.supervisorOHR is not null;
 

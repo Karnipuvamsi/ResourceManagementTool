@@ -7,9 +7,9 @@
     <layout:DynamicPage
         id="opportunityDynamicPage"
         fitContent="false"
-        preserveHeaderStateOnScroll="true"
+        preserveHeaderStateOnScroll="false"
         headerExpanded="true"
-        toggleHeaderOnTitleClick="true">
+        toggleHeaderOnTitleClick="false">
         
         <!-- Optional Page Title -->
         <layout:title>
@@ -22,8 +22,8 @@
         
         <!-- ========== FILTERBAR ========== -->
         <layout:header>
-            <layout:DynamicPageHeader pinnable="true">
-                <VBox class="sapUiSmallMargin">
+            <layout:DynamicPageHeader pinnable="false">
+                <VBox class="sapUiTinyMargin">
                     <mdc:FilterBar
                         id="opportunityFilterBar"
                         delegate='{

@@ -112,18 +112,29 @@ sap.ui.define([
                     })
                     .then(() => {
                         console.log("[Controller] External state applied; rebinding table");
-                        // Ensure actions column exists for inline accept/cancel
-                        const oDelegateAgain = oTable.getControlDelegate();
-                        // Avoid duplicates by ID
-                        if (!oTable.getColumns().some(function (c) { return c.getId && c.getId().endsWith("--col-actions"); })) {
-                            return oDelegateAgain.addItem(oTable, "_actions").then(function (oCol) {
-                                oTable.addColumn(oCol);
-                                oTable.rebind();
-                            }).catch(function () { 
+                        // Check if this is a read-only report table (has "Report" in ID or is readonly)
+                        const sTableId = oTable.getId() || "";
+                        const bIsReportTable = sTableId.includes("Report") || oTable.getMetadata().getName() === "sap.ui.mdc.Table";
+                        
+                        // Only add actions column for editable tables (not reports)
+                        if (!bIsReportTable) {
+                            // Ensure actions column exists for inline accept/cancel
+                            const oDelegateAgain = oTable.getControlDelegate();
+                            // Avoid duplicates by ID
+                            if (!oTable.getColumns().some(function (c) { return c.getId && c.getId().endsWith("--col-actions"); })) {
+                                return oDelegateAgain.addItem(oTable, "_actions").then(function (oCol) {
+                                    oTable.addColumn(oCol);
+                                    oTable.rebind();
+                                }).catch(function () { 
+                                    oTable.rebind();
+                                    return Promise.resolve();
+                                });
+                            } else {
                                 oTable.rebind();
                                 return Promise.resolve();
-                            });
+                            }
                         } else {
+                            // For report tables, just rebind without actions column
                             oTable.rebind();
                             return Promise.resolve();
                         }
@@ -2312,8 +2323,12 @@ sap.ui.define([
         onToggleRowDetail: function (oEvent) {
             const sKey = oEvent.getParameters("key").item.mProperties.key;
 
-            // Detect which table is currently visible
-            const aTableIds = ["Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses", "Res", "Allocations"]; // ✅ Added: "Res", "Allocations"
+            // Detect which table is currently visible - includes main tables and report tables
+            const aTableIds = [
+                "Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses", "Res", "Allocations",
+                "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
+                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable"
+            ];
             aTableIds.forEach((sTableId) => {
                 const oTable = this.byId(sTableId);
                 if (oTable && oTable.getVisible()) {
