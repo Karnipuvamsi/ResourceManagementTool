@@ -2375,6 +2375,54 @@ sap.ui.define([
         _createMultipleAllocationsFromFindResources: function (aAllocationData, oModel, aEmployees) {
             console.log(`Creating ${aAllocationData.length} allocation(s)...`);
             
+            // ✅ NEW: Validate project resource limits before employee validation
+            if (aAllocationData.length > 0) {
+                const sProjectId = aAllocationData[0].projectId;
+                if (sProjectId) {
+                    // Fetch project details to check requiredResources vs allocatedResources
+                    const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
+                    oProjectBinding.requestObject().then((oProject) => {
+                        const iRequiredResources = oProject.requiredResources || 0;
+                        const iCurrentAllocated = oProject.allocatedResources || 0;
+                        const iNewAllocations = aAllocationData.length;
+                        const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
+                        
+                        console.log(`🔵 Project ${sProjectId} validation: Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
+                        
+                        if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
+                            const iExcess = iTotalAfterAllocation - iRequiredResources;
+                            const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
+                            
+                            let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
+                            sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
+                            sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
+                            sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
+                            sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
+                            sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
+                            
+                            sap.m.MessageBox.error(sErrorMessage, {
+                                title: "Project Resource Limit Exceeded"
+                            });
+                            return;
+                        }
+                        
+                        // Project validation passed - continue with employee validation
+                        this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
+                    }).catch((oError) => {
+                        console.warn("⚠️ Could not fetch project details for validation:", oError);
+                        // Continue with employee validation even if project fetch fails
+                        this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
+                    });
+                    return; // Exit early - validation will continue in promise callback
+                }
+            }
+            
+            // No project ID - continue with employee validation
+            this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
+        },
+        
+        // ✅ NEW: Helper function to validate employees and create allocations from Find Resources
+        _validateAndCreateFromFindResources: function (aAllocationData, oModel, aEmployees) {
             // ✅ NEW: Validate each employee's allocation percentage before creating
             const aValidAllocationData = [];
             const aInvalidEmployees = [];
@@ -2587,6 +2635,55 @@ sap.ui.define([
         // ✅ NEW: Helper function to create multiple allocations from AllocateDialog
         _createMultipleAllocationsFromAllocateDialog: function (aAllocationData, oModel, aEmployees, oResTable) {
             console.log(`Creating ${aAllocationData.length} allocation(s) from AllocateDialog...`);
+            
+            // ✅ NEW: Validate project resource limits (safety check - should already be validated in onAllocateConfirm)
+            if (aAllocationData.length > 0) {
+                const sProjectId = aAllocationData[0].projectId;
+                if (sProjectId) {
+                    // Fetch project details to check requiredResources vs allocatedResources
+                    const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
+                    oProjectBinding.requestObject().then((oProject) => {
+                        const iRequiredResources = oProject.requiredResources || 0;
+                        const iCurrentAllocated = oProject.allocatedResources || 0;
+                        const iNewAllocations = aAllocationData.length;
+                        const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
+                        
+                        console.log(`🔵 Project ${sProjectId} validation (AllocateDialog): Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
+                        
+                        if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
+                            const iExcess = iTotalAfterAllocation - iRequiredResources;
+                            const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
+                            
+                            let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
+                            sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
+                            sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
+                            sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
+                            sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
+                            sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
+                            
+                            sap.m.MessageBox.error(sErrorMessage, {
+                                title: "Project Resource Limit Exceeded"
+                            });
+                            return;
+                        }
+                        
+                        // Project validation passed - continue with creation
+                        this._createAllocationsBatch(aAllocationData, oModel, aEmployees, oResTable);
+                    }).catch((oError) => {
+                        console.warn("⚠️ Could not fetch project details for validation:", oError);
+                        // Continue with creation even if project fetch fails
+                        this._createAllocationsBatch(aAllocationData, oModel, aEmployees, oResTable);
+                    });
+                    return; // Exit early - creation will continue in promise callback
+                }
+            }
+            
+            // No project ID - continue with creation
+            this._createAllocationsBatch(aAllocationData, oModel, aEmployees, oResTable);
+        },
+        
+        // ✅ NEW: Helper function to create allocations batch (extracted from _createMultipleAllocationsFromAllocateDialog)
+        _createAllocationsBatch: function (aAllocationData, oModel, aEmployees, oResTable) {
             
             // ✅ CRITICAL: Use correct entity name "Allocations"
             const oBinding = oModel.bindList("/Allocations", null, [], [], {
@@ -2877,7 +2974,7 @@ sap.ui.define([
         },
         
         // ✅ NEW: Allocate confirm handler - creates allocation from AllocateDialog
-        onAllocateConfirm: function () {
+        onAllocateConfirm: async function () {
             // ✅ Get all selected employees from Res fragment (supports multi-select)
             const oResTable = this.byId("Res");
             const aEmployees = [];
@@ -3003,6 +3100,45 @@ sap.ui.define([
             }
             
             console.log(`✅ Allocation percentage from input: "${sPercentage}" -> ${iPercentage}%`);
+            
+            // ✅ NEW: Validate project resource limits before employee validation
+            // Fetch project details to check requiredResources vs allocatedResources
+            // Note: oModel is already declared above
+            let oProject = null;
+            try {
+                const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
+                await oProjectBinding.requestObject();
+                oProject = oProjectBinding.getBoundContext().getObject();
+            } catch (oError) {
+                console.warn("⚠️ Could not fetch project details for validation:", oError);
+            }
+            
+            // ✅ Project-level validation: Check if allocating would exceed requiredResources
+            if (oProject) {
+                const iRequiredResources = oProject.requiredResources || 0;
+                const iCurrentAllocated = oProject.allocatedResources || 0;
+                const iNewAllocations = aEmployees.length;
+                const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
+                
+                console.log(`🔵 Project ${sProjectId} validation: Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
+                
+                if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
+                    const iExcess = iTotalAfterAllocation - iRequiredResources;
+                    const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
+                    
+                    let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
+                    sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
+                    sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
+                    sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
+                    sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
+                    sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
+                    
+                    sap.m.MessageBox.error(sErrorMessage, {
+                        title: "Project Resource Limit Exceeded"
+                    });
+                    return;
+                }
+            }
             
             // ✅ NEW: Validate each employee's allocation percentage before creating
             const aAllocationData = [];

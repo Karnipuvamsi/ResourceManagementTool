@@ -1180,9 +1180,9 @@ module.exports = cds.service.impl(async function () {
 
     // ✅ NEW: Helper function to update project resource counts (allocatedResources and toBeAllocated)
     // This counts ONLY ACTIVE allocations for the project and updates:
-    // - requiredResources = sum of all demand quantities (calculated dynamically)
     // - allocatedResources = count of ACTIVE allocations only
     // - toBeAllocated = requiredResources - allocatedResources
+    // Note: requiredResources is NOT updated - it's a manual field
     this._updateProjectResourceCounts = async function(sProjectId) {
         try {
             // Get project details
@@ -1192,8 +1192,8 @@ module.exports = cds.service.impl(async function () {
                 return;
             }
 
-            // ✅ Calculate requiredResources from sum of demand quantities
-            const iRequiredResources = await this._calculateRequiredResourcesFromDemands(sProjectId);
+            // ✅ Get requiredResources from project (manual field - don't calculate from demands)
+            const iRequiredResources = oProject.requiredResources || 0;
 
             // ✅ Count ONLY ACTIVE allocations for this project
             const aAllocations = await SELECT.from(Allocations).where({ projectId: sProjectId, status: 'Active' });
@@ -1202,7 +1202,7 @@ module.exports = cds.service.impl(async function () {
             // Calculate toBeAllocated
             const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
 
-            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources} (from demands), Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
+            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources} (manual), Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
             console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for project ${sProjectId}`);
             if (aAllocations && aAllocations.length > 0) {
                 console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
@@ -1210,13 +1210,15 @@ module.exports = cds.service.impl(async function () {
 
             // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
             // Don't import from cds.ql - use the service's UPDATE directly
-            // Update all three fields: requiredResources (from demands), allocatedResources (from active allocations), toBeAllocated (calculated)
+            // Update ONLY: allocatedResources (from active allocations), toBeAllocated (calculated)
+            // Do NOT update requiredResources - it's a manual field
             try {
-                const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with({
-                    requiredResources: iRequiredResources,
+                const oUpdateData = {
                     allocatedResources: iAllocatedResources,
                     toBeAllocated: iToBeAllocated
-                });
+                };
+                
+                const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with(oUpdateData);
 
                 console.log(`✅ UPDATE executed for project ${sProjectId}. Rows updated:`, iUpdated);
             } catch (oUpdateError) {
@@ -1228,11 +1230,11 @@ module.exports = cds.service.impl(async function () {
             // ✅ Verify the update by reading back the project
             const oUpdatedProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
             if (oUpdatedProject) {
-                console.log(`✅ Verified update - Project ${sProjectId} now has: allocatedResources=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
+                console.log(`✅ Verified update - Project ${sProjectId} now has: requiredResources=${oUpdatedProject.requiredResources} (unchanged), allocatedResources=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 
                 // ✅ Double-check: if values don't match, log warning
-                if (oUpdatedProject.requiredResources !== iRequiredResources || oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
-                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: required=${iRequiredResources}, allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: required=${oUpdatedProject.requiredResources}, allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
+                if (oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
+                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 }
             } else {
                 console.warn(`⚠️ Could not verify update for project ${sProjectId}`);
