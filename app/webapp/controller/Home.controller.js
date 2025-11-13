@@ -597,10 +597,10 @@ sap.ui.define([
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oEmployeeFilterBar, ["fullName", "status"]);
+                            this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oEmployeeFilterBar, ["fullName", "status"]);
+                            this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
@@ -1877,6 +1877,18 @@ sap.ui.define([
                         console.error("❌ Allocate button not found after dialog load!");
                     }
                     
+                    // ✅ Apply allocation filter to Find Resources table (same as Res table)
+                    // Filter: empallocpercentage <= 95% AND status != "Resigned"
+                    const oFindResourcesTable = this.byId("findResourcesTable");
+                    if (oFindResourcesTable && oFindResourcesTable.getBinding) {
+                        const oBinding = oFindResourcesTable.getBinding("items");
+                        if (oBinding) {
+                            const oAllocationFilter = this._getAllocationFilter();
+                            oBinding.filter([oAllocationFilter]);
+                            console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) to Find Resources table");
+                        }
+                    }
+                    
                     // ✅ Auto-fill dates from project (will use cached data or fetch)
                     this._prefillAllocationDates(sProjectId);
                 });
@@ -1897,6 +1909,18 @@ sap.ui.define([
                     console.log("✅ Allocate button found and accessible");
                 } else {
                     console.error("❌ Allocate button not found after dialog open!");
+                }
+                
+                // ✅ Apply allocation filter to Find Resources table (same as Res table)
+                // Filter: empallocpercentage <= 95% AND status != "Resigned"
+                const oFindResourcesTable = this.byId("findResourcesTable");
+                if (oFindResourcesTable && oFindResourcesTable.getBinding) {
+                    const oBinding = oFindResourcesTable.getBinding("items");
+                    if (oBinding) {
+                        const oAllocationFilter = this._getAllocationFilter();
+                        oBinding.filter([oAllocationFilter]);
+                        console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) to Find Resources table");
+                    }
                 }
                 
                 // ✅ Auto-fill dates from project (will use cached data or fetch)
@@ -2085,6 +2109,17 @@ sap.ui.define([
             // The allocation entity's projectId should match Project.sapPId format
             console.log("✅ Using project ID for allocation:", sProjectId);
             
+            // ✅ NEW: Get demandId from Find Resources dialog
+            const oDemandInput = this.byId("findResourcesDemandInput");
+            const iDemandId = oDemandInput ? oDemandInput.data("selectedId") : null;
+            
+            if (!iDemandId) {
+                sap.m.MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
+                    title: "Demand Selection Required"
+                });
+                return;
+            }
+            
             // Get allocation details from form
             const oStartDatePicker = this.byId("allocationStartDate");
             const oEndDatePicker = this.byId("allocationEndDate");
@@ -2268,6 +2303,12 @@ sap.ui.define([
                         return; // Error popup already shown by validation function
                     }
                     
+                    // ✅ STEP 1.5: Validate demand resource limits
+                    const bDemandValid = await this._validateDemandResourceLimits(iDemandId, aEmployees.length, oModel);
+                    if (!bDemandValid) {
+                        return; // Error popup already shown by validation function
+                    }
+                    
                     // ✅ STEP 1.5: Refresh employee data to get latest empallocpercentage values
                     // The employee objects from table might have stale values
                     const aRefreshedEmployees = [];
@@ -2343,7 +2384,7 @@ sap.ui.define([
                                 onClose: (sAction) => {
                                     if (sAction === sap.m.MessageBox.Action.YES) {
                                         // Continue with valid employees only
-                                        this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
+                                        this._createAllocationsForFindResources(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                                     }
                                 }
                             });
@@ -2358,7 +2399,7 @@ sap.ui.define([
                     }
                     
                     // ✅ All employees are valid - create allocations
-                    this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
+                    this._createAllocationsForFindResources(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                 };
                 
                 fnValidateAndCreate();
@@ -2376,7 +2417,7 @@ sap.ui.define([
         },
         
         // ✅ NEW: Helper function to create allocations for valid employees from Find Resources (same pattern as employee level)
-        _createAllocationsForFindResources: function (aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aAllEmployees) {
+        _createAllocationsForFindResources: function (aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aAllEmployees) {
             const aAllocationData = [];
             
             // ✅ IMPORTANT: Do NOT update empallocpercentage on frontend
@@ -2395,6 +2436,7 @@ sap.ui.define([
                     allocationId: sAllocationId,
                     employeeId: oEmployee.ohrId,
                     projectId: sProjectId,
+                    demandId: iDemandId, // ✅ NEW: Include demandId
                     startDate: sStartDate,
                     endDate: sEndDate,
                     allocationPercentage: iPercentage,
@@ -2699,6 +2741,58 @@ sap.ui.define([
                 return true; // Validation passed
             } catch (oError) {
                 console.warn("⚠️ Could not fetch project details for validation:", oError);
+                // Allow to continue - backend will validate
+                return true;
+            }
+        },
+        
+        // ✅ NEW: Validate demand resource limits (similar to project validation)
+        _validateDemandResourceLimits: async function (iDemandId, iNewAllocations, oModel) {
+            if (!iDemandId || !oModel) {
+                console.warn("⚠️ Cannot validate demand limits: missing demandId or model");
+                return true; // Allow to continue - backend will validate
+            }
+            
+            try {
+                // Fetch demand details to check quantity vs allocatedCount
+                const oDemandBinding = oModel.bindContext(`/Demands(${iDemandId})`);
+                await oDemandBinding.requestObject();
+                const oDemand = oDemandBinding.getBoundContext().getObject();
+                
+                if (!oDemand) {
+                    console.warn("⚠️ Demand not found for validation:", iDemandId);
+                    return true; // Allow to continue - backend will validate
+                }
+                
+                const iQuantity = oDemand.quantity || 0;
+                const iCurrentAllocated = oDemand.allocatedCount || 0;
+                const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
+                
+                console.log(`🔵 Demand ${iDemandId} validation: Quantity=${iQuantity}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
+                
+                // ✅ Demand-level validation: Check if allocating would exceed quantity
+                if (iQuantity > 0 && iTotalAfterAllocation > iQuantity) {
+                    const iExcess = iTotalAfterAllocation - iQuantity;
+                    const iCanAllocate = Math.max(0, iQuantity - iCurrentAllocated);
+                    
+                    let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to demand ${iDemandId}:\n\n`;
+                    sErrorMessage += `• Demand Details: ${oDemand.skill || 'N/A'} - ${oDemand.band || 'N/A'}\n`;
+                    sErrorMessage += `• Required Quantity: ${iQuantity}\n`;
+                    sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
+                    sErrorMessage += `• Remaining Capacity: ${iCanAllocate}\n`;
+                    sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
+                    sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
+                    sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated to this demand.`;
+                    
+                    sap.m.MessageBox.error(sErrorMessage, {
+                        title: "Demand Resource Limit Exceeded"
+                    });
+                    return false; // Validation failed
+                }
+                
+                return true; // Validation passed
+            } catch (oError) {
+                console.warn("⚠️ Could not fetch demand details for validation:", oError);
                 // Allow to continue - backend will validate
                 return true;
             }
@@ -3059,9 +3153,13 @@ sap.ui.define([
                     this._oAllocateDialog = oDialog;
                     this.getView().addDependent(this._oAllocateDialog);
                     this._oAllocateDialog.open();
+                    // ✅ NEW: Populate selected employees' allocation details when dialog opens
+                    this._populateSelectedEmployeesAllocations();
                 }.bind(this));
             } else {
                 this._oAllocateDialog.open();
+                // ✅ NEW: Populate selected employees' allocation details when dialog opens
+                this._populateSelectedEmployeesAllocations();
             }
         },
         
@@ -3100,11 +3198,20 @@ sap.ui.define([
             const oEndDatePicker = this.byId("endDate");
             
             const sProjectId = oProjectInput ? oProjectInput.data("selectedId") : null;
+            const iDemandId = oDemandInput ? oDemandInput.data("selectedId") : null;
             const sStartDate = oStartDatePicker ? oStartDatePicker.getValue() : "";
             const sEndDate = oEndDatePicker ? oEndDatePicker.getValue() : "";
             
             if (!sProjectId) {
                 sap.m.MessageToast.show("Please select a project");
+                return;
+            }
+            
+            // ✅ NEW: Validate demandId is selected
+            if (!iDemandId) {
+                sap.m.MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
+                    title: "Demand Selection Required"
+                });
                 return;
             }
             
@@ -3199,6 +3306,12 @@ sap.ui.define([
                 return; // Error popup already shown by validation function
             }
             
+            // ✅ NEW: Validate demand resource limits
+            const bDemandValid = await this._validateDemandResourceLimits(iDemandId, aEmployees.length, oModel);
+            if (!bDemandValid) {
+                return; // Error popup already shown by validation function
+            }
+            
             // ✅ NEW: Validate each employee's allocation percentage before creating
             const aAllocationData = [];
             const aValidEmployees = [];
@@ -3245,10 +3358,10 @@ sap.ui.define([
                         title: "Allocation Validation Warning",
                         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
                         emphasizedAction: sap.m.MessageBox.Action.YES,
-                        onClose: (sAction) => {
+                            onClose: (sAction) => {
                             if (sAction === sap.m.MessageBox.Action.YES) {
                                 // Continue with valid employees only
-                                this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
+                                this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
                             }
                         }
                     });
@@ -3263,11 +3376,11 @@ sap.ui.define([
             }
             
             // ✅ All employees are valid - create allocations
-            this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
+            this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
         },
         
         // ✅ NEW: Helper function to create allocations for valid employees
-        _createAllocationsForValidEmployees: function (aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aAllEmployees) {
+        _createAllocationsForValidEmployees: function (aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aAllEmployees) {
             const aAllocationData = [];
             
             // ✅ IMPORTANT: Do NOT update empallocpercentage on frontend
@@ -3287,6 +3400,7 @@ sap.ui.define([
                     allocationId: sAllocationId,
                     employeeId: oEmployee.ohrId,
                     projectId: sProjectId,
+                    demandId: iDemandId, // ✅ NEW: Include demandId
                     // ✅ Only include dates if they have values, otherwise backend will auto-fill from project
                     ...(sStartDate && sStartDate.trim() !== "" ? { startDate: sStartDate } : {}),
                     ...(sEndDate && sEndDate.trim() !== "" ? { endDate: sEndDate } : {}),
@@ -3317,6 +3431,228 @@ sap.ui.define([
             if (oPercentageInput) {
                 oPercentageInput.setValue("100");
             }
+        },
+        
+        // ✅ NEW: Populate selected employees' allocation details in AllocateDialog
+        _populateSelectedEmployeesAllocations: function () {
+            const oVBox = this.byId("selectedEmployeesAllocationVBox");
+            if (!oVBox) {
+                console.warn("⚠️ selectedEmployeesAllocationVBox not found");
+                return;
+            }
+            
+            // Clear previous content
+            oVBox.removeAllItems();
+            
+            // Get selected employees from Res table
+            const oResTable = this.byId("Res");
+            if (!oResTable) {
+                oVBox.addItem(new sap.m.Text({ text: "No employees selected" }));
+                return;
+            }
+            
+            const aSelectedContexts = oResTable.getSelectedContexts();
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                oVBox.addItem(new sap.m.Text({ text: "Please select employees from the table first" }));
+                return;
+            }
+            
+            const oModel = this.getOwnerComponent().getModel();
+            if (!oModel) {
+                oVBox.addItem(new sap.m.Text({ text: "Model not found" }));
+                return;
+            }
+            
+            // Fetch allocations for all selected employees
+            const aEmployees = [];
+            aSelectedContexts.forEach((oContext) => {
+                const oEmployee = oContext.getObject();
+                if (oEmployee && oEmployee.ohrId) {
+                    aEmployees.push(oEmployee);
+                }
+            });
+            
+            if (aEmployees.length === 0) {
+                oVBox.addItem(new sap.m.Text({ text: "No valid employees found" }));
+                return;
+            }
+            
+            // Fetch allocations for all employees
+            const aEmployeeIds = aEmployees.map(e => e.ohrId);
+            // ✅ Use correct entity name "Allocations" and fetch all, then filter in JavaScript (OData V4 compatibility)
+            const oAllocationBinding = oModel.bindList("/Allocations", null, null, null, {
+                $expand: "to_Project($select=sapPId,projectName),to_Demand($select=demandId,skill,band)"
+            });
+            
+            oAllocationBinding.requestContexts().then((aAllocationContexts) => {
+                const allAllocations = aAllocationContexts.map(ctx => ctx.getObject());
+                
+                // Filter allocations for selected employees and active status
+                const aAllocations = allAllocations.filter(a => 
+                    aEmployeeIds.includes(a.employeeId) && a.status === "Active"
+                );
+                
+                if (aAllocations.length === 0) {
+                    oVBox.addItem(new sap.m.Text({ 
+                        text: `${aEmployees.length} employee(s) selected - No active allocations found`
+                    }));
+                    return;
+                }
+                
+                // Group allocations by employee
+                aEmployees.forEach((oEmployee, iIndex) => {
+                    if (iIndex > 0) {
+                        oVBox.addItem(new sap.ui.core.HTML({
+                            content: "<div style='border-top:1px solid #ccc; margin:10px 0;'></div>"
+                        }));
+                    }
+                    
+                    oVBox.addItem(new sap.m.Title({
+                        text: `${oEmployee.fullName} (${oEmployee.ohrId})`,
+                        level: "H5"
+                    }));
+                    
+                    const aEmployeeAllocations = aAllocations.filter(a => a.employeeId === oEmployee.ohrId);
+                    
+                    if (aEmployeeAllocations.length === 0) {
+                        oVBox.addItem(new sap.m.Text({ 
+                            text: "No active allocations"
+                        }));
+                    } else {
+                        const oTable = new sap.m.Table({
+                            inset: false,
+                            columns: [
+                                new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
+                                new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
+                                new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
+                                new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                                new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                                new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                            ]
+                        });
+                        
+                        aEmployeeAllocations.forEach((oAlloc) => {
+                            const sProjectId = oAlloc.projectId || "N/A";
+                            const sProjectName = oAlloc.to_Project?.projectName || "N/A";
+                            const sDemand = oAlloc.to_Demand ? `${oAlloc.to_Demand.skill || ""} - ${oAlloc.to_Demand.band || ""}` : "N/A";
+                            const sStartDate = oAlloc.startDate ? new Date(oAlloc.startDate).toLocaleDateString() : "N/A";
+                            const sEndDate = oAlloc.endDate ? new Date(oAlloc.endDate).toLocaleDateString() : "N/A";
+                            const iPercent = oAlloc.allocationPercentage || 0;
+                            
+                            oTable.addItem(new sap.m.ColumnListItem({
+                                cells: [
+                                    new sap.m.Text({ text: sProjectId }),
+                                    new sap.m.Text({ text: sProjectName }),
+                                    new sap.m.Text({ text: sDemand }),
+                                    new sap.m.Text({ text: sStartDate }),
+                                    new sap.m.Text({ text: sEndDate }),
+                                    new sap.m.Text({ text: iPercent + "%" })
+                                ]
+                            }));
+                        });
+                        
+                        oVBox.addItem(oTable);
+                    }
+                });
+            }).catch((oError) => {
+                console.error("❌ Error fetching employee allocations:", oError);
+                oVBox.addItem(new sap.m.Text({ 
+                    text: "Error loading allocation details"
+                }));
+            });
+        },
+        
+        // ✅ NEW: Populate employees allocated to selected project in AllocateDialog
+        _populateProjectEmployees: function (sProjectId) {
+            const oVBox = this.byId("projectEmployeesVBox");
+            if (!oVBox) {
+                console.warn("⚠️ projectEmployeesVBox not found");
+                return;
+            }
+            
+            if (!sProjectId) {
+                oVBox.removeAllItems();
+                oVBox.addItem(new sap.m.Text({ text: "Select a project to see allocated employees" }));
+                return;
+            }
+            
+            // Clear previous content
+            oVBox.removeAllItems();
+            oVBox.addItem(new sap.m.Text({ text: "Loading..." }));
+            
+            const oModel = this.getOwnerComponent().getModel();
+            if (!oModel) {
+                oVBox.removeAllItems();
+                oVBox.addItem(new sap.m.Text({ text: "Model not found" }));
+                return;
+            }
+            
+            // Fetch active allocations for this project
+            // ✅ Use correct entity name "Allocations" and fetch all, then filter in JavaScript (OData V4 compatibility)
+            const oAllocationBinding = oModel.bindList("/Allocations", null, null, null, {
+                $expand: "to_Employee($select=ohrId,fullName),to_Demand($select=demandId,skill,band)"
+            });
+            
+            oAllocationBinding.requestContexts().then((aAllocationContexts) => {
+                oVBox.removeAllItems();
+                
+                const allAllocations = aAllocationContexts.map(ctx => ctx.getObject());
+                
+                // Filter allocations for this project and active status
+                const aAllocations = allAllocations.filter(a => 
+                    a.projectId === sProjectId && a.status === "Active"
+                );
+                
+                if (aAllocations.length === 0) {
+                    oVBox.addItem(new sap.m.Text({ 
+                        text: "No employees allocated to this project"
+                    }));
+                    return;
+                }
+                
+                const oTable = new sap.m.Table({
+                    inset: false,
+                    columns: [
+                        new sap.m.Column({ header: new sap.m.Text({ text: "OHR ID" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                    ]
+                });
+                
+                aAllocations.forEach((oAlloc) => {
+                    const sOhrId = oAlloc.to_Employee?.ohrId || oAlloc.employeeId || "N/A";
+                    const sEmployeeName = oAlloc.to_Employee?.fullName || "N/A";
+                    const sDemand = oAlloc.to_Demand ? `${oAlloc.to_Demand.skill || ""} - ${oAlloc.to_Demand.band || ""}` : "N/A";
+                    const sStartDate = oAlloc.startDate ? new Date(oAlloc.startDate).toLocaleDateString() : "N/A";
+                    const sEndDate = oAlloc.endDate ? new Date(oAlloc.endDate).toLocaleDateString() : "N/A";
+                    const iPercent = oAlloc.allocationPercentage || 0;
+                    
+                    oTable.addItem(new sap.m.ColumnListItem({
+                        cells: [
+                            new sap.m.Text({ text: sOhrId }),
+                            new sap.m.Text({ text: sEmployeeName }),
+                            new sap.m.Text({ text: sDemand }),
+                            new sap.m.Text({ text: sStartDate }),
+                            new sap.m.Text({ text: sEndDate }),
+                            new sap.m.Text({ text: iPercent + "%" })
+                        ]
+                    }));
+                });
+                
+                oVBox.addItem(new sap.m.Text({ 
+                    text: `${aAllocations.length} employee(s) allocated to this project:`
+                }));
+                oVBox.addItem(oTable);
+            }).catch((oError) => {
+                console.error("❌ Error fetching project employees:", oError);
+                oVBox.removeAllItems();
+                oVBox.addItem(new sap.m.Text({ 
+                    text: "Error loading employees"
+                }));
+            });
         },
         
         // ✅ NEW: Helper function to get allocation filter (empallocpercentage <= 95 and status != "Resigned")
@@ -7307,6 +7643,9 @@ sap.ui.define([
                     this._sAllocateDemandProjectFilter = sProjectId;
                     console.log("✅ Stored project ID for AllocateDialog demand filter:", sProjectId);
                     
+                    // ✅ NEW: Populate employees allocated to selected project
+                    this._populateProjectEmployees(sProjectId);
+                    
                     // ✅ Auto-fill start and end dates from project (default values, user can modify)
                     // Try multiple methods to find date pickers (they're in AllocateDialog fragment)
                     let oStartDatePicker = this.byId("startDate");
@@ -7416,12 +7755,13 @@ sap.ui.define([
             
             this._oDemandValueHelpDialog._oInputField = oInput;
             
-            // Check if this is from AllocateDialog and filter by project if needed
+            // Check if this is from AllocateDialog, FindResourcesDialog, or Res fragment and filter by project if needed
             const sInputId = oInput.getId();
             const bIsAllocateDialog = sInputId && sInputId.includes("Resinput_demand");
+            const bIsFindResourcesDialog = sInputId && sInputId.includes("findResourcesDemandInput");
             const bIsResFragment = sInputId && sInputId.includes("Resinput_Demand");
             
-            // ✅ CRITICAL: Store project filter if available (from AllocateDialog or Res fragment)
+            // ✅ CRITICAL: Store project filter if available (from AllocateDialog, FindResourcesDialog, or Res fragment)
             if (bIsAllocateDialog) {
                 // Get project ID from AllocateDialog project input
                 const sProjectId = this.byId("Resinput_proj")?.data("selectedId");
@@ -7438,6 +7778,15 @@ sap.ui.define([
                         // ✅ Also check if project was already stored from previous selection
                         console.log("⚠️ No project ID found in input field. Using stored filter:", this._sAllocateDemandProjectFilter);
                     }
+                }
+            } else if (bIsFindResourcesDialog) {
+                // ✅ NEW: Get project ID from Find Resources context (stored when dialog opened)
+                const sProjectId = this._sAllocationProjectId;
+                if (sProjectId) {
+                    this._sAllocateDemandProjectFilter = sProjectId;
+                    console.log("✅ Stored project ID for FindResourcesDialog demand filter:", sProjectId);
+                } else {
+                    console.log("⚠️ No project ID found for FindResourcesDialog. Using stored filter:", this._sAllocateDemandProjectFilter);
                 }
             } else if (bIsResFragment) {
                 const sProjectId = this.byId("Resinput_Project")?.data("selectedId");

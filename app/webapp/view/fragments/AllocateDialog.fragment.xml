@@ -8,8 +8,8 @@
     title="Allocate Resource"
     draggable="true"
     resizable="true"
-    contentWidth="400px"
-    contentHeight="auto"
+    contentWidth="800px"
+    contentHeight="600px"
     class="sapUiResponsivePadding--header sapUiResponsivePadding--content sapUiResponsivePadding--footer"
     afterClose="onDialogClose">
 
@@ -51,6 +51,30 @@
         value="100"
         placeholder="0-100"
         width="100%"/>
+      
+      <!-- ✅ NEW: Panel to show selected employees' allocation details -->
+      <Panel 
+        id="selectedEmployeesAllocationPanel" 
+        headerText="Selected Employees' Current Allocations" 
+        expandable="true"
+        expanded="false"
+        class="sapUiSmallMarginTop">
+        <VBox id="selectedEmployeesAllocationVBox" class="sapUiSmallMargin">
+          <Text text="Select employees from the table first" />
+        </VBox>
+      </Panel>
+      
+      <!-- ✅ NEW: Panel to show employees allocated to selected project -->
+      <Panel 
+        id="projectEmployeesPanel" 
+        headerText="Employees Allocated to Selected Project" 
+        expandable="true"
+        expanded="false"
+        class="sapUiSmallMarginTop">
+        <VBox id="projectEmployeesVBox" class="sapUiSmallMargin">
+          <Text text="Select a project to see allocated employees" />
+        </VBox>
+      </Panel>
     </VBox>
 
     <beginButton>

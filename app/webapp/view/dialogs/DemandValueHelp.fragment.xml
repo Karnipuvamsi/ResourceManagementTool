@@ -23,17 +23,23 @@
                     growingThreshold="50"
                     growingScrollToLoad="true">
                     <columns>
-                        <Column width="25%">
+                        <Column width="15%">
                             <Text text="Project ID" />
                         </Column>
-                        <Column width="25%">
+                        <Column width="15%">
                             <Text text="Skill" />
                         </Column>
-                        <Column width="25%">
+                        <Column width="15%">
                             <Text text="Band" />
                         </Column>
-                        <Column width="25%">
+                        <Column width="15%">
                             <Text text="Quantity" />
+                        </Column>
+                        <Column width="20%">
+                            <Text text="Allocated" />
+                        </Column>
+                        <Column width="20%">
+                            <Text text="Remaining" />
                         </Column>
                     </columns>
                     <items>
@@ -43,6 +49,8 @@
                                 <Text text="{skill}" />
                                 <Text text="{band}" />
                                 <Text text="{quantity}" />
+                                <Text text="{allocatedCount}" />
+                                <Text text="{remaining}" />
                             </cells>
                         </ColumnListItem>
                     </items>
