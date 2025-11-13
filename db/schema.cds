@@ -264,3 +264,4 @@ entity Skills {
     to_EmployeeSkills     : Association to many EmployeeSkill
                           on to_EmployeeSkills.skillId = $self.id;
 }
+

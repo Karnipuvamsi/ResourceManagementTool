@@ -1601,3 +1601,525 @@ module.exports = cds.service.impl(async function () {
     });
 
 });
+
+            // ✅ Get all active allocations for this employee
+            const aAllocations = await SELECT.from(Allocations)
+                .where({ employeeId: sEmployeeId, status: 'Active' });
+
+            // ✅ If no active allocations, revert to Bench
+            if (!aAllocations || aAllocations.length === 0) {
+                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
+                    // Default to UnproductiveBench if not already on bench
+                    await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
+                    console.log(`✅ Employee ${sEmployeeId} has no active allocations, status set to UnproductiveBench`);
+                }
+                return;
+            }
+
+            // ✅ Employee has active allocations - determine status based on all of them
+            let sFinalStatus = null;
+            let bHasAllocated = false; // Track if any allocation qualifies for "Allocated"
+            let bHasPreAllocated = false; // Track if any allocation qualifies for "PreAllocated"
+
+            for (const oAllocation of aAllocations) {
+                const sProjectId = oAllocation.projectId;
+                if (!sProjectId) continue;
+
+                // Get project details
+                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                if (!oProject) continue;
+
+                const bHasSfdcPId = oProject.sfdcPId && oProject.sfdcPId.trim() !== "";
+
+                // Check project start date
+                const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+                if (oProjectStartDate) {
+                    oProjectStartDate.setHours(0, 0, 0, 0);
+                }
+                const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+
+                // Check allocation start date
+                const oAllocationStartDate = oAllocation.startDate ? new Date(oAllocation.startDate) : null;
+                if (oAllocationStartDate) {
+                    oAllocationStartDate.setHours(0, 0, 0, 0);
+                }
+                const bAllocationStarted = oAllocationStartDate && oToday >= oAllocationStartDate;
+
+                // ✅ Both dates must have arrived for status to apply
+                if (bAllocationStarted && bProjectStarted) {
+                    if (bHasSfdcPId) {
+                        bHasAllocated = true; // "Allocated" takes precedence
+                    } else {
+                        bHasPreAllocated = true;
+                    }
+                }
+            }
+
+            // ✅ Determine final status (Allocated > PreAllocated)
+            if (bHasAllocated) {
+                sFinalStatus = 'Allocated';
+            } else if (bHasPreAllocated) {
+                sFinalStatus = 'PreAllocated';
+            } else {
+                // ✅ Employee has active allocations but none have started yet
+                // Keep current status (don't change to Bench yet)
+                console.log(`✅ Employee ${sEmployeeId} has active allocations but none have started yet, keeping current status`);
+                return;
+            }
+
+            // Update employee status if different
+            if (sFinalStatus && oEmployee.status !== sFinalStatus) {
+                await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sFinalStatus });
+                console.log(`✅ Updated employee ${sEmployeeId} status from "${oEmployee.status}" to "${sFinalStatus}" (based on ${aAllocations.length} active allocation(s))`);
+            } else if (oEmployee.status === sFinalStatus) {
+                console.log(`✅ Employee ${sEmployeeId} already has correct status "${sFinalStatus}"`);
+            }
+        } catch (oError) {
+            console.error("❌ Error in _updateEmployeeStatus:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Helper function to calculate requiredResources from sum of demand quantities
+    // This calculates: requiredResources = sum of all demand quantities for the project
+    this._calculateRequiredResourcesFromDemands = async function(sProjectId) {
+        try {
+            // Get all demands for this project
+            const aDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
+            
+            // Calculate sum of all demand quantities
+            const iRequiredResources = aDemands.reduce((sum, demand) => {
+                return sum + (demand.quantity || 0);
+            }, 0);
+            
+            console.log(`✅ Calculated requiredResources for project ${sProjectId} from demands: ${iRequiredResources}`);
+            return iRequiredResources;
+        } catch (oError) {
+            console.error("❌ Error calculating requiredResources from demands:", oError);
+            return 0;
+        }
+    };
+
+    // ✅ NEW: Helper function to update project resource counts (allocatedResources and toBeAllocated)
+    // This counts ONLY ACTIVE allocations for the project and updates:
+    // - allocatedResources = count of ACTIVE allocations only
+    // - toBeAllocated = requiredResources - allocatedResources
+    // Note: requiredResources is NOT updated - it's a manual field
+    this._updateProjectResourceCounts = async function(sProjectId) {
+        try {
+            // Get project details
+            const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+            if (!oProject) {
+                console.warn("⚠️ Project not found for resource count update:", sProjectId);
+                return;
+            }
+
+            // ✅ Get requiredResources from project (manual field - don't calculate from demands)
+            const iRequiredResources = oProject.requiredResources || 0;
+
+            // ✅ Count ONLY ACTIVE allocations for this project
+            const aAllocations = await SELECT.from(Allocations).where({ projectId: sProjectId, status: 'Active' });
+            const iAllocatedResources = aAllocations ? aAllocations.length : 0;
+
+            // Calculate toBeAllocated
+            const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
+
+            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources} (manual), Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
+            console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for project ${sProjectId}`);
+            if (aAllocations && aAllocations.length > 0) {
+                console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
+            }
+
+            // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
+            // Don't import from cds.ql - use the service's UPDATE directly
+            // Update ONLY: allocatedResources (from active allocations), toBeAllocated (calculated)
+            // Do NOT update requiredResources - it's a manual field
+            try {
+                const oUpdateData = {
+                    allocatedResources: iAllocatedResources,
+                    toBeAllocated: iToBeAllocated
+                };
+                
+                const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with(oUpdateData);
+
+                console.log(`✅ UPDATE executed for project ${sProjectId}. Rows updated:`, iUpdated);
+            } catch (oUpdateError) {
+                console.error(`❌ ERROR executing UPDATE for project ${sProjectId}:`, oUpdateError);
+                console.error(`❌ Error details:`, JSON.stringify(oUpdateError, null, 2));
+                throw oUpdateError;
+            }
+            
+            // ✅ Verify the update by reading back the project
+            const oUpdatedProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+            if (oUpdatedProject) {
+                console.log(`✅ Verified update - Project ${sProjectId} now has: requiredResources=${oUpdatedProject.requiredResources} (unchanged), allocatedResources=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
+                
+                // ✅ Double-check: if values don't match, log warning
+                if (oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
+                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
+                }
+            } else {
+                console.warn(`⚠️ Could not verify update for project ${sProjectId}`);
+            }
+        } catch (oError) {
+            console.error("❌ Error updating project resource counts:", oError);
+            console.error("❌ Error details:", JSON.stringify(oError, null, 2));
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Helper function to update employee statuses based on ALLOCATION start date and project sfdcPId
+    // This is called per-project and updates all employees for that project
+    this._updateEmployeeStatusesForProject = async function(sProjectId) {
+        try {
+            // Get project details
+            const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+            if (!oProject) {
+                console.warn("⚠️ Project not found:", sProjectId);
+                return;
+            }
+
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0); // Reset time to start of day
+            
+            const bHasSfdcPId = oProject.sfdcPId && oProject.sfdcPId.trim() !== "";
+
+            console.log(`✅ Checking project ${sProjectId}: HasSFDC=${bHasSfdcPId}`);
+
+            // Get all active allocations for this project
+            const aAllocations = await SELECT.from(Allocations)
+                .where({ projectId: sProjectId, status: 'Active' });
+
+            if (!aAllocations || aAllocations.length === 0) {
+                console.log("✅ No active allocations found for project:", sProjectId);
+                return;
+            }
+
+            // ✅ CRITICAL: Update employee statuses based on BOTH allocation start date AND project start date
+            // Get project start date for comparison
+            const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+            if (oProjectStartDate) {
+                oProjectStartDate.setHours(0, 0, 0, 0);
+            }
+            const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+
+            for (const oAllocation of aAllocations) {
+                const sEmployeeId = oAllocation.employeeId;
+                if (!sEmployeeId) continue;
+
+                // ✅ Use allocation start date
+                const oAllocationStartDate = oAllocation.startDate ? new Date(oAllocation.startDate) : null;
+                if (oAllocationStartDate) {
+                    oAllocationStartDate.setHours(0, 0, 0, 0);
+                }
+
+                // ✅ CRITICAL: Check if BOTH allocation start date AND project start date have arrived
+                const bAllocationStarted = oAllocationStartDate && oToday >= oAllocationStartDate;
+
+                let sNewStatus = null;
+
+                // ✅ Only update status if BOTH conditions are met:
+                // 1. Allocation start date has arrived
+                // 2. Project start date has arrived (project has started)
+                if (bAllocationStarted && bProjectStarted) {
+                    // ✅ Both allocation and project have started - check project SFDC PID
+                    if (bHasSfdcPId) {
+                        // Project has SFDC PID → Set to "Allocated"
+                        sNewStatus = 'Allocated';
+                    } else {
+                        // Project doesn't have SFDC PID → Set to "Pre Allocated"
+                        sNewStatus = 'PreAllocated';
+                    }
+                } else {
+                    // Either allocation hasn't started OR project hasn't started → Don't change status
+                    if (!bAllocationStarted) {
+                        console.log(`✅ Allocation for employee ${sEmployeeId} hasn't started yet (starts: ${oAllocation.startDate}), keeping status unchanged`);
+                    } else if (!bProjectStarted) {
+                        console.log(`✅ Project ${sProjectId} hasn't started yet (starts: ${oProject.startDate}), keeping employee ${sEmployeeId} status unchanged`);
+                    }
+                    continue;
+                }
+
+                // Update employee status if needed
+                if (sNewStatus) {
+                    // Get current employee status
+                    const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                    if (oEmployee && oEmployee.status !== sNewStatus) {
+                        // Only update if status is different
+                        await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sNewStatus });
+                        console.log(`✅ Updated employee ${sEmployeeId} status from "${oEmployee.status}" to "${sNewStatus}" (allocation started: ${oAllocation.startDate}, project started: ${oProject.startDate}, has SFDC: ${bHasSfdcPId})`);
+                    } else if (oEmployee) {
+                        console.log(`✅ Employee ${sEmployeeId} already has status "${sNewStatus}", no update needed`);
+                    }
+                }
+            }
+            
+            // ✅ CRITICAL: Also call _updateEmployeeStatus for each employee to handle multiple allocations
+            // This ensures if an employee has allocations in multiple projects, we get the correct status
+            const aUniqueEmployeeIds = [...new Set(aAllocations.map(a => a.employeeId).filter(id => id))];
+            for (const sEmployeeId of aUniqueEmployeeIds) {
+                try {
+                    await this._updateEmployeeStatus(sEmployeeId);
+                } catch (oError) {
+                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status (individual check):`, oError);
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error in _updateEmployeeStatusesForProject:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Check and mark expired allocations as "Completed"
+    // This handles Case 1, 3, 4, 6, 7: Allocation end date passes
+    this._markExpiredAllocationsAsCompleted = async function() {
+        try {
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            console.log("🔄 Checking for expired allocations...");
+
+            // Find all active allocations where endDate has passed
+            const aExpiredAllocations = await SELECT.from(Allocations)
+                .where({ status: 'Active' });
+
+            if (!aExpiredAllocations || aExpiredAllocations.length === 0) {
+                console.log("✅ No active allocations found");
+                return { updated: 0, employees: [] };
+            }
+
+            let iUpdatedCount = 0;
+            const aAffectedEmployees = new Set();
+
+            for (const oAllocation of aExpiredAllocations) {
+                if (!oAllocation.endDate) continue;
+
+                const oEndDate = new Date(oAllocation.endDate);
+                oEndDate.setHours(0, 0, 0, 0);
+
+                // Check if allocation end date has passed
+                if (oEndDate < oToday) {
+                    const sAllocationId = oAllocation.allocationId;
+                    const sEmployeeId = oAllocation.employeeId;
+
+                    console.log(`✅ Marking expired allocation ${sAllocationId} as Completed (ended: ${oAllocation.endDate})`);
+
+                    // Mark allocation as Completed
+                    await UPDATE(Allocations)
+                        .where({ allocationId: sAllocationId })
+                        .with({ status: 'Completed' });
+
+                    iUpdatedCount++;
+                    if (sEmployeeId) {
+                        aAffectedEmployees.add(sEmployeeId);
+                    }
+
+                    // Update project resource counts
+                    if (oAllocation.projectId) {
+                        await this._updateProjectResourceCounts(oAllocation.projectId);
+                    }
+                }
+            }
+
+            // Update employee statuses for all affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    await this._updateEmployeeStatus(sEmployeeId);
+                } catch (oError) {
+                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
+                }
+            }
+
+            console.log(`✅ Marked ${iUpdatedCount} expired allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
+            return { updated: iUpdatedCount, employees: Array.from(aAffectedEmployees) };
+        } catch (oError) {
+            console.error("❌ Error in _markExpiredAllocationsAsCompleted:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Check and mark expired projects and their allocations
+    // This handles Case 2, 3, 5: Project end date passes
+    this._markExpiredProjectsAsClosed = async function() {
+        try {
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            console.log("🔄 Checking for expired projects...");
+
+            // Find all active or planned projects where endDate has passed
+            const aExpiredProjects = await SELECT.from(Projects)
+                .where({ status: { in: ['Active', 'Planned'] } });
+
+            if (!aExpiredProjects || aExpiredProjects.length === 0) {
+                console.log("✅ No active/planned projects found");
+                return { updated: 0, allocations: 0, employees: [] };
+            }
+
+            let iUpdatedProjects = 0;
+            let iUpdatedAllocations = 0;
+            const aAffectedEmployees = new Set();
+
+            for (const oProject of aExpiredProjects) {
+                if (!oProject.endDate) continue;
+
+                const oEndDate = new Date(oProject.endDate);
+                oEndDate.setHours(0, 0, 0, 0);
+
+                // Check if project end date has passed
+                if (oEndDate < oToday) {
+                    const sProjectId = oProject.sapPId;
+
+                    console.log(`✅ Marking expired project ${sProjectId} as Closed (ended: ${oProject.endDate})`);
+
+                    // Mark project as Closed
+                    await UPDATE(Projects)
+                        .where({ sapPId: sProjectId })
+                        .with({ status: 'Closed' });
+
+                    iUpdatedProjects++;
+
+                    // Mark all active allocations to this project as Completed
+                    const aProjectAllocations = await SELECT.from(Allocations)
+                        .where({ projectId: sProjectId, status: 'Active' });
+
+                    if (aProjectAllocations && aProjectAllocations.length > 0) {
+                        for (const oAllocation of aProjectAllocations) {
+                            await UPDATE(Allocations)
+                                .where({ allocationId: oAllocation.allocationId })
+                                .with({ status: 'Completed' });
+
+                            iUpdatedAllocations++;
+                            if (oAllocation.employeeId) {
+                                aAffectedEmployees.add(oAllocation.employeeId);
+                            }
+                        }
+                    }
+
+                    // Update project resource counts
+                    await this._updateProjectResourceCounts(sProjectId);
+                }
+            }
+
+            // Update employee statuses for all affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    await this._updateEmployeeStatus(sEmployeeId);
+                } catch (oError) {
+                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
+                }
+            }
+
+            console.log(`✅ Marked ${iUpdatedProjects} expired project(s) as Closed, ${iUpdatedAllocations} allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
+            return { 
+                updated: iUpdatedProjects, 
+                allocations: iUpdatedAllocations, 
+                employees: Array.from(aAffectedEmployees) 
+            };
+        } catch (oError) {
+            console.error("❌ Error in _markExpiredProjectsAsClosed:", oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Main function to check and update all expired allocations and projects
+    // This can be called on-demand or scheduled
+    this._checkAndUpdateExpiredItems = async function() {
+        try {
+            console.log("🔄 Starting expired items check...");
+            
+            // First check expired allocations
+            const oAllocationResult = await this._markExpiredAllocationsAsCompleted();
+            
+            // Then check expired projects (this will also mark their allocations)
+            const oProjectResult = await this._markExpiredProjectsAsClosed();
+            
+            const iTotalUpdated = oAllocationResult.updated + oProjectResult.allocations;
+            const aAllEmployees = [...new Set([...oAllocationResult.employees, ...oProjectResult.employees])];
+            
+            console.log(`✅ Expired items check completed: ${iTotalUpdated} items updated, ${aAllEmployees.length} employees affected`);
+            
+            return {
+                allocations: oAllocationResult.updated,
+                projects: oProjectResult.updated,
+                totalAllocations: oAllocationResult.updated + oProjectResult.allocations,
+                employees: aAllEmployees
+            };
+        } catch (oError) {
+            console.error("❌ Error in _checkAndUpdateExpiredItems:", oError);
+            throw oError;
+        }
+    };
+
+
+    // ✅ NEW: On-demand function to check expired items (can be called via API)
+    this.on('checkExpiredItems', async (req) => {
+        try {
+            const oResult = await this._checkAndUpdateExpiredItems();
+            return {
+                success: true,
+                message: `Checked and updated expired items`,
+                ...oResult
+            };
+        } catch (oError) {
+            console.error("❌ Error in checkExpiredItems:", oError);
+            return {
+                success: false,
+                error: oError.message
+            };
+        }
+    });
+
+    // ✅ NEW: Proactive check on Employee READ (lightweight check)
+    // This checks if the employee's allocations have expired when reading a single employee
+    // Note: This runs AFTER the existing before('READ', Employees) handler
+    this.after('READ', Employees, async (req) => {
+        try {
+            // Only check if it's a single employee read (by key)
+            if (req.keys && req.keys.ohrId) {
+                const sEmployeeId = req.keys.ohrId;
+                
+                // Lightweight check: only check this employee's allocations
+                const aActiveAllocations = await SELECT.from(Allocations)
+                    .where({ employeeId: sEmployeeId, status: 'Active' });
+                
+                if (aActiveAllocations && aActiveAllocations.length > 0) {
+                    const oToday = new Date();
+                    oToday.setHours(0, 0, 0, 0);
+                    
+                    let bNeedsUpdate = false;
+                    
+                    for (const oAllocation of aActiveAllocations) {
+                        if (oAllocation.endDate) {
+                            const oEndDate = new Date(oAllocation.endDate);
+                            oEndDate.setHours(0, 0, 0, 0);
+                            
+                            if (oEndDate < oToday) {
+                                // Mark as Completed
+                                await UPDATE(Allocations)
+                                    .where({ allocationId: oAllocation.allocationId })
+                                    .with({ status: 'Completed' });
+                                
+                                bNeedsUpdate = true;
+                                
+                                // Update project resource counts
+                                if (oAllocation.projectId) {
+                                    await this._updateProjectResourceCounts(oAllocation.projectId);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (bNeedsUpdate) {
+                        // Update employee status
+                        await this._updateEmployeeStatus(sEmployeeId);
+                    }
+                }
+            }
+        } catch (oError) {
+            console.error("❌ Error in Employee READ after hook:", oError);
+            // Don't fail the read, just log the error
+        }
+    });
+
+});

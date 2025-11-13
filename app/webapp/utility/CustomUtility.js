@@ -3103,3 +3103,193 @@ sap.ui.define([
 
     });
 });
+                });
+                sCsrfToken = oTokenRes.headers.get("x-csrf-token");
+            } catch (oError) {
+                console.warn("CSRF token fetch failed:", oError);
+            }
+
+            let iSuccessCount = 0, iFailureCount = 0;
+            const aMessages = [];
+
+            // ✅ Close the dialog before starting upload
+            if (this._pDialog) {
+                this._pDialog.then(function (oDialog) {
+                    oDialog.close();
+                });
+            }
+            for (const [iIndex, oRecord] of this._csvPayload.entries()) {
+
+                try {
+                    const oRes = await fetch(`${sServiceUrl}${sEntitySet}`, {
+                        method: "POST",
+                        credentials: "same-origin",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json;odata.metadata=minimal",
+                            ...(sCsrfToken && { "X-CSRF-Token": sCsrfToken }),
+                        },
+                        body: JSON.stringify(oRecord)
+                    });
+
+                    const sText = await oRes.text();
+                    let sBackendMsg = "";
+                    try {
+                        const oParsed = JSON.parse(sText);
+                        sBackendMsg = oParsed?.Message || oParsed?.message || oParsed?.error?.message || oParsed?.d?.error?.message || "";
+                    } catch {
+                        sBackendMsg = sText;
+                    }
+
+                    if (oRes.status === 201) {
+                        iSuccessCount++;
+                        aMessages.push(new sap.ui.core.message.Message({
+                            message: `✅ Record ${iIndex + 1} uploaded successfully`,
+                            type: sap.ui.core.MessageType.Success,
+                            description: sBackendMsg || "HTTP 201 Created",
+                            additionalText: `Record Index: ${iIndex + 1}`,
+                            target: "/Dummy",
+                            processor: this.getView().getModel()
+                        }));
+                    } else {
+                        iFailureCount++;
+                        aMessages.push(new sap.ui.core.message.Message({
+                            message: `❌ Record ${iIndex + 1} failed: ${sBackendMsg || oRes.statusText}`,
+                            type: sap.ui.core.MessageType.Error,
+                            description: `HTTP ${oRes.status} ${oRes.statusText}`,
+                            additionalText: `Record Index: ${iIndex + 1}`,
+                            target: "/Dummy",
+                            processor: this.getView().getModel()
+                        }));
+                    }
+                } catch (oError) {
+                    iFailureCount++;
+                    aMessages.push(new sap.ui.core.message.Message({
+                        message: `❌ Record ${iIndex + 1} failed: Network/Unexpected error`,
+                        type: sap.ui.core.MessageType.Error,
+                        description: oErr.message || JSON.stringify(oError),
+                        additionalText: `Record Index: ${iIndex + 1}`,
+                        target: "/Dummy",
+                        processor: this.getView().getModel()
+                    }));
+                }
+            }
+
+            if (oUploadBtn) oUploadBtn.setBusy(false);
+            oMessageManager.addMessages(aMessages);
+            this.getView().getModel("message").setData(oMessageManager.getMessageModel().getData());
+
+            this._csvPayload = null;
+            await oMainModel.refresh();
+            // this._configureTable();
+            // 🔹 Stop Busy Indicator
+            oView.setBusy(false);
+
+            sap.m.MessageToast.show(`📋 Upload complete: ${iSuccessCount} success, ${iFailureCount} failed`);
+
+        },
+
+        _updateMessageButtonIcon: function (oController) {
+            const oView = oController.getView();
+            const aMessages = oView.getModel("message").getData();
+            console.log("aMessages in updateMessageButtonIcon", aMessages);
+
+            const oButton = oView.byId("uploadLogButton");
+            console.log(oButton);
+
+
+            if (oButton) {
+                if (aMessages && aMessages.length > 0) {
+                    const oLastMessage = aMessages[aMessages.length - 1];
+                    const sType = oLastMessage.type;
+
+                    if (sType === "Error") {
+                        oButton.setIcon("sap-icon://error");
+                        oButton.setType("Negative");
+                    } else if (sType === "Success") {
+                        oButton.setIcon("sap-icon://sys-enter-2");
+                        oButton.setType("Success");
+                    } else {
+                        oButton.setIcon("sap-icon://alert");
+                        oButton.setType("Default");
+                    }
+                } else {
+                    // Reset when there are no messages
+                    oButton.setIcon("sap-icon://message-popup");
+                    oButton.setType("Default");
+                }
+            }
+        },
+        _exportUploadTemplate: function (oEvent) {
+
+
+            const sButtonId = oEvent.getSource().getId().split("--").pop();
+
+
+            const mExpectedHeaders = {
+                "customerUpload": [
+                    "customerName",
+                    "state", "country", "status", "vertical",
+                    "startDate", "endDate",
+                ],
+                "opportunityUpload": [
+                    "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
+                    "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
+                    "Stage", "tcv", "customerId",
+                ],
+                "employeeUpload": [
+                    "ohrId", "mailid", "fullName",
+                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status",
+
+                ],
+                "projectUpload": [
+                    "sfdcPId", "projectName", "startDate",
+                    "endDate", "gpm", "projectType",
+                    "oppId", "status", "requiredResources",
+                    "allocatedResources", "toBeAllocated",
+                    "SOWReceived", "POReceived",
+                ],
+                "verticalUpload": [
+                    "id", "verticalName"
+
+                ],
+
+            };
+
+
+
+            // collect property keys
+            const aKeys = mExpectedHeaders[sButtonId]
+
+            // CSV string
+            let sCSV = "\uFEFF" + aKeys.join(",") + "\n";
+
+
+            const mExpectedMessage = {
+                "customerUpload": "Customers",
+                "opportunityUpload": "Opportunities",
+                "employeeUpload": "Employees",
+                "projectUpload": "Projects",
+                "verticalUpload": "Verticals"
+            };
+            const sFileBase = mExpectedMessage[sButtonId]
+            const sFileName = `${sFileBase}_Template.csv`;
+
+            this.downloadCSV(sCSV, sFileName);
+
+        },
+        _downloadCSV: function (sContent, sFileName) {
+            const oLink = document.createElement("a");
+            oLink.href = URL.createObjectURL(new Blob([sContent], { type: "text/csv;charset=utf-8;" }));
+            oLink.download = sFileName;
+            oLink.style.display = "none";
+            document.body.appendChild(oLink);
+            oLink.click();
+            document.body.removeChild(oLink);
+        },
+
+
+
+
+    });
+});

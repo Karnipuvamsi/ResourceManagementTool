@@ -321,3 +321,126 @@ sap.ui.define([
     return EmployeeSkillReportTableDelegate;
 });
 
+
+                        const sExistingValue2 = String(oExistingFilter.getValue2() || "");
+                        const sExistingOperator = String(oExistingFilter.getOperator() || "");
+                        return sFilterKey === `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
+                    });
+                    if (!bIsDuplicate) mFiltersByPath[sPath].push(oFilter);
+                });
+                const aOptimizedFilters = [];
+                Object.keys(mFiltersByPath).forEach((sPath) => {
+                    const aFieldFilters = mFiltersByPath[sPath];
+                    if (aFieldFilters.length === 1) {
+                        aOptimizedFilters.push(aFieldFilters[0]);
+                    } else if (aFieldFilters.length > 1) {
+                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                            filters: aFieldFilters,
+                            and: false
+                        }));
+                    }
+                });
+                aOtherFilters.forEach((oFilter) => aOptimizedFilters.push(oFilter));
+                if (aOptimizedFilters.length === 0) return null;
+                if (aOptimizedFilters.length === 1) return aOptimizedFilters[0];
+                return new sap.ui.model.Filter({ filters: aOptimizedFilters, and: true });
+            };
+            const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
+            oBindingInfo.filters = oOptimizedFilter || null;
+        }
+    };
+
+    EmployeeSkillReportTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
+        return this.fetchProperties(oTable).then(function (aProperties) {
+            const oProperty = aProperties.find(function (p) {
+                return p.name === sPropertyName || p.path === sPropertyName;
+            });
+
+            if (!oProperty) {
+                return Promise.reject("Property not found: " + sPropertyName);
+            }
+
+            // Format label using the helper function
+            const sLabel = EmployeeSkillReportTableDelegate._formatPropertyLabel(sPropertyName);
+
+            return new Promise(function (resolve) {
+                sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
+                    const oField = new Field({
+                        value: "{" + sPropertyName + "}",
+                        tooltip: sLabel,
+                        editMode: "Display"
+                    });
+
+                    const oColumn = new Column({
+                        id: oTable.getId() + "--col-" + sPropertyName,
+                        dataProperty: sPropertyName,
+                        propertyKey: sPropertyName,
+                        header: sLabel,
+                        template: oField
+                    });
+
+                    resolve(oColumn);
+                });
+            });
+        });
+    };
+
+    EmployeeSkillReportTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+        if (oColumn) {
+            oColumn.destroy();
+        }
+        return Promise.resolve(true);
+    };
+
+    EmployeeSkillReportTableDelegate.getFilterDelegate = function () {
+        return {
+            addItem: function (vArg1, vArg2, vArg3) {
+                var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
+                var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
+                var mPropertyBag = vArg3;
+
+                const sName =
+                    (typeof vProperty === "string" && vProperty) ||
+                    (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
+                    (mPropertyBag && (mPropertyBag.name || mPropertyBag.propertyKey)) ||
+                    (mPropertyBag && mPropertyBag.property && (mPropertyBag.property.name || mPropertyBag.property.path || mPropertyBag.property.key));
+                if (!sName) {
+                    return Promise.reject("Invalid property for filter item");
+                }
+
+                let sDataType = "sap.ui.model.odata.type.String";
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const oProp = oMetaModel.getObject(`/EmployeeSkillReport/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        const mTypeMap = {
+                            "Edm.String": "sap.ui.model.odata.type.String",
+                            "Edm.Int16": "sap.ui.model.odata.type.Int16",
+                            "Edm.Int32": "sap.ui.model.odata.type.Int32",
+                            "Edm.Int64": "sap.ui.model.odata.type.Int64",
+                            "Edm.Decimal": "sap.ui.model.odata.type.Decimal",
+                            "Edm.Double": "sap.ui.model.odata.type.Double",
+                            "Edm.Boolean": "sap.ui.model.odata.type.Boolean",
+                            "Edm.Date": "sap.ui.model.odata.type.Date",
+                            "Edm.DateTimeOffset": "sap.ui.model.odata.type.DateTimeOffset",
+                            "Edm.Guid": "sap.ui.model.odata.type.Guid"
+                        };
+                        sDataType = mTypeMap[sEdmType] || sDataType;
+                    }
+                } catch (e) { /* ignore */ }
+
+                return Promise.resolve(new FilterField({
+                    label: sName,
+                    propertyKey: sName,
+                    conditions: "{$filters>/conditions/" + sName + "}",
+                    dataType: sDataType
+                }));
+            }
+        };
+    };
+
+    return EmployeeSkillReportTableDelegate;
+});
+

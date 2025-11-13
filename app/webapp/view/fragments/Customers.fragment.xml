@@ -226,3 +226,7 @@
         </layout:content>
     </layout:DynamicPage>
 </core:FragmentDefinition>
+        </layout:content>
+    </layout:DynamicPage>
+</core:FragmentDefinition>
+

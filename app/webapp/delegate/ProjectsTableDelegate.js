@@ -724,4 +724,109 @@ sap.ui.define([
     };
 
     return GenericTableDelegate;
+});                                tooltip: "{" + sPropertyName + "}",
+                                editMode: {
+                                    parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                    mode: "TwoWay",
+                                    formatter: fnEditModeFormatter
+                                }
+                            });
+                        }
+
+                        const oColumn = new Column({
+                            id: oTable.getId() + "--col-" + sPropertyName,
+                            dataProperty: sPropertyName,
+                            propertyKey: sPropertyName,
+                            header: sLabel,
+                            template: oField
+                        });
+
+                        console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
+                        resolve(oColumn);
+                    }).catch(function(oError) {
+                        console.warn("[GenericDelegate] Error, using regular field:", oError);
+                        const oField = new Field({
+                            value: "{" + sPropertyName + "}",
+                            tooltip: "{" + sPropertyName + "}",
+                            editMode: {
+                                parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                mode: "TwoWay",
+                                formatter: fnEditModeFormatter
+                            }
+                        });
+                        const oColumn = new Column({
+                            id: oTable.getId() + "--col-" + sPropertyName,
+                            dataProperty: sPropertyName,
+                            propertyKey: sPropertyName,
+                            header: sLabel,
+                            template: oField
+                        });
+                        resolve(oColumn);
+                    });
+                });
+            });
+        });
+    };
+
+    GenericTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+        console.log("[GenericDelegate] removeItem called for column:", oColumn);
+
+        if (oColumn) {
+            oColumn.destroy();
+        }
+
+        return Promise.resolve(true);
+    };
+
+    // Provide FilterField creation for Adaptation Filter panel in table p13n
+    GenericTableDelegate.getFilterDelegate = function () {
+        return {
+            addItem: function (vArg1, vArg2, vArg3) {
+                // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
+                var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
+                var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
+                var mPropertyBag = vArg3;
+
+                // Resolve property name from string, property object, or mPropertyBag
+                const sName =
+                    (typeof vProperty === "string" && vProperty) ||
+                    (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
+                    (mPropertyBag && (mPropertyBag.name || mPropertyBag.propertyKey)) ||
+                    (mPropertyBag && mPropertyBag.property && (mPropertyBag.property.name || mPropertyBag.property.path || mPropertyBag.property.key));
+                if (!sName) {
+                    return Promise.reject("Invalid property for filter item");
+                }
+
+                let sDataType = "sap.ui.model.type.String";
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
+                            sDataType = "sap.ui.model.type.Integer";
+                        } else if (sEdmType === "Edm.Boolean") {
+                            sDataType = "sap.ui.model.type.Boolean";
+                        } else if (sEdmType === "Edm.Date" || sEdmType === "Edm.DateTimeOffset") {
+                            sDataType = "sap.ui.model.type.Date";
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                return Promise.resolve(new FilterField({
+                    label: String(sName)
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, function (str) { return str.toUpperCase(); })
+                        .trim(),
+                    propertyKey: sName,
+                    conditions: "{$filters>/conditions/" + sName + "}",
+                    dataType: sDataType
+                }));
+            }
+        };
+    };
+
+    return GenericTableDelegate;
 });

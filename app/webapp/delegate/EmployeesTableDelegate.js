@@ -206,6 +206,7 @@ sap.ui.define([
     };
 
     GenericTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+        // ✅ CRITICAL: Call parent FIRST to get filter bar filters
         ODataTableDelegate.updateBindingInfo.apply(this, arguments);
 
         const sPath = oTable.getPayload()?.collectionPath || "Customers";
@@ -234,41 +235,62 @@ sap.ui.define([
                                (sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res");
             
             console.log("[EmployeesTableDelegate] Checking Res table - TableId:", sTableId, "CollectionPath:", sCollectionPath, "IsResTable:", bIsResTable);
+            console.log("[EmployeesTableDelegate] Filters from filter bar (BEFORE processing):", oBindingInfo.filters);
+            console.log("[EmployeesTableDelegate] Filters type:", typeof oBindingInfo.filters, "IsArray:", Array.isArray(oBindingInfo.filters));
             
             if (bIsResTable) {
                 const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
                 const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
                 const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
                 
-                // Initialize filters array if it doesn't exist
-                if (!oBindingInfo.filters) {
-                    oBindingInfo.filters = [];
+                // ✅ CRITICAL: Get existing filters (from filter bar) - preserve them!
+                // Convert to array if it's a single filter or array
+                let aFilters = [];
+                if (oBindingInfo.filters) {
+                    if (Array.isArray(oBindingInfo.filters)) {
+                        aFilters = [...oBindingInfo.filters]; // Copy array
+                    } else {
+                        aFilters = [oBindingInfo.filters]; // Convert single filter to array
+                    }
                 }
                 
-                // Convert to array if it's a single filter
-                let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
+                // Remove null/undefined filters
+                aFilters = aFilters.filter(f => f !== null && f !== undefined);
                 
                 // Check if allocation filter is already present
                 const bHasAllocationFilter = aFilters.some(f => {
                     if (!f) return false;
-                    if (f.getFilters && f.getFilters().length === 2) {
+                    if (f.getFilters) {
                         const aSubFilters = f.getFilters();
-                        return aSubFilters.some(sf => 
-                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                        ) && aSubFilters.some(sf => 
-                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                        );
+                        if (aSubFilters && Array.isArray(aSubFilters) && aSubFilters.length === 2) {
+                            return aSubFilters.some(sf => 
+                                sf && sf.getPath && sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                            ) && aSubFilters.some(sf => 
+                                sf && sf.getPath && sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                            );
+                        }
                     }
                     return false;
                 });
                 
                 // Add allocation filter if not already present
                 if (!bHasAllocationFilter) {
-                    aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
                     aFilters.push(oAllocationFilter);
-                    oBindingInfo.filters = aFilters.length === 1 ? aFilters[0] : aFilters;
-                    console.log("[EmployeesTableDelegate] ✅ Applied base allocation filter (empallocpercentage <= 95% and status != Resigned) for Res table");
+                    console.log("[EmployeesTableDelegate] ✅ Added allocation filter. Total filters:", aFilters.length);
+                } else {
+                    console.log("[EmployeesTableDelegate] ✅ Allocation filter already present");
                 }
+                
+                // Set filters back (single filter or array)
+                if (aFilters.length === 0) {
+                    oBindingInfo.filters = null;
+                } else if (aFilters.length === 1) {
+                    oBindingInfo.filters = aFilters[0];
+                } else {
+                    oBindingInfo.filters = aFilters;
+                }
+                
+                console.log("[EmployeesTableDelegate] ✅ Final filters count:", aFilters.length, "Filters:", oBindingInfo.filters);
             }
         }
         
@@ -357,6 +379,11 @@ sap.ui.define([
             };
             
             // ✅ NEW: Group filters by path and combine same-field filters with OR
+            // ✅ Check if this is Res table (needed for allocation filter)
+            const sTableId = oTable.getId ? oTable.getId() : "";
+            const bIsResTable = sCollectionPath === "Employees" && 
+                               (sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res");
+            
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
                 
@@ -385,27 +412,31 @@ sap.ui.define([
                     if (!oFilter) return;
                     
                     // ✅ NEW: Preserve allocation filter (empallocpercentage <= 95 and status != "Resigned")
-                    if (oFilter.getFilters && oFilter.getFilters().length === 2) {
+                    if (oFilter.getFilters) {
                         const aSubFilters = oFilter.getFilters();
-                        const bIsAllocationFilter = aSubFilters.some(sf => 
-                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                        ) && aSubFilters.some(sf => 
-                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                        );
-                        if (bIsAllocationFilter) {
-                            oAllocationFilter = oFilter; // Preserve allocation filter
-                            return; // Don't process it further
+                        if (aSubFilters && Array.isArray(aSubFilters) && aSubFilters.length === 2) {
+                            const bIsAllocationFilter = aSubFilters.some(sf => 
+                                sf && sf.getPath && sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                            ) && aSubFilters.some(sf => 
+                                sf && sf.getPath && sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                            );
+                            if (bIsAllocationFilter) {
+                                oAllocationFilter = oFilter; // Preserve allocation filter
+                                return; // Don't process it further
+                            }
                         }
                     }
                     
-                    if (oFilter.getFilters && oFilter.getFilters()) {
+                    if (oFilter.getFilters) {
                         const aNested = oFilter.getFilters();
-                        const oOptimizedNested = fnOptimizeFilters(aNested);
-                        if (oOptimizedNested) {
-                            aOtherFilters.push(new sap.ui.model.Filter({
-                                filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
-                                and: oFilter.getAnd ? oFilter.getAnd() : true
-                            }));
+                        if (aNested && Array.isArray(aNested)) {
+                            const oOptimizedNested = fnOptimizeFilters(aNested);
+                            if (oOptimizedNested) {
+                                aOtherFilters.push(new sap.ui.model.Filter({
+                                    filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
+                                    and: oFilter.getAnd ? oFilter.getAnd() : true
+                                }));
+                            }
                         }
                         return;
                     }
@@ -456,12 +487,25 @@ sap.ui.define([
                     aOptimizedFilters.push(oFilter);
                 });
                 
-                // ✅ NEW: Always add allocation filter at the end (if it exists)
+                // ✅ NEW: Always add allocation filter at the end (if it exists or if this is Res table)
                 if (oAllocationFilter) {
                     aOptimizedFilters.push(oAllocationFilter);
+                } else if (bIsResTable) {
+                    // ✅ CRITICAL: If allocation filter was not in the filters, add it back for Res table
+                    const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
+                    const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
+                    const oNewAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+                    aOptimizedFilters.push(oNewAllocationFilter);
+                    console.log("[EmployeesTableDelegate] ✅ Re-added allocation filter after optimization (empallocpercentage <= 95% and status != Resigned)");
                 }
                 
                 if (aOptimizedFilters.length === 0) {
+                    // ✅ If no filters and this is Res table, still add allocation filter
+                    if (bIsResTable) {
+                        const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
+                        const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
+                        return new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true);
+                    }
                     return null;
                 } else if (aOptimizedFilters.length === 1) {
                     return aOptimizedFilters[0];
@@ -591,6 +635,215 @@ sap.ui.define([
                                 });
                             });
                             const oComboBox = new ComboBox({
+                                value: "{" + sPropertyName + "}",
+                                selectedKey: "{" + sPropertyName + "}",
+                                items: aItems,
+                                editable: oEditableBinding
+                            });
+                            oField = new Field({
+                                value: "{" + sPropertyName + "}",
+                                contentEdit: oComboBox,
+                                editMode: {
+                                    parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                    mode: "TwoWay",
+                                    formatter: fnEditModeFormatter
+                                }
+                            });
+                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
+                        } else if (bIsAssoc) {
+                            // ✅ ASSOCIATION: Display name from association, but store ID for editing
+                            // Determine association path based on property
+                            let sAssocPath = "";
+                            if (sPropertyName === "customerId") {
+                                sAssocPath = "to_Customer/customerName"; // Display customer name
+                            } else if (sPropertyName === "supervisorOHR") {
+                                sAssocPath = "to_Supervisor/fullName"; // Display supervisor name
+                            } else if (sPropertyName === "oppId") {
+                                sAssocPath = "to_Opportunity/opportunityName"; // Display opportunity name
+                            } else {
+                                // Fallback: try to construct association path
+                                sAssocPath = sPropertyName.replace("Id", "").replace("OHR", "");
+                                if (sAssocPath === "customer") {
+                                    sAssocPath = "to_Customer/customerName";
+                                } else if (sAssocPath === "opp") {
+                                    sAssocPath = "to_Opportunity/opportunityName";
+                                } else if (sAssocPath === "supervisor") {
+                                    sAssocPath = "to_Supervisor/fullName";
+                                } else {
+                                    sAssocPath = sPropertyName; // Fallback to ID
+                                }
+                            }
+                            
+                            const oModel = oTable.getModel();
+                            const sCollectionPath = "/" + oAssocConfig.targetEntity;
+                            
+                            const oComboBox = new ComboBox({
+                                selectedKey: "{" + sPropertyName + "}",
+                                value: "{" + sPropertyName + "}",
+                                items: {
+                                    path: sCollectionPath,
+                                    template: new Item({
+                                        key: "{" + oAssocConfig.keyField + "}",
+                                        text: "{" + oAssocConfig.displayField + "}"
+                                    })
+                                },
+                                editable: oEditableBinding,
+                                showSecondaryValues: true,
+                                filterSecondaryValues: true,
+                                placeholder: "Select " + oAssocConfig.displayField
+                            });
+                            
+                            // Bind to the same model as the table
+                            oComboBox.setModel(oModel);
+
+                            // Display the name from association path directly
+                            // OData V4 will automatically expand associations if configured
+                            oField = new Field({
+                                value: "{" + sAssocPath + "}", // Direct binding to association name
+                                additionalValue: "{" + sPropertyName + "}", // Show ID as secondary value
+                                contentEdit: oComboBox,
+                                editMode: {
+                                    parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                    mode: "TwoWay",
+                                    formatter: fnEditModeFormatter
+                                }
+                            });
+                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
+                        } else {
+                            // ✅ FIX: Add date formatter for doj and lwd fields to ensure consistent formatting
+                            let oValueBinding = "{" + sPropertyName + "}";
+                            if (sPropertyName === "doj" || sPropertyName === "lwd") {
+                                // Format date strings consistently (handle both Date objects and string dates)
+                                oValueBinding = {
+                                    path: sPropertyName,
+                                    formatter: function(sValue) {
+                                        if (!sValue) return "";
+                                        // If already a formatted string, return as is
+                                        if (typeof sValue === "string" && sValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+                                            // Format YYYY-MM-DD to readable format
+                                            const oDate = new Date(sValue);
+                                            if (!isNaN(oDate.getTime())) {
+                                                return oDate.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+                                            }
+                                        }
+                                        // If it's a Date object, format it
+                                        if (sValue instanceof Date) {
+                                            return sValue.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
+                                        }
+                                        // Return as is if already formatted
+                                        return sValue;
+                                    }
+                                };
+                            }
+                            
+                            oField = new Field({
+                                value: oValueBinding,
+                                tooltip: "{" + sPropertyName + "}",
+                                editMode: {
+                                    parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                    mode: "TwoWay",
+                                    formatter: fnEditModeFormatter
+                                }
+                            });
+                        }
+
+                        const oColumn = new Column({
+                            id: oTable.getId() + "--col-" + sPropertyName,
+                            dataProperty: sPropertyName,
+                            propertyKey: sPropertyName,
+                            header: sLabel,
+                            template: oField
+                        });
+
+                        console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
+                        resolve(oColumn);
+                    }).catch(function(oError) {
+                        console.warn("[GenericDelegate] Error, using regular field:", oError);
+                        const oField = new Field({
+                            value: "{" + sPropertyName + "}",
+                            tooltip: "{" + sPropertyName + "}",
+                            editMode: {
+                                parts: [{ path: `edit>/${sTableId}/editingPath` }],
+                                mode: "TwoWay",
+                                formatter: fnEditModeFormatter
+                            }
+                        });
+                        const oColumn = new Column({
+                            id: oTable.getId() + "--col-" + sPropertyName,
+                            dataProperty: sPropertyName,
+                            propertyKey: sPropertyName,
+                            header: sLabel,
+                            template: oField
+                        });
+                        resolve(oColumn);
+                    });
+                });
+            });
+        });
+    };
+
+    GenericTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+        console.log("[GenericDelegate] removeItem called for column:", oColumn);
+
+        if (oColumn) {
+            oColumn.destroy();
+        }
+
+        return Promise.resolve(true);
+    };
+
+    // Provide FilterField creation for Adaptation Filter panel in table p13n
+    GenericTableDelegate.getFilterDelegate = function () {
+        return {
+            addItem: function (vArg1, vArg2, vArg3) {
+                // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
+                var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
+                var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
+                var mPropertyBag = vArg3;
+
+                // Resolve property name from string, property object, or mPropertyBag
+                const sName =
+                    (typeof vProperty === "string" && vProperty) ||
+                    (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
+                    (mPropertyBag && (mPropertyBag.name || mPropertyBag.propertyKey)) ||
+                    (mPropertyBag && mPropertyBag.property && (mPropertyBag.property.name || mPropertyBag.property.path || mPropertyBag.property.key));
+                if (!sName) {
+                    return Promise.reject("Invalid property for filter item");
+                }
+
+                let sDataType = "sap.ui.model.type.String";
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
+                            sDataType = "sap.ui.model.type.Integer";
+                        } else if (sEdmType === "Edm.Boolean") {
+                            sDataType = "sap.ui.model.type.Boolean";
+                        } else if (sEdmType === "Edm.Date" || sEdmType === "Edm.DateTimeOffset") {
+                            sDataType = "sap.ui.model.type.Date";
+                        }
+                    }
+                } catch (e) { /* ignore */ }
+
+                return Promise.resolve(new FilterField({
+                    label: String(sName)
+                        .replace(/([A-Z])/g, ' $1')
+                        .replace(/^./, function (str) { return str.toUpperCase(); })
+                        .trim(),
+                    propertyKey: sName,
+                    conditions: "{$filters>/conditions/" + sName + "}",
+                    dataType: sDataType
+                }));
+            }
+        };
+    };
+
+    return GenericTableDelegate;
+});                            const oComboBox = new ComboBox({
                                 value: "{" + sPropertyName + "}",
                                 selectedKey: "{" + sPropertyName + "}",
                                 items: aItems,
