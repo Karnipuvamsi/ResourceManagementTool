@@ -42,49 +42,31 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- OHR ID Filter -->
+                            <!-- Full Name Filter -->
                             <mdc:FilterField
-                                id="filterEmployeeOHRId"
-                                label="OHR ID"
-                                conditions="{filterModel>/Employees/conditions/ohrId}"
-                                propertyKey="ohrId"
+                                id="filterFullName"
+                                label="Full Name"
+                                conditions="{filterModel>/Employees/conditions/fullName}"
+                                propertyKey="fullName"
                                 maxConditions="-1"
                                 required="false"
-                                defaultOperator="EQ"
-                                caseSensitive="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Band Filter -->
-                            <mdc:FilterField
-                                id="filterEmployeeBand"
-                                label="Band"
-                                conditions="{filterModel>/Employees/conditions/band}"
-                                propertyKey="band"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                caseSensitive="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Skills Filter -->
-                            <mdc:FilterField
-                                id="filterEmployeeSkills"
-                                label="Skills"
-                                conditions="{filterModel>/Employees/conditions/skills}"
-                                propertyKey="skills"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="Contains"
                                 caseSensitive="false"
                                 width="250px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Status Filter -->
+                            <mdc:FilterField
+                                id="filterEmployeeStatus"
+                                label="Status"
+                                conditions="{filterModel>/Employees/conditions/status}"
+                                propertyKey="status"
+                                maxConditions="-1"
+                                required="false"
+                                caseSensitive="false"
+                                width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
