@@ -18,7 +18,7 @@ sap.ui.define([
     GenericTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
         const mEnumFields = {
             "Customers": {
-                "status": { values: ["A", "I", "P"], labels: ["Active", "Inactive", "Prospect"] },
+                "status": { values: ["Active", "Inactive", "Prospect"], labels: ["Active", "Inactive", "Prospect"] },
                 "vertical": { 
                     values: ["BFS", "CapitalMarkets", "CPG", "Healthcare", "HighTech", "Insurance", "LifeSciences", "Manufacturing", "Retail", "Services"],
                     labels: ["BFS", "Capital Markets", "CPG", "Healthcare", "High Tech", "Insurance", "Life Sciences", "Manufacturing", "Retail", "Services"]
@@ -87,7 +87,8 @@ sap.ui.define([
             return Promise.resolve(null);
         }
 
-        const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
+        // Simple fallback mapping for associations (can be enhanced with metadata later)
+        const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
         
         const mAssociationFields = {
             "Opportunities": {
@@ -216,24 +217,18 @@ sap.ui.define([
             $count: true
         });
         
-        // ✅ Expand associations to load related entity names
+        // ✅ Employees-specific: Expand Supervisor association and handle Res table allocation filter
         const sCollectionPath = sPath.replace(/^\//, "");
         if (sCollectionPath === "Employees") {
             // Expand Supervisor association for Employee table
-            oBindingInfo.parameters.$expand = "to_Supervisor";
+            oBindingInfo.parameters.$expand = "to_Supervisor($select=fullName,ohrId)";
             
-            // ✅ NEW: For Res table (Employees in Allocation Overview), ALWAYS apply base allocation filter
+            // ✅ For Res table (Employees in Allocation Overview), ALWAYS apply base allocation filter
             // Filter: empallocpercentage <= 95 AND status != "Resigned"
             const sTableId = oTable.getId ? oTable.getId() : "";
-            const oPayload = oTable.getPayload ? oTable.getPayload() : {};
-            const sPayloadCollection = oPayload.collectionPath ? oPayload.collectionPath.replace(/^\//, "") : "";
             
             // Res table uses "Employees" collection and has "Res" in its ID
-            // Check table ID (could be full ID like "container-glassboard---Home--Res" or just "Res")
-            const bIsResTable = sCollectionPath === "Employees" && 
-                               (sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res");
-            
-            console.log("[EmployeesTableDelegate] Checking Res table - TableId:", sTableId, "CollectionPath:", sCollectionPath, "IsResTable:", bIsResTable);
+            const bIsResTable = sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res";
             
             if (bIsResTable) {
                 const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
@@ -248,18 +243,16 @@ sap.ui.define([
                 // Convert to array if it's a single filter
                 let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
                 
-                // Check if allocation filter is already present
+                // Check if allocation filter is already present (avoid duplicates)
                 const bHasAllocationFilter = aFilters.some(f => {
-                    if (!f) return false;
-                    if (f.getFilters && f.getFilters().length === 2) {
-                        const aSubFilters = f.getFilters();
-                        return aSubFilters.some(sf => 
-                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                        ) && aSubFilters.some(sf => 
-                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                        );
-                    }
-                    return false;
+                    if (!f || !f.getFilters) return false;
+                    const aSubFilters = f.getFilters();
+                    if (!aSubFilters || !Array.isArray(aSubFilters) || aSubFilters.length !== 2) return false;
+                    return aSubFilters.some(sf => 
+                        sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                    ) && aSubFilters.some(sf => 
+                        sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                    );
                 });
                 
                 // Add allocation filter if not already present
@@ -267,20 +260,12 @@ sap.ui.define([
                     aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
                     aFilters.push(oAllocationFilter);
                     oBindingInfo.filters = aFilters.length === 1 ? aFilters[0] : aFilters;
-                    console.log("[EmployeesTableDelegate] ✅ Applied base allocation filter (empallocpercentage <= 95% and status != Resigned) for Res table");
                 }
             }
         }
         
-        // ✅ Make all string filters case-insensitive by recreating them
-        // Handle both array and single filter cases
-        if (oBindingInfo.filters) {
-            // If filters is not an array, convert it to array for processing
-            if (!Array.isArray(oBindingInfo.filters)) {
-                oBindingInfo.filters = [oBindingInfo.filters];
-            }
-            
-            if (Array.isArray(oBindingInfo.filters)) {
+        // ✅ Process filters: group by field, combine same field with OR, different fields with AND
+        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
             
@@ -326,7 +311,7 @@ sap.ui.define([
                             
                             return oNewFilter;
                         } catch (e) {
-                            console.warn("[EmployeesTableDelegate] Could not recreate filter with caseSensitive:", e);
+                            console.warn("[CustomersTableDelegate] Could not recreate filter with caseSensitive:", e);
                             return oFilter;
                         }
                     }
@@ -360,7 +345,9 @@ sap.ui.define([
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
                 
+                // Handle single Filter object
                 if (!Array.isArray(vFilters)) {
+                    // If it's a single filter with nested filters, process those
                     if (vFilters.getFilters && vFilters.getFilters()) {
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
@@ -376,28 +363,17 @@ sap.ui.define([
                 
                 if (vFilters.length === 0) return null;
                 
+                // First, make filters case-insensitive
                 let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
+                
+                // Group filters by path (field name)
                 const mFiltersByPath = {};
-                const aOtherFilters = [];
-                let oAllocationFilter = null; // Store allocation filter separately
+                const aOtherFilters = []; // Filters without a path (nested/complex filters)
                 
                 aProcessedFilters.forEach((oFilter) => {
                     if (!oFilter) return;
                     
-                    // ✅ NEW: Preserve allocation filter (empallocpercentage <= 95 and status != "Resigned")
-                    if (oFilter.getFilters && oFilter.getFilters().length === 2) {
-                        const aSubFilters = oFilter.getFilters();
-                        const bIsAllocationFilter = aSubFilters.some(sf => 
-                            sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                        ) && aSubFilters.some(sf => 
-                            sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                        );
-                        if (bIsAllocationFilter) {
-                            oAllocationFilter = oFilter; // Preserve allocation filter
-                            return; // Don't process it further
-                        }
-                    }
-                    
+                    // Handle nested filters recursively
                     if (oFilter.getFilters && oFilter.getFilters()) {
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
@@ -420,11 +396,13 @@ sap.ui.define([
                         mFiltersByPath[sPath] = [];
                     }
                     
+                    // Check for duplicates before adding
                     const sValue1 = String(oFilter.getValue1() || "");
                     const sValue2 = String(oFilter.getValue2() || "");
                     const sOperator = String(oFilter.getOperator() || "");
                     const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
                     
+                    // Check if this exact filter already exists
                     const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
                         const sExistingValue1 = String(oExistingFilter.getValue1() || "");
                         const sExistingValue2 = String(oExistingFilter.getValue2() || "");
@@ -438,34 +416,37 @@ sap.ui.define([
                     }
                 });
                 
+                // Build optimized filter array
                 const aOptimizedFilters = [];
                 
+                // For each field, combine multiple values with OR
                 Object.keys(mFiltersByPath).forEach((sPath) => {
                     const aFieldFilters = mFiltersByPath[sPath];
                     if (aFieldFilters.length === 1) {
+                        // Single filter for this field, add as-is
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                        // Multiple filters for same field, combine with OR
+                        const oOrFilter = new sap.ui.model.Filter({
                             filters: aFieldFilters,
                             and: false // OR logic
-                        }));
+                        });
+                        aOptimizedFilters.push(oOrFilter);
                     }
                 });
                 
+                // Add other filters (nested/complex) as-is
                 aOtherFilters.forEach((oFilter) => {
                     aOptimizedFilters.push(oFilter);
                 });
                 
-                // ✅ NEW: Always add allocation filter at the end (if it exists)
-                if (oAllocationFilter) {
-                    aOptimizedFilters.push(oAllocationFilter);
-                }
-                
+                // Return optimized filters
                 if (aOptimizedFilters.length === 0) {
                     return null;
                 } else if (aOptimizedFilters.length === 1) {
                     return aOptimizedFilters[0];
                 } else {
+                    // Multiple field groups, combine them with AND
                     return new sap.ui.model.Filter({
                         filters: aOptimizedFilters,
                         and: true // AND logic between different fields
@@ -475,7 +456,6 @@ sap.ui.define([
             
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
-            }
         }
 
         console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
@@ -495,31 +475,15 @@ sap.ui.define([
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
-            // Format label
-            // const sLabel = sPropertyName
-            //     // .replace(/([A-Z])/g, ' $1')
-            //     .replace(/([a-z])([A-Z])/g, '$1 $2')
-            //     .replace(/^./, function(str) { return str.toUpperCase(); })
-            //     .trim();
-            // Custom header mapping for Employees table
+            // Custom header mapping for Customers table
             const mCustomHeaders = {
-                "ohrId": "OHR ID",
-                "mailid": "Email ID",
-                "fullName": "Full Name",
-                "gender": "Gender",
-                "dob": "DOB",                    // Optional if you later add a DOB field
-                "employeeType": "Employee Type",
-                "doj": "DOJ",
-                "band": "Band",
-                "role": "Designation",
-                "location": "Location",
-                "skills": "Skill Details",
-                "city": "City",
-                "lwd": "LWD",
-                "supervisorOHR": "Supervisor OHR",
+                "SAPcustId": "SAP Customer ID",
+                "customerName": "Customer Name",
+                "segment": "Segment",
+                "state": "State",
+                "country": "Country",
                 "status": "Status",
-                "skillCategory": "Skill Category", // Optional future field
-                "experience": "Experience"         // Optional future field
+                "vertical": "Vertical"  // ✅ UPDATED: Now using enum instead of verticalId
             };
 
             // Smart header generation with better fallback
@@ -529,34 +493,38 @@ sap.ui.define([
             if (mCustomHeaders[sPropertyName]) {
                 // Use custom header if available
                 sLabel = mCustomHeaders[sPropertyName];
-                sTooltip = sLabel; // Same as label
+                sTooltip = sLabel; // Use same text for tooltip
             } else {
-                // Smart fallback for any new or unmapped fields
+                // Smart fallback for new fields
                 sLabel = sPropertyName
-                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')   // "SAPId" → "SAP Id"
-                    .replace(/([a-z])([A-Z])/g, '$1 $2')         // "customerName" → "Customer Name"
-                    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')    // "OHRId" → "OHR Id"
-                    .replace(/^./, str => str.toUpperCase())     // Capitalize first letter
+                    // Handle common patterns
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')  // "SAPId" → "SAP Id"
+                    .replace(/([a-z])([A-Z])/g, '$1 $2')        // "customerName" → "customer Name"
+                    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')   // "OHRId" → "OHR Id"
+                    .replace(/^./, function (str) { return str.toUpperCase(); })
                     .trim();
 
+                // Enhanced tooltip for new fields
                 sTooltip = `${sLabel} (Field: ${sPropertyName})`;
 
-                console.log(`[EmployeeTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
+                // Log new field for easy identification
+                // console.log(`[CustomersTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
             }
-
-            oProperty.label = sLabel;
-            oProperty.tooltip = sTooltip;
-
 
             // Load the Column module and create column
             return new Promise(function (resolve) {
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
-                    const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
+                    // ✅ FIXED: Get table ID from collectionPath for table-specific edit state
+                    const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
                     
+                    // ✅ STEP 1: Check if enum field (fixed values)
                     const oEnumConfig = GenericTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
+
+                    // ✅ STEP 2: Check if association field (dynamic from OData)
                     const oAssocPromise = GenericTableDelegate._detectAssociation(oTable, sPropertyName);
                     
+                    // Helper function for edit mode formatter
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
                         if (sPath && sPath.includes(",")) {
@@ -566,6 +534,7 @@ sap.ui.define([
                         return sPath === rowPath ? "Editable" : "Display";
                     };
 
+                    // Helper function for editable binding
                     const oEditableBinding = {
                         parts: [{ path: `edit>/${sTableId}/editingPath` }],
                         mode: "TwoWay",
@@ -584,20 +553,33 @@ sap.ui.define([
                         let oField;
 
                         if (bIsEnum) {
+                            // ✅ METHOD 1: ENUM - ComboBox with static values
                             const aItems = oEnumConfig.values.map(function(sVal, iIndex) {
                                 return new Item({
                                     key: sVal,
                                     text: oEnumConfig.labels[iIndex] || sVal
                                 });
                             });
+
+                            // ✅ Create formatter to display label instead of key in display mode
+                            const fnEnumFormatter = function(sKey) {
+                                if (!sKey) return "";
+                                const iIndex = oEnumConfig.values.indexOf(sKey);
+                                return iIndex >= 0 ? oEnumConfig.labels[iIndex] : sKey;
+                            };
+
                             const oComboBox = new ComboBox({
                                 value: "{" + sPropertyName + "}",
                                 selectedKey: "{" + sPropertyName + "}",
                                 items: aItems,
                                 editable: oEditableBinding
                             });
+
                             oField = new Field({
-                                value: "{" + sPropertyName + "}",
+                                value: {
+                                    path: sPropertyName,
+                                    formatter: fnEnumFormatter
+                                },
                                 contentEdit: oComboBox,
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
@@ -605,31 +587,10 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
+
+                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox with formatter");
                         } else if (bIsAssoc) {
-                            // ✅ ASSOCIATION: Display name from association, but store ID for editing
-                            // Determine association path based on property
-                            let sAssocPath = "";
-                            if (sPropertyName === "customerId") {
-                                sAssocPath = "to_Customer/customerName"; // Display customer name
-                            } else if (sPropertyName === "supervisorOHR") {
-                                sAssocPath = "to_Supervisor/fullName"; // Display supervisor name
-                            } else if (sPropertyName === "oppId") {
-                                sAssocPath = "to_Opportunity/opportunityName"; // Display opportunity name
-                            } else {
-                                // Fallback: try to construct association path
-                                sAssocPath = sPropertyName.replace("Id", "").replace("OHR", "");
-                                if (sAssocPath === "customer") {
-                                    sAssocPath = "to_Customer/customerName";
-                                } else if (sAssocPath === "opp") {
-                                    sAssocPath = "to_Opportunity/opportunityName";
-                                } else if (sAssocPath === "supervisor") {
-                                    sAssocPath = "to_Supervisor/fullName";
-                                } else {
-                                    sAssocPath = sPropertyName; // Fallback to ID
-                                }
-                            }
-                            
+                            // ✅ METHOD 2: ASSOCIATION - ComboBox bound to OData (compatible with UI5 1.141.1)
                             const oModel = oTable.getModel();
                             const sCollectionPath = "/" + oAssocConfig.targetEntity;
                             
@@ -652,11 +613,8 @@ sap.ui.define([
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
-                            // Display the name from association path directly
-                            // OData V4 will automatically expand associations if configured
                             oField = new Field({
-                                value: "{" + sAssocPath + "}", // Direct binding to association name
-                                additionalValue: "{" + sPropertyName + "}", // Show ID as secondary value
+                                value: "{" + sPropertyName + "}",
                                 contentEdit: oComboBox,
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
@@ -664,36 +622,12 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
+
+                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ ComboBox bound to", oAssocConfig.targetEntity);
                         } else {
-                            // ✅ FIX: Add date formatter for doj and lwd fields to ensure consistent formatting
-                            let oValueBinding = "{" + sPropertyName + "}";
-                            if (sPropertyName === "doj" || sPropertyName === "lwd") {
-                                // Format date strings consistently (handle both Date objects and string dates)
-                                oValueBinding = {
-                                    path: sPropertyName,
-                                    formatter: function(sValue) {
-                                        if (!sValue) return "";
-                                        // If already a formatted string, return as is
-                                        if (typeof sValue === "string" && sValue.match(/^\d{4}-\d{2}-\d{2}/)) {
-                                            // Format YYYY-MM-DD to readable format
-                                            const oDate = new Date(sValue);
-                                            if (!isNaN(oDate.getTime())) {
-                                                return oDate.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
-                                            }
-                                        }
-                                        // If it's a Date object, format it
-                                        if (sValue instanceof Date) {
-                                            return sValue.toLocaleDateString("en-US", { year: "numeric", month: "2-digit", day: "2-digit" });
-                                        }
-                                        // Return as is if already formatted
-                                        return sValue;
-                                    }
-                                };
-                            }
-                            
+                            // ✅ Regular text field
                             oField = new Field({
-                                value: oValueBinding,
+                                value: "{" + sPropertyName + "}",
                                 tooltip: "{" + sPropertyName + "}",
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
@@ -708,13 +642,15 @@ sap.ui.define([
                             dataProperty: sPropertyName,
                             propertyKey: sPropertyName,
                             header: sLabel,
-                            template: oField
+                            template: oField,
+                            headerTooltip: sTooltip
                         });
 
                         console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[GenericDelegate] Error, using regular field:", oError);
+                        console.warn("[GenericDelegate] Error detecting association, using regular field:", oError);
+                        // Fallback to regular field
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -729,7 +665,8 @@ sap.ui.define([
                             dataProperty: sPropertyName,
                             propertyKey: sPropertyName,
                             header: sLabel,
-                            template: oField
+                            template: oField,
+                            headerTooltip: sTooltip
                         });
                         resolve(oColumn);
                     });
@@ -785,7 +722,27 @@ sap.ui.define([
                     }
                 } catch (e) { /* ignore */ }
 
-                return Promise.resolve(new FilterField({
+                // ✅ Determine if property is a string type for case-insensitive filtering
+                let bIsString = false;
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.String") {
+                            bIsString = true;
+                        }
+                    }
+                } catch (e) {
+                    // If metadata check fails, check dataType
+                    if (sDataType === "sap.ui.model.type.String") {
+                        bIsString = true;
+                    }
+                }
+                
+                const oFilterFieldConfig = {
                     label: String(sName)
                         .replace(/([A-Z])/g, ' $1')
                         .replace(/^./, function (str) { return str.toUpperCase(); })
@@ -793,7 +750,14 @@ sap.ui.define([
                     propertyKey: sName,
                     conditions: "{$filters>/conditions/" + sName + "}",
                     dataType: sDataType
-                }));
+                };
+                
+                // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
+                if (bIsString) {
+                    oFilterFieldConfig.caseSensitive = false;
+                }
+                
+                return Promise.resolve(new FilterField(oFilterFieldConfig));
             }
         };
     };

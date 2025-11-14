@@ -2258,103 +2258,107 @@ sap.ui.define([
                 
                 console.log(`✅ Allocation percentage from input: "${sPercentage}" -> ${iPercentage}%`);
                 
-                // ✅ CRITICAL: Frontend validation - Check total allocation percentage per employee
-                // Group employees and check their existing allocations
-                const mEmployeeTotals = {}; // Map of employeeId -> current total percentage
-                const aEmployeeIds = [...new Set(aEmployees.map(e => e.ohrId))];
-                
-                // Fetch existing allocations for all selected employees
+                // ✅ Use the SAME validation logic as employee level allocation
+                // First: Validate project resource limits
+                // Second: Validate employee allocation percentages (same as onAllocateConfirm)
                 const fnValidateAndCreate = async () => {
-                    try {
-                        // Get existing allocations for all selected employees
-                        for (let i = 0; i < aEmployeeIds.length; i++) {
-                            const sEmployeeId = aEmployeeIds[i];
-                            
-                            try {
-                                // ✅ Use OData V4 bindList to read allocations
-                                const oAllocBinding = oModel.bindList("/Allocations", null, [
-                                    new sap.ui.model.Filter("employeeId", sap.ui.model.FilterOperator.EQ, sEmployeeId),
-                                    new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Active")
-                                ]);
-                                
-                                const aExistingAllocs = await new Promise((resolve, reject) => {
-                                    oAllocBinding.requestContexts(0, 1000).then((aContexts) => {
-                                        const aAllocs = aContexts.map(ctx => ctx.getObject());
-                                        resolve(aAllocs);
-                                    }).catch(reject);
-                                });
-                                
-                                const iCurrentTotal = aExistingAllocs.reduce((sum, alloc) => {
-                                    return sum + (alloc.allocationPercentage || 0);
-                                }, 0);
-                                
-                                mEmployeeTotals[sEmployeeId] = iCurrentTotal;
-                                
-                                // Check if adding new allocation would exceed 100%
-                                // Count how many times this employee appears in the selection
-                                const iEmployeeCount = aEmployees.filter(e => e.ohrId === sEmployeeId).length;
-                                const iNewTotal = iCurrentTotal + (iPercentage * iEmployeeCount);
-                                
-                                if (iNewTotal > 100) {
-                                    const sEmployeeName = aEmployees.find(e => e.ohrId === sEmployeeId)?.fullName || sEmployeeId;
-                                    sap.m.MessageBox.error(`Cannot allocate: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeName}. Current allocations: ${iCurrentTotal}%, New allocation(s): ${iPercentage * iEmployeeCount}%`);
-                                    return;
-                                }
-                            } catch (oReadError) {
-                                console.warn(`Could not fetch existing allocations for employee ${sEmployeeId}:`, oReadError);
-                                // Continue with validation - backend will catch it
-                            }
-                        }
-                        
-                        // All validations passed - create allocations
-                        const aAllocationData = [];
-                        for (let i = 0; i < aEmployees.length; i++) {
-                            const oEmployee = aEmployees[i];
-            const sAllocationId = this._generateUUID();
-            
-                            const oAllocData = {
-                allocationId: sAllocationId,
-                                employeeId: oEmployee.ohrId,
-                projectId: sProjectId,
-                startDate: sStartDate,
-                endDate: sEndDate,
-                                allocationPercentage: iPercentage,
-                status: "Active"
-            };
-                            
-                            console.log(`🔵 Creating allocation for employee ${oEmployee.ohrId} with percentage: ${iPercentage}%`);
-                            console.log(`🔵 Allocation data:`, JSON.stringify(oAllocData, null, 2));
-                            
-                            aAllocationData.push(oAllocData);
-                        }
-                        
-                        console.log(`✅ Frontend validation passed. Creating ${aAllocationData.length} allocation(s) with ${iPercentage}% each...`);
-                        this._createMultipleAllocationsFromFindResources(aAllocationData, oModel, aEmployees);
-                    } catch (oError) {
-                        console.error("Error in frontend validation:", oError);
-                        // Still proceed - backend will validate
-                        const aAllocationData = [];
-                        for (let i = 0; i < aEmployees.length; i++) {
-                            const oEmployee = aEmployees[i];
-                            const sAllocationId = this._generateUUID();
-                            
-                            const oAllocData = {
-                                allocationId: sAllocationId,
-                                employeeId: oEmployee.ohrId,
-                                projectId: sProjectId,
-                                startDate: sStartDate,
-                                endDate: sEndDate,
-                                allocationPercentage: iPercentage,
-                                status: "Active"
-                            };
-                            
-                            console.log(`🔵 Creating allocation for employee ${oEmployee.ohrId} with percentage: ${iPercentage}%`);
-                            console.log(`🔵 Allocation data:`, JSON.stringify(oAllocData, null, 2));
-                            
-                            aAllocationData.push(oAllocData);
-                        }
-                        this._createMultipleAllocationsFromFindResources(aAllocationData, oModel, aEmployees);
+                    // ✅ STEP 1: Validate project resource limits (same as employee level)
+                    const bProjectValid = await this._validateProjectResourceLimits(sProjectId, aEmployees.length, oModel);
+                    if (!bProjectValid) {
+                        return; // Error popup already shown by validation function
                     }
+                    
+                    // ✅ STEP 1.5: Refresh employee data to get latest empallocpercentage values
+                    // The employee objects from table might have stale values
+                    const aRefreshedEmployees = [];
+                    for (let i = 0; i < aEmployees.length; i++) {
+                        const oEmployee = aEmployees[i];
+                        try {
+                            // Fetch latest employee data including empallocpercentage
+                            const oEmployeeBinding = oModel.bindContext(`/Employees('${oEmployee.ohrId}')`);
+                            await oEmployeeBinding.requestObject();
+                            const oRefreshedEmployee = oEmployeeBinding.getBoundContext().getObject();
+                            if (oRefreshedEmployee) {
+                                // Merge refreshed data with original employee object
+                                aRefreshedEmployees.push({
+                                    ...oEmployee,
+                                    ...oRefreshedEmployee
+                                });
+                            } else {
+                                // Fallback to original if refresh fails
+                                aRefreshedEmployees.push(oEmployee);
+                            }
+                        } catch (oError) {
+                            console.warn(`⚠️ Could not refresh employee ${oEmployee.ohrId} data:`, oError);
+                            // Fallback to original employee object
+                            aRefreshedEmployees.push(oEmployee);
+                        }
+                    }
+                    
+                    // ✅ STEP 2: Validate each employee's allocation percentage (SAME LOGIC as employee level)
+                    const aValidEmployees = [];
+                    const aInvalidEmployees = [];
+                    
+                    // First pass: Validate each employee (same logic as onAllocateConfirm lines 3109-3132)
+                    for (let i = 0; i < aRefreshedEmployees.length; i++) {
+                        const oEmployee = aRefreshedEmployees[i];
+                        
+                        // Get employee's current allocation percentage (default to 0 if missing)
+                        const iEmpAllocPercentage = oEmployee.empallocpercentage ? parseInt(oEmployee.empallocpercentage, 10) : 0;
+                        // Calculate combined allocation percentage
+                        const iCombinedPercentage = iEmpAllocPercentage + iPercentage;
+                        
+                        console.log(`🔵 Employee ${oEmployee.ohrId} (${oEmployee.fullName}): Current = ${iEmpAllocPercentage}%, Requested = ${iPercentage}%, Combined = ${iCombinedPercentage}%`);
+                        
+                        // ✅ Validate: Check if combined percentage exceeds 100%
+                        if (iCombinedPercentage > 100) {
+                            aInvalidEmployees.push({
+                                name: oEmployee.fullName,
+                                ohrId: oEmployee.ohrId,
+                                current: iEmpAllocPercentage,
+                                requested: iPercentage,
+                                total: iCombinedPercentage,
+                                available: 100 - iEmpAllocPercentage
+                            });
+                            console.warn(`⚠️ Employee ${oEmployee.ohrId} (${oEmployee.fullName}) cannot be allocated: ${iCombinedPercentage}% > 100%`);
+                        } else {
+                            aValidEmployees.push(oEmployee);
+                        }
+                    }
+                    
+                    // ✅ Show warning/error if some employees cannot be allocated (SAME POPUP as employee level)
+                    if (aInvalidEmployees.length > 0) {
+                        let sErrorMessage = `Cannot allocate ${aInvalidEmployees.length} employee(s) - allocation would exceed 100%:\n\n`;
+                        aInvalidEmployees.forEach((oInvalid) => {
+                            sErrorMessage += `• ${oInvalid.name} (${oInvalid.ohrId}): Current ${oInvalid.current}% + Requested ${oInvalid.requested}% = ${oInvalid.total}% (Available: ${oInvalid.available}%)\n`;
+                        });
+                        
+                        if (aValidEmployees.length > 0) {
+                            sErrorMessage += `\n${aValidEmployees.length} employee(s) can still be allocated. Continue with only valid employees?`;
+                            
+                            sap.m.MessageBox.warning(sErrorMessage, {
+                                title: "Allocation Validation Warning",
+                                actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+                                emphasizedAction: sap.m.MessageBox.Action.YES,
+                                onClose: (sAction) => {
+                                    if (sAction === sap.m.MessageBox.Action.YES) {
+                                        // Continue with valid employees only
+                                        this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
+                                    }
+                                }
+                            });
+                            return;
+                        } else {
+                            // No valid employees - show error and return
+                            sap.m.MessageBox.error(sErrorMessage, {
+                                title: "Allocation Validation Error"
+                            });
+                            return;
+                        }
+                    }
+                    
+                    // ✅ All employees are valid - create allocations
+                    this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                 };
                 
                 fnValidateAndCreate();
@@ -2371,54 +2375,51 @@ sap.ui.define([
             }
         },
         
-        // ✅ NEW: Helper function to create multiple allocations from Find Resources
-        _createMultipleAllocationsFromFindResources: function (aAllocationData, oModel, aEmployees) {
-            console.log(`Creating ${aAllocationData.length} allocation(s)...`);
+        // ✅ NEW: Helper function to create allocations for valid employees from Find Resources (same pattern as employee level)
+        _createAllocationsForFindResources: function (aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aAllEmployees) {
+            const aAllocationData = [];
             
-            // ✅ NEW: Validate project resource limits before employee validation
-            if (aAllocationData.length > 0) {
-                const sProjectId = aAllocationData[0].projectId;
-                if (sProjectId) {
-                    // Fetch project details to check requiredResources vs allocatedResources
-                    const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
-                    oProjectBinding.requestObject().then((oProject) => {
-                        const iRequiredResources = oProject.requiredResources || 0;
-                        const iCurrentAllocated = oProject.allocatedResources || 0;
-                        const iNewAllocations = aAllocationData.length;
-                        const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
-                        
-                        console.log(`🔵 Project ${sProjectId} validation: Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
-                        
-                        if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
-                            const iExcess = iTotalAfterAllocation - iRequiredResources;
-                            const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
-                            
-                            let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
-                            sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
-                            sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
-                            sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
-                            sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
-                            sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
-                            
-                            sap.m.MessageBox.error(sErrorMessage, {
-                                title: "Project Resource Limit Exceeded"
-                            });
-                            return;
-                        }
-                        
-                        // Project validation passed - continue with employee validation
-                        this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
-                    }).catch((oError) => {
-                        console.warn("⚠️ Could not fetch project details for validation:", oError);
-                        // Continue with employee validation even if project fetch fails
-                        this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
-                    });
-                    return; // Exit early - validation will continue in promise callback
-                }
+            // ✅ IMPORTANT: Do NOT update empallocpercentage on frontend
+            // The backend's after('CREATE', Allocations) hook will handle it after validation
+            for (let i = 0; i < aValidEmployees.length; i++) {
+                const oEmployee = aValidEmployees[i];
+                const sAllocationId = this._generateUUID();
+
+                // Get employee's current allocation percentage for logging only
+                const iEmpAllocPercentage = oEmployee.empallocpercentage ? parseInt(oEmployee.empallocpercentage, 10) : 0;
+                const iCombinedPercentage = iEmpAllocPercentage + iPercentage;
+                
+                console.log(`✅ Employee ${oEmployee.ohrId} (${oEmployee.fullName}): Current = ${iEmpAllocPercentage}%, Entering = ${iPercentage}%, Will be = ${iCombinedPercentage}%`);
+
+                const oAllocData = {
+                    allocationId: sAllocationId,
+                    employeeId: oEmployee.ohrId,
+                    projectId: sProjectId,
+                    startDate: sStartDate,
+                    endDate: sEndDate,
+                    allocationPercentage: iPercentage,
+                    status: "Active"
+                };
+                
+                console.log(`🔵 Creating allocation for employee ${oEmployee.ohrId} with percentage: ${iPercentage}%`);
+                console.log(`🔵 Allocation data:`, JSON.stringify(oAllocData, null, 2));
+                
+                aAllocationData.push(oAllocData);
             }
             
-            // No project ID - continue with employee validation
-            this._validateAndCreateFromFindResources(aAllocationData, oModel, aEmployees);
+            console.log(`✅ Creating ${aAllocationData.length} allocation(s) from Find Resources with ${iPercentage}% each...`);
+            console.log(`✅ Backend will update empallocpercentage for each employee after validation`);
+            
+            // ✅ Use the same batch creation function
+            this._createValidAllocationsFromFindResources(aAllocationData, oModel, aValidEmployees);
+        },
+        
+        // ✅ DEPRECATED: This function is no longer used - validation now happens before calling _createAllocationsForFindResources
+        // Kept for backward compatibility
+        _createMultipleAllocationsFromFindResources: async function (aAllocationData, oModel, aEmployees) {
+            console.log(`⚠️ _createMultipleAllocationsFromFindResources called - this should not happen if validation is working correctly`);
+            // Just create allocations directly (validation should have happened already)
+            this._createValidAllocationsFromFindResources(aAllocationData, oModel, aEmployees);
         },
         
         // ✅ NEW: Helper function to validate employees and create allocations from Find Resources
@@ -2617,19 +2618,90 @@ sap.ui.define([
                 console.error("❌ Error submitting allocation batch:", oError);
                 console.error("Error details:", JSON.stringify(oError, null, 2));
                 
-                // ✅ CRITICAL: Extract error message from batch response
+                // ✅ CRITICAL: Extract error message from batch response with better parsing
                 let sErrorMessage = `Failed to create allocation(s). ${aAllocationData.length} employee(s) selected.`;
                 
+                // Try multiple ways to extract error message
                 if (oError.message) {
                     sErrorMessage = oError.message;
-                } else if (oError.body && oError.body.error && oError.body.error.message) {
-                    sErrorMessage = oError.body.error.message;
+                } else if (oError.body) {
+                    // Check for OData error format
+                    if (oError.body.error && oError.body.error.message) {
+                        sErrorMessage = oError.body.error.message;
+                    } else if (oError.body.error && oError.body.error.message && oError.body.error.message.value) {
+                        sErrorMessage = oError.body.error.message.value;
+                    } else if (typeof oError.body === 'string') {
+                        sErrorMessage = oError.body;
+                    }
+                } else if (oError.responseText) {
+                    try {
+                        const oParsed = JSON.parse(oError.responseText);
+                        if (oParsed.error && oParsed.error.message) {
+                            sErrorMessage = oParsed.error.message;
+                        }
+                    } catch (e) {
+                        sErrorMessage = oError.responseText;
+                    }
                 } else if (typeof oError === 'string') {
                     sErrorMessage = oError;
                 }
                 
-                sap.m.MessageBox.error(sErrorMessage);
+                // ✅ Show error popup with detailed message
+                sap.m.MessageBox.error(sErrorMessage, {
+                    title: "Allocation Failed"
+                });
             });
+        },
+        
+        // ✅ NEW: Shared helper function to validate project resource limits
+        // Returns: Promise<boolean> - true if valid, false if invalid (error popup shown)
+        _validateProjectResourceLimits: async function (sProjectId, iNewAllocations, oModel) {
+            if (!sProjectId || !oModel) {
+                console.warn("⚠️ Cannot validate project limits: missing projectId or model");
+                return true; // Allow to continue - backend will validate
+            }
+            
+            try {
+                // Fetch project details to check requiredResources vs allocatedResources
+                const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
+                await oProjectBinding.requestObject();
+                const oProject = oProjectBinding.getBoundContext().getObject();
+                
+                if (!oProject) {
+                    console.warn("⚠️ Project not found for validation:", sProjectId);
+                    return true; // Allow to continue - backend will validate
+                }
+                
+                const iRequiredResources = oProject.requiredResources || 0;
+                const iCurrentAllocated = oProject.allocatedResources || 0;
+                const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
+                
+                console.log(`🔵 Project ${sProjectId} validation: Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
+                
+                // ✅ Project-level validation: Check if allocating would exceed requiredResources
+                if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
+                    const iExcess = iTotalAfterAllocation - iRequiredResources;
+                    const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
+                    
+                    let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
+                    sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
+                    sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
+                    sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
+                    sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
+                    sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
+                    
+                    sap.m.MessageBox.error(sErrorMessage, {
+                        title: "Project Resource Limit Exceeded"
+                    });
+                    return false; // Validation failed
+                }
+                
+                return true; // Validation passed
+            } catch (oError) {
+                console.warn("⚠️ Could not fetch project details for validation:", oError);
+                // Allow to continue - backend will validate
+                return true;
+            }
         },
         
         // ✅ NEW: Helper function to create multiple allocations from AllocateDialog
@@ -2803,18 +2875,38 @@ sap.ui.define([
                 console.error("❌ Error submitting allocation batch:", oError);
                 console.error("Error details:", JSON.stringify(oError, null, 2));
                 
-                // ✅ CRITICAL: Extract error message from batch response
+                // ✅ CRITICAL: Extract error message from batch response with better parsing
                 let sErrorMessage = `Failed to create allocation(s). ${aAllocationData.length} employee(s) selected.`;
                 
+                // Try multiple ways to extract error message
                 if (oError.message) {
                     sErrorMessage = oError.message;
-                } else if (oError.body && oError.body.error && oError.body.error.message) {
-                    sErrorMessage = oError.body.error.message;
+                } else if (oError.body) {
+                    // Check for OData error format
+                    if (oError.body.error && oError.body.error.message) {
+                        sErrorMessage = oError.body.error.message;
+                    } else if (oError.body.error && oError.body.error.message && oError.body.error.message.value) {
+                        sErrorMessage = oError.body.error.message.value;
+                    } else if (typeof oError.body === 'string') {
+                        sErrorMessage = oError.body;
+                    }
+                } else if (oError.responseText) {
+                    try {
+                        const oParsed = JSON.parse(oError.responseText);
+                        if (oParsed.error && oParsed.error.message) {
+                            sErrorMessage = oParsed.error.message;
+                        }
+                    } catch (e) {
+                        sErrorMessage = oError.responseText;
+                    }
                 } else if (typeof oError === 'string') {
                     sErrorMessage = oError;
                 }
                 
-                sap.m.MessageBox.error(sErrorMessage);
+                // ✅ Show error popup with detailed message
+                sap.m.MessageBox.error(sErrorMessage, {
+                    title: "Allocation Failed"
+                });
             });
         },
         
@@ -3101,43 +3193,10 @@ sap.ui.define([
             
             console.log(`✅ Allocation percentage from input: "${sPercentage}" -> ${iPercentage}%`);
             
-            // ✅ NEW: Validate project resource limits before employee validation
-            // Fetch project details to check requiredResources vs allocatedResources
-            // Note: oModel is already declared above
-            let oProject = null;
-            try {
-                const oProjectBinding = oModel.bindContext(`/Projects('${sProjectId}')`);
-                await oProjectBinding.requestObject();
-                oProject = oProjectBinding.getBoundContext().getObject();
-            } catch (oError) {
-                console.warn("⚠️ Could not fetch project details for validation:", oError);
-            }
-            
-            // ✅ Project-level validation: Check if allocating would exceed requiredResources
-            if (oProject) {
-                const iRequiredResources = oProject.requiredResources || 0;
-                const iCurrentAllocated = oProject.allocatedResources || 0;
-                const iNewAllocations = aEmployees.length;
-                const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
-                
-                console.log(`🔵 Project ${sProjectId} validation: Required=${iRequiredResources}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
-                
-                if (iRequiredResources > 0 && iTotalAfterAllocation > iRequiredResources) {
-                    const iExcess = iTotalAfterAllocation - iRequiredResources;
-                    const iCanAllocate = Math.max(0, iRequiredResources - iCurrentAllocated);
-                    
-                    let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to project ${oProject.projectName || sProjectId}:\n\n`;
-                    sErrorMessage += `• Required Resources: ${iRequiredResources}\n`;
-                    sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
-                    sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
-                    sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
-                    sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
-                    
-                    sap.m.MessageBox.error(sErrorMessage, {
-                        title: "Project Resource Limit Exceeded"
-                    });
-                    return;
-                }
+            // ✅ NEW: Validate project resource limits before employee validation (using shared function)
+            const bProjectValid = await this._validateProjectResourceLimits(sProjectId, aEmployees.length, oModel);
+            if (!bProjectValid) {
+                return; // Error popup already shown by validation function
             }
             
             // ✅ NEW: Validate each employee's allocation percentage before creating
