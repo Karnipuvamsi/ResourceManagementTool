@@ -11,7 +11,7 @@
         afterClose="onFindResourcesDialogClose">
         
         <VBox class="sapUiSmallMargin">
-            <Label text="Select one or more employees on bench to allocate:" />
+            <Label text="Select one or more employees to allocate (showing employees with allocation &lt;= 95% and not Resigned):" />
             <SearchField
                 id="findResourcesSearchField"
                 width="100%"
@@ -26,11 +26,6 @@
                     selectionChange="onFindResourcesSelectionChange"
                     items="{
                         path: '/Employees',
-                        filters: [{
-                            path: 'status',
-                            operator: 'EQ',
-                            value1: 'Unproductive Bench'
-                        }],
                         sorter: [{
                             path: 'fullName',
                             descending: false
@@ -73,6 +68,16 @@
             
             <VBox class="sapUiSmallMarginTop">
                 <Label text="Allocation Details:" />
+                <VBox class="sapUiSmallMarginTop">
+                    <Label text="Demand" labelFor="findResourcesDemandInput"/>
+                    <Input 
+                        id="findResourcesDemandInput" 
+                        width="100%"
+                        placeholder="Select Demand"
+                        showValueHelp="true"
+                        valueHelpRequest="onDemandValueHelpRequest">
+                    </Input>
+                </VBox>
                 <HBox class="sapUiSmallMarginTop">
                     <VBox class="sapUiSmallMarginEnd" width="33%">
                         <Label text="Start Date" labelFor="allocationStartDate" />

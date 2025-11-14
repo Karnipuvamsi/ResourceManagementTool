@@ -195,6 +195,61 @@ module.exports = cds.service.impl(async function () {
             console.log("✅ Set allocationDate to:", req.data.allocationDate);
         }
         
+        // ✅ NEW: Validate demandId - if not provided, try to auto-assign from project's first demand
+        if (!req.data.demandId && req.data.demandId !== 0) {
+            if (req.data.projectId) {
+                try {
+                    // Try to get first demand for the project
+                    const aDemands = await SELECT.from(Demands).where({ sapPId: req.data.projectId }).limit(1);
+                    if (aDemands && aDemands.length > 0) {
+                        req.data.demandId = aDemands[0].demandId;
+                        console.log(`✅ Auto-assigned demandId ${req.data.demandId} from project ${req.data.projectId}'s first demand`);
+                    } else {
+                        req.reject(400, `demandId is required. Project ${req.data.projectId} has no demands. Please create a demand first.`);
+                        return;
+                    }
+                } catch (oError) {
+                    console.error("❌ Error auto-assigning demandId:", oError);
+                    req.reject(400, "demandId is required. Employee must be allocated to a specific demand.");
+                    return;
+                }
+            } else {
+                req.reject(400, "demandId is required. Employee must be allocated to a specific demand.");
+                return;
+            }
+        }
+        
+        // ✅ NEW: Validate employee cannot be allocated to same project twice (regardless of demand)
+        // This prevents: Same employee → Same project (even with different demands)
+        // This allows: Same employee → Different projects (based on available percentage)
+        if (req.data.employeeId && req.data.projectId) {
+            try {
+                const sEmployeeId = req.data.employeeId;
+                const sProjectId = req.data.projectId;
+                
+                // Check if employee already has an active allocation to this project (any demand)
+                const oExistingAllocation = await SELECT.one.from(Allocations)
+                    .where({ 
+                        employeeId: sEmployeeId, 
+                        projectId: sProjectId, 
+                        status: 'Active'
+                    });
+                
+                if (oExistingAllocation) {
+                    const sErrorMessage = `Employee ${sEmployeeId} is already allocated to project ${sProjectId}. An employee can only be allocated to a project once.`;
+                    console.error("❌", sErrorMessage);
+                    req.reject(400, sErrorMessage);
+                    return;
+                }
+                
+                console.log(`✅ Validation passed: Employee ${sEmployeeId} is not already allocated to project ${sProjectId}`);
+            } catch (oError) {
+                console.error("❌ Error validating duplicate project allocation:", oError);
+                req.reject(500, `Error validating allocation: ${oError.message}`);
+                return;
+            }
+        }
+        
         // ✅ Set default allocationPercentage to 100 if not provided
         // ✅ CRITICAL: Log the incoming value to debug
         console.log(`🔵 Backend received allocationPercentage: type=${typeof req.data.allocationPercentage}, value="${req.data.allocationPercentage}"`);
@@ -278,6 +333,7 @@ module.exports = cds.service.impl(async function () {
         const oAllocationData = {
             employeeId: req.data.employeeId,
             projectId: req.data.projectId,
+            demandId: req.data.demandId, // ✅ NEW: Store demandId
             allocationPercentage: req.data.allocationPercentage || 100,
             status: req.data.status || 'Active',
             allocationId: req.data.allocationId // May be undefined if not provided
@@ -487,8 +543,21 @@ module.exports = cds.service.impl(async function () {
                 console.warn("⚠️ No projectId found in allocation data");
             }
 
-            // ✅ Note: Demand allocatedCount/remaining are calculated on READ, so no need to update here
-            // The calculation happens dynamically when demands are read
+            // ✅ NEW: Update demand resource counts
+            const iDemandId = oAllocationData.demandId ? parseInt(oAllocationData.demandId, 10) : null;
+            if (iDemandId && !isNaN(iDemandId)) {
+                console.log(`🔄 Updating demand resource counts for ${iDemandId} after allocation creation...`);
+                try {
+                    await this._updateDemandResourceCounts(iDemandId);
+                    console.log(`✅ Demand resource counts updated successfully for ${iDemandId}`);
+                } catch (oUpdateError) {
+                    console.error(`❌ ERROR updating demand resource counts for ${iDemandId}:`, oUpdateError);
+                    console.error(`❌ Error stack:`, oUpdateError.stack);
+                    // Don't throw - continue with other updates
+                }
+            } else {
+                console.warn("⚠️ No valid demandId found in allocation data:", oAllocationData.demandId);
+            }
 
             if (sProjectId) {
                 await this._updateEmployeeStatusesForProject(sProjectId);
@@ -516,10 +585,12 @@ module.exports = cds.service.impl(async function () {
                 if (oOldAllocation) {
                     req._oldAllocation = {
                         employeeId: oOldAllocation.employeeId,
+                        projectId: oOldAllocation.projectId,
+                        demandId: oOldAllocation.demandId, // ✅ NEW: Store demandId
                         allocationPercentage: oOldAllocation.allocationPercentage || 0,
                         status: oOldAllocation.status || 'Active'
                     };
-                    console.log(`✅ Stored old allocation data before update: Employee ${oOldAllocation.employeeId}, Percentage: ${oOldAllocation.allocationPercentage}%, Status: ${oOldAllocation.status}`);
+                    console.log(`✅ Stored old allocation data before update: Employee ${oOldAllocation.employeeId}, Project: ${oOldAllocation.projectId}, Demand: ${oOldAllocation.demandId}, Percentage: ${oOldAllocation.allocationPercentage}%, Status: ${oOldAllocation.status}`);
                 }
             }
         } catch (oError) {
@@ -748,6 +819,30 @@ module.exports = cds.service.impl(async function () {
                 await this._updateProjectResourceCounts(sNewProjectId);
             }
 
+            // ✅ NEW: Update demand resource counts if demandId changed
+            const iOldDemandId = req._oldAllocation?.demandId ? parseInt(req._oldAllocation.demandId, 10) : null;
+            const iNewDemandIdRaw = req.data.demandId || req.keys?.demandId || req._oldAllocation?.demandId || null;
+            const iNewDemandId = iNewDemandIdRaw ? parseInt(iNewDemandIdRaw, 10) : null;
+            
+            if (iOldDemandId && iNewDemandId && !isNaN(iOldDemandId) && !isNaN(iNewDemandId) && iOldDemandId !== iNewDemandId) {
+                // Demand changed - update both old and new demands
+                console.log(`🔄 Demand changed from ${iOldDemandId} to ${iNewDemandId}, updating both...`);
+                try {
+                    await this._updateDemandResourceCounts(iOldDemandId);
+                    await this._updateDemandResourceCounts(iNewDemandId);
+                } catch (oUpdateError) {
+                    console.error(`❌ ERROR updating demand resource counts:`, oUpdateError);
+                }
+            } else if (iNewDemandId && !isNaN(iNewDemandId)) {
+                // Same demand or new allocation - update demand counts
+                console.log(`🔄 Updating demand resource counts for ${iNewDemandId}...`);
+                try {
+                    await this._updateDemandResourceCounts(iNewDemandId);
+                } catch (oUpdateError) {
+                    console.error(`❌ ERROR updating demand resource counts for ${iNewDemandId}:`, oUpdateError);
+                }
+            }
+
             // ✅ If allocation status changed to Completed or Cancelled, update employee status
             if (sEmployeeId && (req.data.status === 'Completed' || req.data.status === 'Cancelled')) {
                 console.log(`✅ Allocation status changed to ${req.data.status} for employee ${sEmployeeId}, updating status`);
@@ -774,10 +869,12 @@ module.exports = cds.service.impl(async function () {
                 if (oAllocation) {
                     req._deletedAllocation = {
                         employeeId: oAllocation.employeeId,
+                        projectId: oAllocation.projectId,
+                        demandId: oAllocation.demandId, // ✅ NEW: Store demandId
                         allocationPercentage: oAllocation.allocationPercentage || 0,
                         status: oAllocation.status || 'Active'
                     };
-                    console.log(`✅ Stored allocation data before deletion: Employee ${oAllocation.employeeId}, Percentage: ${oAllocation.allocationPercentage}%, Status: ${oAllocation.status}`);
+                    console.log(`✅ Stored allocation data before deletion: Employee ${oAllocation.employeeId}, Project: ${oAllocation.projectId}, Demand: ${oAllocation.demandId}, Percentage: ${oAllocation.allocationPercentage}%, Status: ${oAllocation.status}`);
                 }
             }
         } catch (oError) {
@@ -817,6 +914,19 @@ module.exports = cds.service.impl(async function () {
             // ✅ Update project resource counts
             if (sProjectId) {
                 await this._updateProjectResourceCounts(sProjectId);
+            }
+
+            // ✅ NEW: Update demand resource counts
+            const iDemandIdRaw = req._deletedAllocation?.demandId || req.keys?.demandId || null;
+            const iDemandId = iDemandIdRaw ? parseInt(iDemandIdRaw, 10) : null;
+            if (iDemandId && !isNaN(iDemandId)) {
+                console.log(`🔄 Updating demand resource counts for ${iDemandId} after allocation deletion...`);
+                try {
+                    await this._updateDemandResourceCounts(iDemandId);
+                    console.log(`✅ Demand resource counts updated successfully for ${iDemandId}`);
+                } catch (oUpdateError) {
+                    console.error(`❌ ERROR updating demand resource counts for ${iDemandId}:`, oUpdateError);
+                }
             }
 
             if (sEmployeeId) {
@@ -920,37 +1030,41 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
-    // ✅ NEW: Calculate allocatedCount and remaining for Demands when reading
-    // This calculates how many employees are allocated matching each demand's skill
+    // ✅ UPDATED: Calculate allocatedCount and remaining for Demands when reading
+    // Now uses demandId from allocations instead of skill matching
     this.on('READ', Demands, async (req, next) => {
         try {
-            // Execute the default read
+            // Execute the default read (gets values from database)
             const aDemands = await next();
             
-            // If result is an array, process each demand
+            // ✅ NEW: Recalculate counts from actual allocations using demandId
+            // This ensures counts are always accurate even if database values are stale
             if (Array.isArray(aDemands) && aDemands.length > 0) {
-                // Calculate allocatedCount and remaining for each demand
                 for (const oDemand of aDemands) {
-                    if (oDemand.demandId && oDemand.sapPId && oDemand.skill) {
-                        const iAllocatedCount = await this._calculateDemandAllocatedCount(
-                            oDemand.sapPId, 
-                            oDemand.skill
-                        );
-                        const iQuantity = oDemand.quantity || 0;
-                        const iRemaining = Math.max(0, iQuantity - iAllocatedCount);
-                        
-                        oDemand.allocatedCount = iAllocatedCount;
-                        oDemand.remaining = iRemaining;
+                    if (oDemand.demandId) {
+                        const iDemandIdInt = parseInt(oDemand.demandId, 10);
+                        if (!isNaN(iDemandIdInt)) {
+                            // Count active allocations for this demandId
+                            const aAllocations = await SELECT.from(Allocations)
+                                .where({ demandId: iDemandIdInt, status: 'Active' });
+                            const iAllocatedCount = aAllocations ? aAllocations.length : 0;
+                            const iQuantity = oDemand.quantity || 0;
+                            const iRemaining = Math.max(0, iQuantity - iAllocatedCount);
+                            
+                            oDemand.allocatedCount = iAllocatedCount;
+                            oDemand.remaining = iRemaining;
+                        }
                     }
                 }
             } else if (aDemands && aDemands.demandId) {
                 // Single demand result
                 const oDemand = aDemands;
-                if (oDemand.sapPId && oDemand.skill) {
-                    const iAllocatedCount = await this._calculateDemandAllocatedCount(
-                        oDemand.sapPId, 
-                        oDemand.skill
-                    );
+                const iDemandIdInt = parseInt(oDemand.demandId, 10);
+                if (!isNaN(iDemandIdInt)) {
+                    // Count active allocations for this demandId
+                    const aAllocations = await SELECT.from(Allocations)
+                        .where({ demandId: iDemandIdInt, status: 'Active' });
+                    const iAllocatedCount = aAllocations ? aAllocations.length : 0;
                     const iQuantity = oDemand.quantity || 0;
                     const iRemaining = Math.max(0, iQuantity - iAllocatedCount);
                     
@@ -1241,6 +1355,77 @@ module.exports = cds.service.impl(async function () {
             }
         } catch (oError) {
             console.error("❌ Error updating project resource counts:", oError);
+            console.error("❌ Error details:", JSON.stringify(oError, null, 2));
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Helper function to update demand resource counts (allocatedCount and remaining)
+    // This counts ONLY ACTIVE allocations for the demand and updates:
+    // - allocatedCount = count of ACTIVE allocations for this demand
+    // - remaining = quantity - allocatedCount
+    this._updateDemandResourceCounts = async function(iDemandId) {
+        try {
+            // Get demand details
+            const oDemand = await SELECT.one.from(Demands).where({ demandId: iDemandId });
+            if (!oDemand) {
+                console.warn("⚠️ Demand not found for resource count update:", iDemandId);
+                return;
+            }
+
+            // Get quantity from demand
+            const iQuantity = oDemand.quantity || 0;
+
+            // ✅ Count ONLY ACTIVE allocations for this demand
+            // ✅ CRITICAL: Ensure demandId is integer for proper query matching
+            const iDemandIdInt = parseInt(iDemandId, 10);
+            if (isNaN(iDemandIdInt)) {
+                console.error(`❌ Invalid demandId: ${iDemandId} (not a number)`);
+                return;
+            }
+            
+            const aAllocations = await SELECT.from(Allocations)
+                .where({ demandId: iDemandIdInt, status: 'Active' });
+            const iAllocatedCount = aAllocations ? aAllocations.length : 0;
+
+            // Calculate remaining
+            const iRemaining = Math.max(0, iQuantity - iAllocatedCount);
+
+            console.log(`🔄 Updating demand ${iDemandId} resource counts: Quantity=${iQuantity}, Current Allocated=${oDemand.allocatedCount || 0}, New Allocated=${iAllocatedCount}, Remaining=${iRemaining}`);
+            console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for demand ${iDemandId}`);
+            if (aAllocations && aAllocations.length > 0) {
+                console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
+            }
+
+            // Update demand
+            try {
+                const oUpdateData = {
+                    allocatedCount: iAllocatedCount,
+                    remaining: iRemaining
+                };
+                
+                const iUpdated = await UPDATE(Demands).where({ demandId: iDemandId }).with(oUpdateData);
+                console.log(`✅ UPDATE executed for demand ${iDemandId}. Rows updated:`, iUpdated);
+            } catch (oUpdateError) {
+                console.error(`❌ ERROR executing UPDATE for demand ${iDemandId}:`, oUpdateError);
+                console.error(`❌ Error details:`, JSON.stringify(oUpdateError, null, 2));
+                throw oUpdateError;
+            }
+            
+            // ✅ Verify the update by reading back the demand
+            const oUpdatedDemand = await SELECT.one.from(Demands).where({ demandId: iDemandId });
+            if (oUpdatedDemand) {
+                console.log(`✅ Verified update - Demand ${iDemandId} now has: quantity=${oUpdatedDemand.quantity}, allocatedCount=${oUpdatedDemand.allocatedCount}, remaining=${oUpdatedDemand.remaining}`);
+                
+                // ✅ Double-check: if values don't match, log warning
+                if (oUpdatedDemand.allocatedCount !== iAllocatedCount || oUpdatedDemand.remaining !== iRemaining) {
+                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedCount}, remaining=${iRemaining}, Got: allocated=${oUpdatedDemand.allocatedCount}, remaining=${oUpdatedDemand.remaining}`);
+                }
+            } else {
+                console.warn(`⚠️ Could not verify update for demand ${iDemandId}`);
+            }
+        } catch (oError) {
+            console.error("❌ Error updating demand resource counts:", oError);
             console.error("❌ Error details:", JSON.stringify(oError, null, 2));
             throw oError;
         }
