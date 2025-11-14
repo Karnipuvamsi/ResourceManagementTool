@@ -211,8 +211,6 @@ entity EmployeeProjectAllocation {
     key allocationId      : UUID;
     employeeId            : String;
     projectId             : String;
-    demandId              : Integer;    // ✅ NEW: Link to Demand (employee can only be allocated to one demand per project)
-                                          // Note: For existing allocations without demandId, will be set to first demand of project
     startDate             : Date;        // ✅ Allocation start date (defaults to project start, but can be modified for employees joining mid-project)
     endDate               : Date;        // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
     allocationDate        : Date;       // ✅ Date when allocation was created
@@ -223,8 +221,6 @@ entity EmployeeProjectAllocation {
                               on to_Employee.ohrId = $self.employeeId;
     to_Project            : Association to one Project
                               on to_Project.sapPId = $self.projectId;
-    to_Demand             : Association to one Demand
-                              on to_Demand.demandId = $self.demandId;
 }
 
 entity Employee {

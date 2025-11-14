@@ -173,8 +173,8 @@
 
         <!-- Panel for Form -->
         <Panel headerText="Project Allocation Details" class="sapUiResponsiveMargin" expandable="false">
-            <VBox id="projectAllocationDetailsVBox" class="sapUiSmallMargin">
-                <Text text="Select a project to see allocation details" />
+            <VBox class="sapUiSmallMargin">
+                <!-- Allocation details form can be added here if needed -->
             </VBox>
         </Panel>
     </VBox>
