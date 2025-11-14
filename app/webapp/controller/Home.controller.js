@@ -2303,12 +2303,6 @@ sap.ui.define([
                         return; // Error popup already shown by validation function
                     }
                     
-                    // ✅ STEP 1.5: Validate demand resource limits
-                    const bDemandValid = await this._validateDemandResourceLimits(iDemandId, aEmployees.length, oModel);
-                    if (!bDemandValid) {
-                        return; // Error popup already shown by validation function
-                    }
-                    
                     // ✅ STEP 1.5: Refresh employee data to get latest empallocpercentage values
                     // The employee objects from table might have stale values
                     const aRefreshedEmployees = [];
@@ -2384,7 +2378,7 @@ sap.ui.define([
                                 onClose: (sAction) => {
                                     if (sAction === sap.m.MessageBox.Action.YES) {
                                         // Continue with valid employees only
-                                        this._createAllocationsForFindResources(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
+                                        this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                                     }
                                 }
                             });
@@ -2399,7 +2393,7 @@ sap.ui.define([
                     }
                     
                     // ✅ All employees are valid - create allocations
-                    this._createAllocationsForFindResources(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
+                    this._createAllocationsForFindResources(aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                 };
                 
                 fnValidateAndCreate();
@@ -2417,7 +2411,7 @@ sap.ui.define([
         },
         
         // ✅ NEW: Helper function to create allocations for valid employees from Find Resources (same pattern as employee level)
-        _createAllocationsForFindResources: function (aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aAllEmployees) {
+        _createAllocationsForFindResources: function (aValidEmployees, sProjectId, sStartDate, sEndDate, iPercentage, oModel, aAllEmployees) {
             const aAllocationData = [];
             
             // ✅ IMPORTANT: Do NOT update empallocpercentage on frontend
@@ -2436,7 +2430,6 @@ sap.ui.define([
                     allocationId: sAllocationId,
                     employeeId: oEmployee.ohrId,
                     projectId: sProjectId,
-                    demandId: iDemandId, // ✅ NEW: Include demandId
                     startDate: sStartDate,
                     endDate: sEndDate,
                     allocationPercentage: iPercentage,
@@ -2623,7 +2616,9 @@ sap.ui.define([
                     // Close dialog
                     this.onFindResourcesDialogClose();
                     
-                    // ✅ CRITICAL: Refresh Demands table and re-apply project filter
+                    // ✅ CRITICAL: Refresh 
+                  
+                  s table and re-apply project filter
                     const oDemandsTable = this.byId("Demands");
                     if (oDemandsTable && oDemandsTable.rebind) {
                         oDemandsTable.rebind();
@@ -2741,58 +2736,6 @@ sap.ui.define([
                 return true; // Validation passed
             } catch (oError) {
                 console.warn("⚠️ Could not fetch project details for validation:", oError);
-                // Allow to continue - backend will validate
-                return true;
-            }
-        },
-        
-        // ✅ NEW: Validate demand resource limits (similar to project validation)
-        _validateDemandResourceLimits: async function (iDemandId, iNewAllocations, oModel) {
-            if (!iDemandId || !oModel) {
-                console.warn("⚠️ Cannot validate demand limits: missing demandId or model");
-                return true; // Allow to continue - backend will validate
-            }
-            
-            try {
-                // Fetch demand details to check quantity vs allocatedCount
-                const oDemandBinding = oModel.bindContext(`/Demands(${iDemandId})`);
-                await oDemandBinding.requestObject();
-                const oDemand = oDemandBinding.getBoundContext().getObject();
-                
-                if (!oDemand) {
-                    console.warn("⚠️ Demand not found for validation:", iDemandId);
-                    return true; // Allow to continue - backend will validate
-                }
-                
-                const iQuantity = oDemand.quantity || 0;
-                const iCurrentAllocated = oDemand.allocatedCount || 0;
-                const iTotalAfterAllocation = iCurrentAllocated + iNewAllocations;
-                
-                console.log(`🔵 Demand ${iDemandId} validation: Quantity=${iQuantity}, Current Allocated=${iCurrentAllocated}, New Allocations=${iNewAllocations}, Total After=${iTotalAfterAllocation}`);
-                
-                // ✅ Demand-level validation: Check if allocating would exceed quantity
-                if (iQuantity > 0 && iTotalAfterAllocation > iQuantity) {
-                    const iExcess = iTotalAfterAllocation - iQuantity;
-                    const iCanAllocate = Math.max(0, iQuantity - iCurrentAllocated);
-                    
-                    let sErrorMessage = `Cannot allocate ${iNewAllocations} employee(s) to demand ${iDemandId}:\n\n`;
-                    sErrorMessage += `• Demand Details: ${oDemand.skill || 'N/A'} - ${oDemand.band || 'N/A'}\n`;
-                    sErrorMessage += `• Required Quantity: ${iQuantity}\n`;
-                    sErrorMessage += `• Currently Allocated: ${iCurrentAllocated}\n`;
-                    sErrorMessage += `• Remaining Capacity: ${iCanAllocate}\n`;
-                    sErrorMessage += `• New Allocations: ${iNewAllocations}\n`;
-                    sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
-                    sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated to this demand.`;
-                    
-                    sap.m.MessageBox.error(sErrorMessage, {
-                        title: "Demand Resource Limit Exceeded"
-                    });
-                    return false; // Validation failed
-                }
-                
-                return true; // Validation passed
-            } catch (oError) {
-                console.warn("⚠️ Could not fetch demand details for validation:", oError);
                 // Allow to continue - backend will validate
                 return true;
             }
@@ -3303,12 +3246,6 @@ sap.ui.define([
             // ✅ NEW: Validate project resource limits before employee validation (using shared function)
             const bProjectValid = await this._validateProjectResourceLimits(sProjectId, aEmployees.length, oModel);
             if (!bProjectValid) {
-                return; // Error popup already shown by validation function
-            }
-            
-            // ✅ NEW: Validate demand resource limits
-            const bDemandValid = await this._validateDemandResourceLimits(iDemandId, aEmployees.length, oModel);
-            if (!bDemandValid) {
                 return; // Error popup already shown by validation function
             }
             
