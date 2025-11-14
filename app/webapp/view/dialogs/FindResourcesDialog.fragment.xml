@@ -50,6 +50,9 @@
                         <Column>
                             <Text text="Location" />
                         </Column>
+                        <Column>
+                            <Text text="Allocation %" />
+                        </Column>
                     </columns>
                     <items>
                         <ColumnListItem>
@@ -60,6 +63,10 @@
                                 <Text text="{role}" />
                                 <Text text="{skills}" />
                                 <Text text="{location}" />
+                                <Text text="{
+                                    path: 'empallocpercentage',
+                                    formatter: '.formatAllocationPercentage'
+                                }" />
                             </cells>
                         </ColumnListItem>
                     </items>
@@ -67,17 +74,6 @@
             </ScrollContainer>
             
             <VBox class="sapUiSmallMarginTop">
-                <Label text="Allocation Details:" />
-                <VBox class="sapUiSmallMarginTop">
-                    <Label text="Demand" labelFor="findResourcesDemandInput"/>
-                    <Input 
-                        id="findResourcesDemandInput" 
-                        width="100%"
-                        placeholder="Select Demand"
-                        showValueHelp="true"
-                        valueHelpRequest="onDemandValueHelpRequest">
-                    </Input>
-                </VBox>
                 <HBox class="sapUiSmallMarginTop">
                     <VBox class="sapUiSmallMarginEnd" width="33%">
                         <Label text="Start Date" labelFor="allocationStartDate" />

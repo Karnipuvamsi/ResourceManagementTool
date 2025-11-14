@@ -109,7 +109,32 @@ module.exports = cds.service.impl(async function () {
             }
         }
 
-        // ✅ Note: No validation needed - requiredResources will be calculated dynamically from sum of demands
+        // ✅ VALIDATION: Check that total demand quantities don't exceed requiredResources
+        const sProjectId = req.data?.sapPId;
+        const iNewQuantity = req.data?.quantity || 0;
+        
+        if (sProjectId && iNewQuantity > 0) {
+            try {
+                // Get project to check requiredResources
+                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                if (oProject && oProject.requiredResources) {
+                    // Get sum of all existing demand quantities for this project
+                    const aExistingDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
+                    const iExistingTotal = aExistingDemands.reduce((sum, demand) => sum + (demand.quantity || 0), 0);
+                    
+                    // Calculate new total (existing + new)
+                    const iNewTotal = iExistingTotal + iNewQuantity;
+                    
+                    if (iNewTotal > oProject.requiredResources) {
+                        const iExcess = iNewTotal - oProject.requiredResources;
+                        return req.error(409, `Total demand quantity (${iNewTotal}) exceeds required resources (${oProject.requiredResources}) for project ${sProjectId}. Excess: ${iExcess}`);
+                    }
+                }
+            } catch (oError) {
+                console.error("❌ Error validating demand quantity:", oError);
+                // Don't block creation if validation fails due to error
+            }
+        }
     });
 
     // ✅ NEW: Update project resource counts when demand is created
@@ -125,7 +150,38 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
-    // ✅ Note: No validation needed - requiredResources will be calculated dynamically from sum of demands
+    // ✅ VALIDATION: Check that total demand quantities don't exceed requiredResources (for UPDATE)
+    this.before('UPDATE', Demands, async (req) => {
+        const sDemandId = req.keys?.demandId || req.data.demandId;
+        const iNewQuantity = req.data.quantity;
+        
+        if (sDemandId && iNewQuantity !== undefined) {
+            // Get current demand to get project ID
+            const oCurrentDemand = await SELECT.one.from(Demands).where({ demandId: sDemandId });
+            if (oCurrentDemand && oCurrentDemand.sapPId) {
+                const sProjectId = oCurrentDemand.sapPId;
+                
+                // Get project to check requiredResources
+                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                if (oProject && oProject.requiredResources) {
+                    // Get sum of all existing demand quantities EXCEPT the current one being updated
+                    const aExistingDemands = await SELECT.from(Demands).where({ sapPId: sProjectId });
+                    const iExistingTotal = aExistingDemands
+                        .filter(d => d.demandId !== sDemandId) // Exclude current demand
+                        .reduce((sum, demand) => sum + (demand.quantity || 0), 0);
+                    
+                    // Calculate new total (existing + new quantity)
+                    const iNewTotal = iExistingTotal + iNewQuantity;
+                    
+                    if (iNewTotal > oProject.requiredResources) {
+                        const iExcess = iNewTotal - oProject.requiredResources;
+                        return req.error(409, `Total demand quantity (${iNewTotal}) exceeds required resources (${oProject.requiredResources}) for project ${sProjectId}. Excess: ${iExcess}`);
+                    }
+                }
+            }
+        }
+    });
+
     // ✅ NEW: Update project resource counts when demand is updated
     this.after('UPDATE', Demands, async (req) => {
         try {

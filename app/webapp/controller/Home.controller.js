@@ -1334,7 +1334,17 @@ sap.ui.define([
                             }, 2000);
                         }
                         
-                        this.initializeTable("Allocations");
+                        // Initialize table and trigger initial data load
+                        this.initializeTable("Allocations").then(() => {
+                            // ✅ Trigger initial data load by firing FilterBar search event
+                            setTimeout(() => {
+                                if (oAllocationFilterBar) {
+                                    oAllocationFilterBar.fireSearch();
+                                } else if (oTable && typeof oTable.rebind === "function") {
+                                    oTable.rebind();
+                                }
+                            }, 1000);
+                        });
                         this._resetSegmentedButtonForFragment("Allocations");
                         
                         // Ensure dropdown is set to "projects"
@@ -1818,18 +1828,23 @@ sap.ui.define([
                 return;
             }
             
-            // ✅ CRITICAL: Get project ID from multiple sources (priority order)
+            // ✅ CRITICAL: Get project ID and demand ID from selected demand
             // 1. From stored filter (set when navigating from Projects)
             // 2. From selected project ID (set when navigating from Projects)
             // 3. From selected demand's sapPId
             let sProjectId = this._sDemandProjectFilter || this._sSelectedProjectId;
+            let iDemandId = null;
             
-            // ✅ Try to get project data from selected demand's association (if available)
+            // ✅ Try to get project data and demand ID from selected demand's association (if available)
             let oProjectData = null;
             if (aSelectedContexts.length > 0) {
                 const oDemand = aSelectedContexts[0].getObject();
+                // ✅ Store demand ID from selected demand
+                iDemandId = oDemand.demandId;
+                console.log("✅ Got demand ID from selected demand:", iDemandId);
+                
                 // If no project ID yet, get it from demand
-            if (!sProjectId) {
+                if (!sProjectId) {
                     sProjectId = oDemand.sapPId;
                     console.log("✅ Got project ID from selected demand:", sProjectId);
                 }
@@ -1839,6 +1854,10 @@ sap.ui.define([
                     console.log("✅ Got project data from demand association");
                 }
             }
+            
+            // ✅ Store demand ID for use in allocation
+            this._sAllocationDemandId = iDemandId;
+            console.log("✅ Stored demand ID for allocation:", iDemandId);
             
             if (!sProjectId) {
                 sap.m.MessageBox.error("Project ID not found. Please navigate from Projects screen or select a demand with a project.");
@@ -2121,9 +2140,8 @@ sap.ui.define([
             // The allocation entity's projectId should match Project.sapPId format
             console.log("✅ Using project ID for allocation:", sProjectId);
             
-            // ✅ NEW: Get demandId from Find Resources dialog
-            const oDemandInput = this.byId("findResourcesDemandInput");
-            const iDemandId = oDemandInput ? oDemandInput.data("selectedId") : null;
+            // ✅ Get demandId from stored value (set when opening dialog from selected demand)
+            const iDemandId = this._sAllocationDemandId;
             
             if (!iDemandId) {
                 sap.m.MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
@@ -2131,6 +2149,8 @@ sap.ui.define([
                 });
                 return;
             }
+            
+            console.log("✅ Using demand ID for allocation:", iDemandId);
             
             // Get allocation details from form
             const oStartDatePicker = this.byId("allocationStartDate");
@@ -6275,9 +6295,72 @@ sap.ui.define([
                 return;
             }
 
+            const iQuantity = parseInt(sQuantity);
             const oTable = this.byId("Demands");
             const oModel = oTable.getModel();
             
+            // ✅ UI VALIDATION: Check if total demand quantities exceed requiredResources
+            // Get project to check requiredResources
+            const oProjectsBinding = oModel.bindList("/Projects");
+            oProjectsBinding.attachEventOnce("dataReceived", function() {
+                const aProjects = oProjectsBinding.getContexts().map(ctx => ctx.getObject());
+                const oProject = aProjects.find(p => p.sapPId === sSapPId);
+                
+                if (oProject && oProject.requiredResources) {
+                    // Get existing demands for this project
+                    const oDemandsBinding = oModel.bindList("/Demands", {
+                        filters: [new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sSapPId)]
+                    });
+                    
+                    oDemandsBinding.attachEventOnce("dataReceived", function() {
+                        const aDemands = oDemandsBinding.getContexts().map(ctx => ctx.getObject());
+                        
+                        // Check if updating existing demand
+                        const aSelectedContexts = this.byId("Demands").getSelectedContexts();
+                        let iExistingTotal = 0;
+                        let sCurrentDemandId = null;
+                        
+                        if (aSelectedContexts && aSelectedContexts.length > 0) {
+                            // UPDATE MODE: Exclude current demand from total
+                            sCurrentDemandId = aSelectedContexts[0].getObject().demandId;
+                            iExistingTotal = aDemands
+                                .filter(d => d.demandId !== sCurrentDemandId)
+                                .reduce((sum, d) => sum + (d.quantity || 0), 0);
+                        } else {
+                            // CREATE MODE: Include all existing demands
+                            iExistingTotal = aDemands.reduce((sum, d) => sum + (d.quantity || 0), 0);
+                        }
+                        
+                        const iNewTotal = iExistingTotal + iQuantity;
+                        
+                        if (iNewTotal > oProject.requiredResources) {
+                            const iExcess = iNewTotal - oProject.requiredResources;
+                            const iAvailable = oProject.requiredResources - iExistingTotal;
+                            sap.m.MessageBox.error(
+                                `Total demand quantity (${iNewTotal}) exceeds required resources (${oProject.requiredResources}) for this project.\n\n` +
+                                `Excess: ${iExcess}\n` +
+                                `Available: ${iAvailable}\n` +
+                                `Current total: ${iExistingTotal}`
+                            );
+                            return;
+                        }
+                        
+                        // Validation passed, proceed with submit
+                        this._proceedWithDemandSubmit(sSapPId, sBand, sQuantity, sSkill, oTable, oModel);
+                    }.bind(this));
+                    
+                    oDemandsBinding.getContexts(); // Trigger data load
+                } else {
+                    // Project not found or no requiredResources set, proceed anyway
+                    this._proceedWithDemandSubmit(sSapPId, sBand, sQuantity, sSkill, oTable, oModel);
+                }
+            }.bind(this));
+            
+            oProjectsBinding.getContexts(); // Trigger data load
+        },
+        
+        // ✅ Helper function to proceed with demand submit after validation
+        _proceedWithDemandSubmit: function(sSapPId, sBand, sQuantity, sSkill, oTable, oModel) {
             // Check if a row is selected (Update mode)
             const aSelectedContexts = oTable.getSelectedContexts();
             
@@ -8765,6 +8848,18 @@ sap.ui.define([
                     });
             });
         },
+
+        // ✅ Formatter function for allocation percentage display
+        formatAllocationPercentage: function(iPercentage) {
+            if (iPercentage === null || iPercentage === undefined || iPercentage === "") {
+                return "0%";
+            }
+            const iValue = parseInt(iPercentage, 10);
+            if (isNaN(iValue)) {
+                return "0%";
+            }
+            return iValue + "%";
+        }
 
     });
     });

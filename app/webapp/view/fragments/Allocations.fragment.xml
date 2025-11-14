@@ -35,8 +35,6 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
                         variantBackreference="allocationFilterBar"
                         filterConditions="{filterModel>/Allocations/conditions}"
                         p13nMode="Item,Value">
@@ -125,7 +123,7 @@
                     p13nMode="Column,Sort,Filter,Group"
                     selectionMode="Single"
                     delegate='{
-                        "name": "glassboard/delegate/AllocationsTableDelegate",
+                        "name": "glassboard/delegate/ProjectsTableDelegate",
                         "payload": {
                             "collectionPath": "Projects"
                         }

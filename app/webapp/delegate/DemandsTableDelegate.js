@@ -59,33 +59,25 @@ sap.ui.define([
     };
 
     DemandsTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [GenericDelegate] fetchProperties called ===");
-
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[GenericDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
         const oMetaModel = oModel.getMetaModel();
-        console.log("[GenericDelegate] MetaModel:", oMetaModel);
 
         // Get collection path from payload
-        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
-        console.log("[GenericDelegate] Collection Path:", sCollectionPath);
+        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Demands";
 
         // Wait for metadata to be loaded
         return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
-                console.log("[GenericDelegate] Entity Type Path:", sEntityTypePath);
-
                 // Request the entity type definition
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
-            })
+            }.bind(this))
             .then(function (oEntityType) {
-                console.log("[GenericDelegate] Entity Type loaded:", oEntityType);
-
                 const aProperties = [];
+                const oDelegate = this;
 
                 // Iterate through entity type properties
                 Object.keys(oEntityType).forEach(function (sPropertyName) {
@@ -95,20 +87,18 @@ sap.ui.define([
                     }
 
                     const oProperty = oEntityType[sPropertyName];
-                    console.log("[GenericDelegate] Processing property:", sPropertyName, oProperty);
 
                     // Check if it's a property (not a navigation property)
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
                         // ✅ For Demands table, exclude demandId from display (it's auto-generated)
                         if (sCollectionPath === "Demands" && sPropertyName === "demandId") {
-                            console.log("[GenericDelegate] Skipping demandId for Demands table (auto-generated)");
                             return;
                         }
                         
                         const sType = oProperty.$Type || "Edm.String";
                         
                         // ✅ Use shared formatter to ensure label matches getFilterDelegate
-                        const sLabel = GenericTableDelegate._formatPropertyLabel(sCollectionPath, sPropertyName);
+                        const sLabel = oDelegate._formatPropertyLabel(sCollectionPath, sPropertyName);
 
                         // Include all necessary attributes for sorting/filtering
                         aProperties.push({
@@ -125,12 +115,9 @@ sap.ui.define([
                     }
                 });
 
-                console.log("[GenericDelegate] Final properties array:", aProperties);
                 return aProperties;
-            })
+            }.bind(this))
             .catch(function (oError) {
-                console.error("[GenericDelegate] Error fetching properties:", oError);
-                console.log("[GenericDelegate] Using fallback properties for", sCollectionPath);
 
                 // Fallback properties for Opportunities
                 const mFallbackProperties = {
@@ -170,7 +157,6 @@ sap.ui.define([
                 if (oController && oController._sDemandProjectFilter) {
                     // Note: We can't apply filter here directly in updateBindingInfo
                     // Filter will be applied via binding.filter() in controller after initialization
-                    console.log("[DemandsTableDelegate] Project filter available:", oController._sDemandProjectFilter);
                 }
             } catch (e) {
                 // Ignore if controller not accessible
@@ -302,16 +288,11 @@ sap.ui.define([
             oBindingInfo.filters = oOptimizedFilter || null;
         }
 
-        console.log("[DemandsTableDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[DemandsTableDelegate] Expanded associations for Demands: to_Project");
     };
 
     DemandsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
-        console.log("[GenericDelegate] addItem called for property:", sPropertyName);
-
         // ✅ Skip non-property fields like _actions, _columns, etc.
         if (sPropertyName.startsWith("_") || sPropertyName === "actions" || sPropertyName === "columns") {
-            console.log("[GenericDelegate] Skipping non-property field:", sPropertyName);
             return Promise.reject("Skipping non-property field: " + sPropertyName);
         }
 
@@ -321,7 +302,6 @@ sap.ui.define([
             });
 
             if (!oProperty) {
-                console.error("[GenericDelegate] Property not found:", sPropertyName);
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
@@ -385,9 +365,9 @@ sap.ui.define([
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
                     
-                    const oEnumConfig = GenericTableDelegate._getEnumConfig(sTableId, sPropertyName);
+                    const oEnumConfig = BaseTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
-                    const oAssocPromise = GenericTableDelegate._detectAssociation(oTable, sPropertyName);
+                    const oAssocPromise = BaseTableDelegate._detectAssociation(oTable, sPropertyName);
                     
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
@@ -439,7 +419,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
                         } else if (bIsAssoc) {
                             // ✅ ASSOCIATION: Display name from association, but store ID for editing
                             // Determine association path based on property
@@ -532,7 +511,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
                         } else {
                             // ✅ Check if field is integer type - don't bind tooltip directly for integers
                             const sType = oProperty.dataType || "";
@@ -562,10 +540,8 @@ sap.ui.define([
                             template: oField
                         });
 
-                        console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[GenericDelegate] Error, using regular field:", oError);
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -590,7 +566,6 @@ sap.ui.define([
     };
 
     DemandsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
-        console.log("[GenericDelegate] removeItem called for column:", oColumn);
 
         if (oColumn) {
             oColumn.destroy();
@@ -638,7 +613,7 @@ sap.ui.define([
 
                 // ✅ Use shared formatter to ensure label matches fetchProperties
                 const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
-                const sLabel = GenericTableDelegate._formatPropertyLabel(sCollectionPath, sName);
+                const sLabel = DemandsTableDelegate._formatPropertyLabel(sCollectionPath, sName);
 
                 return Promise.resolve(new FilterField({
                     label: sLabel, // ✅ Use same formatter as fetchProperties

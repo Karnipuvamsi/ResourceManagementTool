@@ -55,33 +55,25 @@ sap.ui.define([
     };
 
     AllocationsTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [AllocationsTableDelegate] fetchProperties called ===");
-
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[AllocationsTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
         const oMetaModel = oModel.getMetaModel();
-        console.log("[AllocationsTableDelegate] MetaModel:", oMetaModel);
 
         // Get collection path from payload
         const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
-        console.log("[AllocationsTableDelegate] Collection Path:", sCollectionPath);
 
         // Wait for metadata to be loaded
         return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
-                console.log("[AllocationsTableDelegate] Entity Type Path:", sEntityTypePath);
-
                 // Request the entity type definition
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
             })
             .then(function (oEntityType) {
-                console.log("[AllocationsTableDelegate] Entity Type loaded:", oEntityType);
-
                 const aProperties = [];
+                const oDelegate = this;
 
                 // Iterate through entity type properties
                 Object.keys(oEntityType).forEach(function (sPropertyName) {
@@ -91,14 +83,13 @@ sap.ui.define([
                     }
 
                     const oProperty = oEntityType[sPropertyName];
-                    console.log("[AllocationsTableDelegate] Processing property:", sPropertyName, oProperty);
 
                     // Check if it's a property (not a navigation property)
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
                         const sType = oProperty.$Type || "Edm.String";
                         
                         // ✅ Use shared formatter to ensure label matches getFilterDelegate
-                        const sLabel = GenericTableDelegate._formatPropertyLabel(sCollectionPath, sPropertyName);
+                        const sLabel = oDelegate._formatPropertyLabel(sCollectionPath, sPropertyName);
 
                         // Include all necessary attributes for sorting/filtering
                         aProperties.push({
@@ -115,11 +106,9 @@ sap.ui.define([
                     }
                 });
 
-                console.log("[AllocationsTableDelegate] Final properties array:", aProperties);
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[AllocationsTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };
@@ -261,12 +250,9 @@ sap.ui.define([
             oBindingInfo.filters = oOptimizedFilter || null;
         }
 
-        console.log("[AllocationsTableDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[AllocationsTableDelegate] Expanded associations: to_Opportunity,to_GPM");
     };
 
     AllocationsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
-        console.log("[AllocationsTableDelegate] addItem called for property:", sPropertyName);
 
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
@@ -274,7 +260,6 @@ sap.ui.define([
             });
 
             if (!oProperty) {
-                console.error("[AllocationsTableDelegate] Property not found:", sPropertyName);
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
@@ -317,9 +302,9 @@ sap.ui.define([
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
                     
-                    const oEnumConfig = GenericTableDelegate._getEnumConfig(sTableId, sPropertyName);
+                    const oEnumConfig = BaseTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
-                    const oAssocPromise = GenericTableDelegate._detectAssociation(oTable, sPropertyName);
+                    const oAssocPromise = BaseTableDelegate._detectAssociation(oTable, sPropertyName);
                     
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
@@ -369,7 +354,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[AllocationsTableDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
                         } else if (bIsAssoc) {
                             // ✅ ASSOCIATION: Display name from association
                             let sAssocPath = "";
@@ -432,7 +416,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[AllocationsTableDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath);
                         } else {
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
@@ -453,10 +436,8 @@ sap.ui.define([
                             template: oField
                         });
 
-                        console.log("[AllocationsTableDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[AllocationsTableDelegate] Error, using regular field:", oError);
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -481,7 +462,6 @@ sap.ui.define([
     };
 
     AllocationsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
-        console.log("[AllocationsTableDelegate] removeItem called for column:", oColumn);
 
         if (oColumn) {
             oColumn.destroy();
@@ -527,7 +507,7 @@ sap.ui.define([
 
                 // ✅ Use shared formatter to ensure label matches fetchProperties
                 const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
-                const sLabel = GenericTableDelegate._formatPropertyLabel(sCollectionPath, sName);
+                const sLabel = AllocationsTableDelegate._formatPropertyLabel(sCollectionPath, sName);
 
                 return Promise.resolve(new FilterField({
                     label: sLabel, // ✅ Use same formatter as fetchProperties
