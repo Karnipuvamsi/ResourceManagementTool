@@ -36,28 +36,40 @@
                 search="onFilterSearch"
                 showAdaptFiltersButton="true"
                 showGoButton="true"
-                showRestoreButton="true"
-                        showVariantManagement="true"
                         variantBackreference="customerFilterBar"
                         filterConditions="{filterModel>/Customers/conditions}"
                 p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
                             <!-- Customer Name Filter -->
-                            <mdc:FilterField
-                                id="filterCustomerName"
-                                label="Customer Name"
-                                conditions="{filterModel>/Customers/conditions/customerName}"
-                                propertyKey="customerName"
-                                maxConditions="-1"
-                                required="false"
-                                caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                                       <!-- Customer Name Filter -->
+                           <!-- ================= FILTER FIELD WITH VALUE HELP ================= -->
+<mdc:FilterField id="filterCustomerName" label="Customer Name" propertyKey="customerName"
+    conditions="{filterModel>/Customers/conditions/customerName}" valueHelp="vhCustomerName" width="250px">
+    <mdc:dependents>
+        <mdc:ValueHelp id="vhCustomerName" delegate="{name: 'glassboard/delegate/CustomersFilterBarDelegate', payload: { searchKeys: ['customerName','SAPcustId','country'] }}">
+            <mdc:dialog>
+                <mdcvh:Dialog id="dlgCustomerVH" title="Select Customer">
+                    <mdcvc:MDCTable keyPath="SAPcustId" descriptionPath="customerName">
+                        <mdcvc:filterBar>
+                            <mdcvh:FilterBar id="fbCustomerVH" showGoButton="true" liveMode="false"
+                                delegate="{name: 'glassboard/delegate/CustomersFilterBarDelegate', payload: { collectionPath: 'Customers' }}">
+                                <mdcvh:filterItems />
+                            </mdcvh:FilterBar>
+                        </mdcvc:filterBar>
+                        <mdc:Table id="tblCustomersVH" autoBindOnInit="true" width="100%" p13nMode="Column,Sort"
+                            selectionMode="Multi" enableAutoColumnWidth="true" threshold="100"
+                            delegate="{name: 'glassboard/delegate/CustomersTableDelegate', payload: { collectionPath: 'Customers', tableModeType: 'ValueHelp' }}">
+                            <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                        </mdc:Table>
+                    </mdcvc:MDCTable>
+                </mdcvh:Dialog>
+            </mdc:dialog>
+        </mdc:ValueHelp>
+    </mdc:dependents>
+</mdc:FilterField>
                             <!-- Vertical Filter -->
                             <mdc:FilterField
                                 id="filterVertical"
