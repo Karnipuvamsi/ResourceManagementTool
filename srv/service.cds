@@ -42,4 +42,33 @@ service MyService {
   
   @readonly
   entity ProjectsNearingCompletionReport as projection on reports.ProjectsNearingCompletionView;
+  
+  // ============================================
+  // METADATA & CONFIGURATION ENDPOINTS
+  // ============================================
+  
+  // Enum metadata endpoint - provides enum values and labels from schema
+  type EnumMetadata {
+    entity: String;
+    property: String;
+    values: array of String;
+    labels: array of String;
+  }
+  
+  // Country-City mapping endpoint
+  type CountryCityMapping {
+    country: String;
+    cities: array of String;
+  }
+  
+  // Band-Designation mapping endpoint
+  type BandDesignationMapping {
+    band: String;
+    designations: array of String;
+  }
+  
+  // Metadata service actions
+  function getEnumMetadata() returns array of EnumMetadata;
+  function getCountryCityMappings() returns array of CountryCityMapping;
+  function getBandDesignationMappings() returns array of BandDesignationMapping;
 }

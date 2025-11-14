@@ -287,7 +287,19 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("Customers");
+                    this.initializeTable("Customers").then(() => {
+                        // ✅ Trigger initial data load by firing FilterBar search event
+                        // This ensures table binds even when there are no filter conditions
+                        setTimeout(() => {
+                            if (oFilterBar) {
+                                // Fire search event to trigger table binding
+                                oFilterBar.fireSearch();
+                            } else if (oTable && typeof oTable.rebind === "function") {
+                                // Fallback: rebind table directly if FilterBar not available
+                                oTable.rebind();
+                            }
+                        }, 1000);
+                    });
 
                     // Reset segmented button to "less" state for this fragment
                     this._resetSegmentedButtonForFragment("Customers");
@@ -373,12 +385,12 @@ sap.ui.define([
                         if (oFiltersModel) {
                             oOpportunityFilterBar.setModel(oFiltersModel, "$filters");
                         }
-                        // ✅ Set defaults with multiple retries
+                        // ✅ Set defaults with multiple retries - 4 important filters: sapOpportunityId, sfdcOpportunityId, businessUnit, Stage
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oOpportunityFilterBar, ["opportunityName", "Stage"]);
+                            this._setDefaultFilterFields(oOpportunityFilterBar, ["sapOpportunityId", "sfdcOpportunityId", "businessUnit", "Stage"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oOpportunityFilterBar, ["opportunityName", "Stage"]);
+                            this._setDefaultFilterFields(oOpportunityFilterBar, ["sapOpportunityId", "sfdcOpportunityId", "businessUnit", "Stage"]);
                         }, 2000);
                     }
 
@@ -464,12 +476,12 @@ sap.ui.define([
                         if (oFiltersModel) {
                             oProjectFilterBar.setModel(oFiltersModel, "$filters");
                         }
-                            // ✅ Set defaults with multiple retries - 3 important filters: projectName, projectType, SOWReceived
+                            // ✅ Set defaults with multiple retries - 4 important filters: sapPId, sfdcPId, projectType, SOWReceived
                             setTimeout(() => {
-                                this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                                this._setDefaultFilterFields(oProjectFilterBar, ["sapPId", "sfdcPId", "projectType", "SOWReceived"]);
                             }, 1000);
                             setTimeout(() => {
-                                this._setDefaultFilterFields(oProjectFilterBar, ["projectName", "projectType", "SOWReceived"]);
+                                this._setDefaultFilterFields(oProjectFilterBar, ["sapPId", "sfdcPId", "projectType", "SOWReceived"]);
                             }, 2000);
                     }
 
@@ -1882,8 +1894,8 @@ sap.ui.define([
                     const oFindResourcesTable = this.byId("findResourcesTable");
                     if (oFindResourcesTable && oFindResourcesTable.getBinding) {
                         const oBinding = oFindResourcesTable.getBinding("items");
-                        if (oBinding) {
-                            const oAllocationFilter = this._getAllocationFilter();
+                            if (oBinding) {
+                                const oAllocationFilter = this._getAllocationFilter();
                             oBinding.filter([oAllocationFilter]);
                             console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) to Find Resources table");
                         }
@@ -1916,8 +1928,8 @@ sap.ui.define([
                 const oFindResourcesTable = this.byId("findResourcesTable");
                 if (oFindResourcesTable && oFindResourcesTable.getBinding) {
                     const oBinding = oFindResourcesTable.getBinding("items");
-                    if (oBinding) {
-                        const oAllocationFilter = this._getAllocationFilter();
+                        if (oBinding) {
+                            const oAllocationFilter = this._getAllocationFilter();
                         oBinding.filter([oAllocationFilter]);
                         console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) to Find Resources table");
                     }
@@ -3112,21 +3124,21 @@ sap.ui.define([
                 console.error("Error details:", JSON.stringify(oError, null, 2));
                 
                 // ✅ CRITICAL: Extract error message from batch response
-                let sErrorMessage = "Failed to create allocation. Please check the data and try again.";
-                
-                if (oError.message) {
-                    sErrorMessage = oError.message;
-                } else if (oError.body && oError.body.error && oError.body.error.message) {
-                    sErrorMessage = oError.body.error.message;
-                } else if (typeof oError === 'string') {
-                    sErrorMessage = oError;
-                }
-                
-                // Check for specific validation errors
-                if (sErrorMessage.includes("cannot be earlier than") || sErrorMessage.includes("cannot be later than")) {
-                    sap.m.MessageBox.error(sErrorMessage);
-                } else {
-                    sap.m.MessageBox.error(sErrorMessage);
+                    let sErrorMessage = "Failed to create allocation. Please check the data and try again.";
+                    
+                    if (oError.message) {
+                        sErrorMessage = oError.message;
+                    } else if (oError.body && oError.body.error && oError.body.error.message) {
+                        sErrorMessage = oError.body.error.message;
+                    } else if (typeof oError === 'string') {
+                        sErrorMessage = oError;
+                    }
+                    
+                    // Check for specific validation errors
+                    if (sErrorMessage.includes("cannot be earlier than") || sErrorMessage.includes("cannot be later than")) {
+                        sap.m.MessageBox.error(sErrorMessage);
+                    } else {
+                        sap.m.MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -3358,7 +3370,7 @@ sap.ui.define([
                         title: "Allocation Validation Warning",
                         actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
                         emphasizedAction: sap.m.MessageBox.Action.YES,
-                            onClose: (sAction) => {
+                        onClose: (sAction) => {
                             if (sAction === sap.m.MessageBox.Action.YES) {
                                 // Continue with valid employees only
                                 this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
@@ -6877,16 +6889,14 @@ sap.ui.define([
             }
 
             try {
-                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
-                    new sap.ui.model.Filter({
-                        path: "status",
-                        operator: sap.ui.model.FilterOperator.EQ,
-                        value1: "Pre Allocated"
-                    })
-                );
+                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+                const oListBinding = oModel.bindList("/Employees", null, null, null);
 
                 const aContexts = await oListBinding.requestContexts(0, 10000);
-                const preAllocatedCount = aContexts.length;
+                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                
+                // Filter employees with status = 'Pre Allocated'
+                const preAllocatedCount = allEmployees.filter(emp => emp.status === "Pre Allocated").length;
 
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 if (oHomeCountsModel) {
@@ -6907,16 +6917,14 @@ sap.ui.define([
             }
 
             try {
-                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
-                    new sap.ui.model.Filter({
-                        path: "status",
-                        operator: sap.ui.model.FilterOperator.EQ,
-                        value1: "Unproductive Bench"
-                    })
-                );
+                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+                const oListBinding = oModel.bindList("/Employees", null, null, null);
 
                 const aContexts = await oListBinding.requestContexts(0, 10000);
-                const unproductiveBenchCount = aContexts.length;
+                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                
+                // Filter employees with status = 'Unproductive Bench'
+                const unproductiveBenchCount = allEmployees.filter(emp => emp.status === "Unproductive Bench").length;
 
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 if (oHomeCountsModel) {
@@ -6937,16 +6945,14 @@ sap.ui.define([
             }
 
             try {
-                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
-                    new sap.ui.model.Filter({
-                        path: "status",
-                        operator: sap.ui.model.FilterOperator.EQ,
-                        value1: "Inactive Bench"
-                    })
-                );
+                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+                const oListBinding = oModel.bindList("/Employees", null, null, null);
 
                 const aContexts = await oListBinding.requestContexts(0, 10000);
-                const onLeaveCount = aContexts.length;
+                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                
+                // Filter employees with status = 'Inactive Bench'
+                const onLeaveCount = allEmployees.filter(emp => emp.status === "Inactive Bench").length;
 
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 if (oHomeCountsModel) {
@@ -8761,4 +8767,4 @@ sap.ui.define([
         },
 
     });
-});
+    });

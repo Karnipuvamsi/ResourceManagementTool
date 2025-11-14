@@ -1,5 +1,5 @@
 sap.ui.define([
-    "sap/ui/mdc/odata/v4/TableDelegate",
+    "glassboard/delegate/BaseTableDelegate",
     "sap/ui/model/Sorter",
     "sap/ui/mdc/FilterField",
     "sap/ui/mdc/Field",
@@ -9,73 +9,27 @@ sap.ui.define([
     "sap/m/library",
     "sap/m/ComboBox",
     "sap/ui/core/Item"
-], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
     "use strict";
 
-    const GenericTableDelegate = Object.assign({}, ODataTableDelegate);
+    /**
+     * Allocations Table Delegate
+     * Extends BaseTableDelegate with Allocations-specific logic
+     */
+    const AllocationsTableDelegate = Object.assign({}, BaseTableDelegate);
 
-    // ✅ ENUM CONFIGURATION: Static values for enum fields
-    GenericTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
-        const mEnumFields = {
-            "Projects": {
-                "projectType": { 
-                    values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine"],
-                    labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine"]
-                },
-                "status": { 
-                    values: ["Active", "Closed", "Planned"],
-                    labels: ["Active", "Closed", "Planned"]
-                },
-                "SOWReceived": { 
-                    values: ["Yes", "No"],
-                    labels: ["Yes", "No"]
-                },
-                "POReceived": { 
-                    values: ["Yes", "No"],
-                    labels: ["Yes", "No"]
-                }
-            },
-            "Allocations": {
-                "status": { 
-                    values: ["Active", "Completed", "Cancelled"],
-                    labels: ["Active", "Completed", "Cancelled"]
-                }
-            }
-        };
-        return mEnumFields[sTableId]?.[sPropertyName] || null;
+    // ✅ Override default table ID for Allocations
+    AllocationsTableDelegate._getDefaultTableId = function() {
+        return "Allocations";
     };
 
-    // ✅ ASSOCIATION DETECTION: Dynamic detection from OData metadata
-    GenericTableDelegate._detectAssociation = function(oTable, sPropertyName) {
-        const oModel = oTable.getModel();
-        if (!oModel || !oModel.getMetaModel) {
-            return Promise.resolve(null);
-        }
-
-        const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
-        
-        const mAssociationFields = {
-            "Projects": {
-                "oppId": { targetEntity: "Opportunities", displayField: "opportunityName", keyField: "sapOpportunityId" },
-                "gpm": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" }
-            },
-            "Allocations": {
-                "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
-                "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
-            }
-        };
-
-        const oAssocConfig = mAssociationFields[sTableId]?.[sPropertyName];
-        return Promise.resolve(oAssocConfig || null);
-    };
-
-    // Ensure Table advertises support for all desired p13n panels
-    GenericTableDelegate.getSupportedP13nModes = function () {
-        return ["Column", "Sort", "Filter", "Group"];
+    // ✅ Override delegate name for logging
+    AllocationsTableDelegate._getDelegateName = function() {
+        return "AllocationsTableDelegate";
     };
 
     // ✅ SHARED LABEL FORMATTER: Ensures consistent labels across fetchProperties and getFilterDelegate
-    GenericTableDelegate._formatPropertyLabel = function(sTableId, sPropertyName) {
+    AllocationsTableDelegate._formatPropertyLabel = function(sTableId, sPropertyName) {
         // Custom header mapping
         const mCustomHeaders = {
             "sapPId": "SAP PID",
@@ -100,7 +54,7 @@ sap.ui.define([
             .trim();
     };
 
-    GenericTableDelegate.fetchProperties = function (oTable) {
+    AllocationsTableDelegate.fetchProperties = function (oTable) {
         console.log("=== [AllocationsTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
@@ -170,19 +124,14 @@ sap.ui.define([
             });
     };
 
-    GenericTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
-        ODataTableDelegate.updateBindingInfo.apply(this, arguments);
+    AllocationsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+        // Call parent implementation first (handles common logic)
+        BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-        const sPath = oTable.getPayload()?.collectionPath || "Projects";
-        oBindingInfo.path = "/" + sPath;
-
-        // Essential OData V4 parameters
-        oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
-            $count: true
-        });
+        const sPath = oTable.getPayload()?.collectionPath || "Allocations";
+        const sCollectionPath = sPath.replace(/^\//, "");
         
         // ✅ Expand associations to load related entity names
-        const sCollectionPath = sPath.replace(/^\//, "");
         if (sCollectionPath === "Projects") {
             // Expand Opportunity and GPM associations for Project table
             oBindingInfo.parameters.$expand = "to_Opportunity,to_GPM";
@@ -316,7 +265,7 @@ sap.ui.define([
         console.log("[AllocationsTableDelegate] Expanded associations: to_Opportunity,to_GPM");
     };
 
-    GenericTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
+    AllocationsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         console.log("[AllocationsTableDelegate] addItem called for property:", sPropertyName);
 
         return this.fetchProperties(oTable).then(function (aProperties) {
@@ -531,7 +480,7 @@ sap.ui.define([
         });
     };
 
-    GenericTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+    AllocationsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
         console.log("[AllocationsTableDelegate] removeItem called for column:", oColumn);
 
         if (oColumn) {
@@ -542,7 +491,7 @@ sap.ui.define([
     };
 
     // Provide FilterField creation for Adaptation Filter panel in table p13n
-    GenericTableDelegate.getFilterDelegate = function () {
+    AllocationsTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
@@ -590,5 +539,5 @@ sap.ui.define([
         };
     };
 
-    return GenericTableDelegate;
+    return AllocationsTableDelegate;
 });

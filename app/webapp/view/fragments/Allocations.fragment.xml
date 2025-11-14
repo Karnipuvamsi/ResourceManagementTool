@@ -51,7 +51,6 @@
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -67,7 +66,6 @@
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -83,7 +81,6 @@
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",

@@ -1785,4 +1785,111 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    // ============================================
+    // METADATA & CONFIGURATION ENDPOINTS
+    // ============================================
+
+    // ✅ NEW: Get enum metadata from schema
+    // Returns enum values and labels for all entities
+    this.on('getEnumMetadata', async (req) => {
+        try {
+            const aEnumMetadata = [
+                // Customers
+                { entity: "Customers", property: "status", values: ["Active", "Inactive", "Prospect"], labels: ["Active", "Inactive", "Prospect"] },
+                { entity: "Customers", property: "vertical", values: ["BFS", "CapitalMarkets", "CPG", "Healthcare", "HighTech", "Insurance", "LifeSciences", "Manufacturing", "Retail", "Services"], labels: ["BFS", "Capital Markets", "CPG", "Healthcare", "High Tech", "Insurance", "Life Sciences", "Manufacturing", "Retail", "Services"] },
+                
+                // Opportunities
+                { entity: "Opportunities", property: "probability", values: ["0%-ProposalStage", "33%-SoWSent", "85%-SoWSigned", "100%-PurchaseOrderReceived"], labels: ["0%-ProposalStage", "33%-SoWSent", "85%-SoWSigned", "100%-PurchaseOrderReceived"] },
+                { entity: "Opportunities", property: "Stage", values: ["Discover", "Define", "OnBid", "DownSelect", "SignedDeal"], labels: ["Discover", "Define", "On Bid", "Down Select", "Signed Deal"] },
+                
+                // Projects
+                { entity: "Projects", property: "projectType", values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine"], labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine"] },
+                { entity: "Projects", property: "status", values: ["Active", "Closed", "Planned"], labels: ["Active", "Closed", "Planned"] },
+                { entity: "Projects", property: "SOWReceived", values: ["Yes", "No"], labels: ["Yes", "No"] },
+                { entity: "Projects", property: "POReceived", values: ["Yes", "No"], labels: ["Yes", "No"] },
+                
+                // Employees
+                { entity: "Employees", property: "gender", values: ["Male", "Female", "Others"], labels: ["Male", "Female", "Others"] },
+                { entity: "Employees", property: "employeeType", values: ["FullTime", "SubCon", "Intern", "YTJ"], labels: ["Full Time", "Subcon", "Intern", "Yet To Join"] },
+                { entity: "Employees", property: "band", values: ["1", "2", "3", "4A", "4B-C", "4B-LC", "4C", "4D", "5A", "5B", "Subcon"], labels: ["1", "2", "3", "4A", "4B-C", "4B-LC", "4C", "4D", "5A", "5B", "Subcon"] },
+                { entity: "Employees", property: "status", values: ["PreAllocated", "Allocated", "Resigned", "UnproductiveBench", "InactiveBench"], labels: ["Pre Allocated", "Allocated", "Resigned", "Unproductive Bench", "Inactive Bench"] },
+                
+                // Allocations
+                { entity: "Allocations", property: "status", values: ["Active", "Completed", "Cancelled"], labels: ["Active", "Completed", "Cancelled"] }
+            ];
+            
+            return aEnumMetadata;
+        } catch (oError) {
+            console.error("❌ Error in getEnumMetadata:", oError);
+            req.reject(500, `Error getting enum metadata: ${oError.message}`);
+        }
+    });
+
+    // ✅ NEW: Get Country-City mappings
+    this.on('getCountryCityMappings', async (req) => {
+        try {
+            const aMappings = [
+                { country: "South Africa", cities: ["Johannesburg (Gauteng)"] },
+                { country: "China", cities: ["Dalian", "Foshan (Guangdong)", "Kunshan (Jiangsu)"] },
+                { country: "India", cities: ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)"] },
+                { country: "Japan", cities: ["Tokyo (Chiyoda-ku)", "Yokohama (Kanagawa)"] },
+                { country: "Malaysia", cities: ["Kuala Lumpur / Petaling Jaya (Selangor)"] },
+                { country: "Philippines", cities: ["Bataan", "Manila / Quezon City"] },
+                { country: "Singapore", cities: ["Singapore"] },
+                { country: "Colombia", cities: ["Bogota"] },
+                { country: "Costa Rica", cities: ["Heredia"] },
+                { country: "Brazil", cities: ["Belo Horizonte (MG)", "Uberlândia (MG)"] },
+                { country: "Guatemala", cities: ["Guatemala City"] },
+                { country: "Mexico", cities: ["Juárez (Chihuahua)", "Guadalajara (Jalisco)", "Monterrey / San Pedro Garza García (Nuevo León)"] },
+                { country: "Egypt", cities: ["Cairo"] },
+                { country: "Israel", cities: ["Netanya"] },
+                { country: "Turkey", cities: ["Istanbul"] },
+                { country: "Canada", cities: ["Toronto (Ontario)"] },
+                { country: "USA", cities: ["Atlanta (Georgia)", "Danville (Illinois)", "New York (New York)", "Richardson (Texas)", "Wilkes-Barre (Pennsylvania)"] },
+                { country: "Australia", cities: ["Melbourne (Victoria)", "Sydney (New South Wales)"] },
+                { country: "Bulgaria", cities: ["Sofia"] },
+                { country: "France", cities: ["Paris"] },
+                { country: "Hungary", cities: ["Budapest"] },
+                { country: "Italy", cities: ["Milano"] },
+                { country: "Germany", cities: ["Munich"] },
+                { country: "Netherlands", cities: ["Hoofddorp"] },
+                { country: "Poland", cities: ["Katowice", "Kraków", "Lublin", "Bielsko-Biała", "Wrocław"] },
+                { country: "Portugal", cities: ["Lisbon"] },
+                { country: "Republic of Ireland", cities: ["Dublin"] },
+                { country: "Romania", cities: ["Bucharest", "Cluj Napoca", "Iași"] },
+                { country: "Switzerland", cities: ["Zug"] },
+                { country: "United Kingdom", cities: ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"] }
+            ];
+            
+            return aMappings;
+        } catch (oError) {
+            console.error("❌ Error in getCountryCityMappings:", oError);
+            req.reject(500, `Error getting country-city mappings: ${oError.message}`);
+        }
+    });
+
+    // ✅ NEW: Get Band-Designation mappings
+    this.on('getBandDesignationMappings', async (req) => {
+        try {
+            const aMappings = [
+                { band: "1", designations: ["Senior Vice President"] },
+                { band: "2", designations: ["Vice President"] },
+                { band: "3", designations: ["Assistant Vice President"] },
+                { band: "4A", designations: ["Consultant", "Management Trainee"] },
+                { band: "4B-C", designations: ["Consultant", "Assistant Manager"] },
+                { band: "4B-LC", designations: ["Assistant Manager", "Lead Consultant"] },
+                { band: "4C", designations: ["Manager", "Principal Consultant", "Project Manager"] },
+                { band: "4D", designations: ["Senior Manager", "Senior Principal Consultant", "Senior Project Manager"] },
+                { band: "5A", designations: ["Process Associate"] },
+                { band: "5B", designations: ["Senior Associate", "Technical Associate"] },
+                { band: "Subcon", designations: ["Subcon"] }
+            ];
+            
+            return aMappings;
+        } catch (oError) {
+            console.error("❌ Error in getBandDesignationMappings:", oError);
+            req.reject(500, `Error getting band-designation mappings: ${oError.message}`);
+        }
+    });
+
 });

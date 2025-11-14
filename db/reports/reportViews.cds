@@ -27,7 +27,7 @@ select from db.Employee as e {
         // Calculate days on bench
         cast(
             case 
-                when e.status in ('Unproductive Bench', 'Productive Bench') 
+                when e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated') 
                 then days_between(current_date, coalesce(
                     (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
                      where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
@@ -38,7 +38,7 @@ select from db.Employee as e {
             as Integer
         ) as daysOnBench
 }
-where e.status in ('Unproductive Bench', 'Productive Bench');
+where e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated');
 
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as

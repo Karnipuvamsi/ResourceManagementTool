@@ -1,5 +1,5 @@
 sap.ui.define([
-    "sap/ui/mdc/odata/v4/TableDelegate",
+    "glassboard/delegate/BaseTableDelegate",
     "sap/ui/model/Sorter",
     "sap/ui/mdc/FilterField",
     "sap/ui/mdc/Field",
@@ -9,412 +9,67 @@ sap.ui.define([
     "sap/m/library",
     "sap/m/ComboBox",
     "sap/ui/core/Item"
-], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
     "use strict";
 
-    const GenericTableDelegate = Object.assign({}, ODataTableDelegate);
+    /**
+     * Opportunities Table Delegate
+     * Extends BaseTableDelegate with Opportunities-specific logic
+     */
+    const OpportunitiesTableDelegate = Object.assign({}, BaseTableDelegate);
 
-    // ✅ ENUM CONFIGURATION: Static values for enum fields (shared with CustomersTableDelegate)
-    GenericTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
-        const mEnumFields = {
-            "Customers": {
-                "status": { values: ["A", "I", "P"], labels: ["Active", "Inactive", "Prospect"] },
-                "vertical": { 
-                    values: ["BFS", "CapitalMarkets", "CPG", "Healthcare", "HighTech", "Insurance", "LifeSciences", "Manufacturing", "Retail", "Services"],
-                    labels: ["BFS", "Capital Markets", "CPG", "Healthcare", "High Tech", "Insurance", "Life Sciences", "Manufacturing", "Retail", "Services"]
-                }
-            },
-            "Opportunities": {
-                "probability": { 
-                    values: ["ProposalStage", "SoWSent", "SoWSigned", "PurchaseOrderReceived"],
-                    labels: ["0%-ProposalStage", "33%-SoWSent", "85%-SoWSigned", "100%-PurchaseOrderReceived"]
-                },
-                "Stage": { 
-                    values: ["Discover", "Define", "OnBid", "DownSelect", "SignedDeal"],
-                    labels: ["Discover", "Define", "On Bid", "Down Select", "Signed Deal"]
-                }
-            },
-            "Projects": {
-                "projectType": { 
-                    values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine"],
-                    labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine"]
-                },
-                "status": { 
-                    values: ["Active", "Closed", "Planned"],
-                    labels: ["Active", "Closed", "Planned"]
-                },
-                "SOWReceived": { 
-                    values: ["Yes", "No"],
-                    labels: ["Yes", "No"]
-                },
-                "POReceived": { 
-                    values: ["Yes", "No"],
-                    labels: ["Yes", "No"]
-                }
-            },
-            "Employees": {
-                "gender": { 
-                    values: ["Male", "Female", "Others"],
-                    labels: ["Male", "Female", "Others"]
-                },
-                "employeeType": { 
-                    values: ["FullTime", "SubCon", "Intern", "YTJ"],
-                    labels: ["Full Time", "Subcon", "Intern", "Yet To Join"]
-                },
-                "band": { 
-                    values: ["1", "2", "3", "Band4A", "Band4BC", "Band4BLC", "Band4C", "Band4D", "Band5A", "Band5B", "BandSubcon"],
-                    labels: ["1", "2", "3", "4A", "4B-C", "4B-LC", "4C", "4D", "5A", "5B", "Subcon"]
-                },
-                "status": { 
-                    values: ["PreAllocated", "Bench", "Resigned", "Allocated"],
-                    labels: ["Pre Allocated", "Bench", "Resigned", "Allocated"]
-                }
-            },
-            "Allocations": {
-                "status": { 
-                    values: ["Active", "Completed", "Cancelled"],
-                    labels: ["Active", "Completed", "Cancelled"]
-                }
-            }
-        };
-        return mEnumFields[sTableId]?.[sPropertyName] || null;
+    // ✅ Override default table ID for Opportunities
+    OpportunitiesTableDelegate._getDefaultTableId = function() {
+        return "Opportunities";
     };
 
-    // ✅ ASSOCIATION DETECTION: Dynamic detection from OData metadata
-    GenericTableDelegate._detectAssociation = function(oTable, sPropertyName) {
-        const oModel = oTable.getModel();
-        if (!oModel || !oModel.getMetaModel) {
-            return Promise.resolve(null);
+    // ✅ Override delegate name for logging
+    OpportunitiesTableDelegate._getDelegateName = function() {
+        return "OpportunitiesTableDelegate";
+    };
+
+    // ✅ fetchProperties is inherited from BaseTableDelegate
+    // Override to provide fallback properties for Opportunities
+    OpportunitiesTableDelegate._getFallbackProperties = function(sCollectionPath) {
+        if (sCollectionPath === "Opportunities") {
+            return [
+                { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
+                { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opportunity ID", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                { name: "probability", path: "probability", label: "Probability", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
+                { name: "expectedEnd", path: "expectedEnd", label: "Expected End", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
+                { name: "customerId", path: "customerId", label: "Customer ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true }
+            ];
         }
-
-        const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Opportunities";
-        
-        const mAssociationFields = {
-            "Opportunities": {
-                "customerId": { targetEntity: "Customers", displayField: "customerName", keyField: "SAPcustId" }
-            },
-            "Projects": {
-                "oppId": { targetEntity: "Opportunities", displayField: "opportunityName", keyField: "sapOpportunityId" }
-            },
-            "Demands": {
-                "skillId": { targetEntity: "Skills", displayField: "name", keyField: "id" },
-                "sapPId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
-            },
-            "Employees": {
-                "supervisorOHR": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" }
-            },
-            "EmployeeSkills": {
-                "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
-                "skillId": { targetEntity: "Skills", displayField: "name", keyField: "id" }
-            },
-            "Allocations": {
-                "employeeId": { targetEntity: "Employees", displayField: "fullName", keyField: "ohrId" },
-                "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
-            }
-        };
-
-        const oAssocConfig = mAssociationFields[sTableId]?.[sPropertyName];
-        return Promise.resolve(oAssocConfig || null);
+        return [];
     };
 
-    // Ensure Table advertises support for all desired p13n panels
-    GenericTableDelegate.getSupportedP13nModes = function () {
-        return ["Column", "Sort", "Filter", "Group"];
-    };
+    // ✅ Opportunities-specific: Override updateBindingInfo to expand Customer association
+    OpportunitiesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+        // Call parent implementation first (handles common logic)
+        BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-    GenericTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [GenericDelegate] fetchProperties called ===");
-
-        const oModel = oTable.getModel();
-        if (!oModel) {
-            console.error("[GenericDelegate] No model found on table");
-            return Promise.resolve([]);
-        }
-
-        const oMetaModel = oModel.getMetaModel();
-        console.log("[GenericDelegate] MetaModel:", oMetaModel);
-
-        // Get collection path from payload
-        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
-        console.log("[GenericDelegate] Collection Path:", sCollectionPath);
-
-        // Wait for metadata to be loaded
-        return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
-            .then(function (sEntityTypePath) {
-                console.log("[GenericDelegate] Entity Type Path:", sEntityTypePath);
-
-                // Request the entity type definition
-                return oMetaModel.requestObject(`/${sEntityTypePath}/`);
-            })
-            .then(function (oEntityType) {
-                console.log("[GenericDelegate] Entity Type loaded:", oEntityType);
-
-                const aProperties = [];
-
-                // Iterate through entity type properties
-                Object.keys(oEntityType).forEach(function (sPropertyName) {
-                    // Skip metadata properties that start with $
-                    if (sPropertyName.startsWith("$")) {
-                        return;
-                    }
-
-                    const oProperty = oEntityType[sPropertyName];
-                    console.log("[GenericDelegate] Processing property:", sPropertyName, oProperty);
-
-                    // Check if it's a property (not a navigation property)
-                    if (oProperty.$kind === "Property" || !oProperty.$kind) {
-                        const sType = oProperty.$Type || "Edm.String";
-
-                        // Include all necessary attributes for sorting/filtering
-                        aProperties.push({
-                            name: sPropertyName,
-                            path: sPropertyName,
-                            label: sPropertyName,
-                            dataType: sType,
-                            sortable: true,
-                            filterable: true,
-                            groupable: true,
-                            maxConditions: -1,
-                            caseSensitive: sType === "Edm.String" ? false : undefined
-                        });
-                    }
-                });
-
-                console.log("[GenericDelegate] Final properties array:", aProperties);
-                return aProperties;
-            })
-            .catch(function (oError) {
-                console.error("[GenericDelegate] Error fetching properties:", oError);
-                console.log("[GenericDelegate] Using fallback properties for", sCollectionPath);
-
-                // Fallback properties for Opportunities
-                const mFallbackProperties = {
-                    "Opportunities": [
-                        { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
-                        { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opportunity ID", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                        { name: "probability", path: "probability", label: "Probability", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                        { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                        { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                        { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
-                        { name: "expectedEnd", path: "expectedEnd", label: "Expected End", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
-                        { name: "customerId", path: "customerId", label: "Customer ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true }
-                    ]
-                };
-
-                return mFallbackProperties[sCollectionPath] || [];
-            });
-    };
-
-    GenericTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
-        ODataTableDelegate.updateBindingInfo.apply(this, arguments);
-
-        const sPath = oTable.getPayload()?.collectionPath || "Customers";
-        oBindingInfo.path = "/" + sPath;
-
-        // Essential OData V4 parameters
-        oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
-            $count: true
-        });
-        
-        // ✅ Expand associations to load related entity names
+        const sPath = oTable.getPayload()?.collectionPath || "Opportunities";
         const sCollectionPath = sPath.replace(/^\//, "");
+        
+        // ✅ Opportunities-specific: Expand Customer association
         if (sCollectionPath === "Opportunities") {
             // Expand Customer association for Opportunity table
             oBindingInfo.parameters.$expand = "to_Customer";
         }
-        
-        // ✅ Make all string filters case-insensitive by recreating them
-        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
-            const oModel = oTable.getModel();
-            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-            
-            const fnMakeCaseInsensitive = (aFilters) => {
-                if (!aFilters || !Array.isArray(aFilters)) return aFilters;
-                
-                return aFilters.map((oFilter) => {
-                    if (!oFilter || !oFilter.getPath) return oFilter;
-                    
-                    const sFilterPath = oFilter.getPath();
-                    // Check if this is a string property
-                    let bIsString = false;
-                    try {
-                        if (oMetaModel) {
-                            const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sFilterPath}`);
-                            if (oProp && oProp.$Type === "Edm.String") {
-                                bIsString = true;
-                            }
-                        }
-                    } catch (e) {
-                        // If we can't determine, skip modification
-                    }
-                    
-                    // Recreate filter with caseSensitive: false for string filters
-                    if (bIsString) {
-                        try {
-                            const sOperator = oFilter.getOperator();
-                            const vValue1 = oFilter.getValue1();
-                            const vValue2 = oFilter.getValue2();
-                            const aNestedFilters = oFilter.getFilters ? oFilter.getFilters() : null;
-                            const bAnd = oFilter.getAnd ? oFilter.getAnd() : true;
-                            
-                            // Recreate the filter with caseSensitive: false
-                            const oNewFilter = new sap.ui.model.Filter({
-                                path: sFilterPath,
-                                operator: sOperator,
-                                value1: vValue1,
-                                value2: vValue2,
-                                caseSensitive: false,
-                                filters: aNestedFilters ? fnMakeCaseInsensitive(aNestedFilters) : undefined,
-                                and: aNestedFilters ? bAnd : undefined
-                            });
-                            
-                            return oNewFilter;
-                        } catch (e) {
-                            console.warn("[OpportunitiesTableDelegate] Could not recreate filter with caseSensitive:", e);
-                            return oFilter;
-                        }
-                    }
-                    
-                    // Recursively process nested filters
-                    if (oFilter.getFilters && oFilter.getFilters()) {
-                        const aNestedFilters = oFilter.getFilters();
-                        const aNewNestedFilters = fnMakeCaseInsensitive(aNestedFilters);
-                        if (aNewNestedFilters !== aNestedFilters) {
-                            // Recreate filter with updated nested filters
-                            try {
-                                return new sap.ui.model.Filter({
-                                    path: sFilterPath,
-                                    operator: oFilter.getOperator(),
-                                    value1: oFilter.getValue1(),
-                                    value2: oFilter.getValue2(),
-                                    filters: aNewNestedFilters,
-                                    and: oFilter.getAnd ? oFilter.getAnd() : true
-                                });
-                            } catch (e) {
-                                return oFilter;
-                            }
-                        }
-                    }
-                    
-                    return oFilter;
-                });
-            };
-            
-            // ✅ NEW: Group filters by path and combine same-field filters with OR
-            const fnOptimizeFilters = (vFilters) => {
-                if (!vFilters) return null;
-                
-                if (!Array.isArray(vFilters)) {
-                    if (vFilters.getFilters && vFilters.getFilters()) {
-                        const aNested = vFilters.getFilters();
-                        const oOptimized = fnOptimizeFilters(aNested);
-                        if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
-                            return new sap.ui.model.Filter({
-                                filters: oOptimized,
-                                and: vFilters.getAnd ? vFilters.getAnd() : true
-                            });
-                        }
-                    }
-                    return vFilters;
-                }
-                
-                if (vFilters.length === 0) return null;
-                
-                let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
-                const mFiltersByPath = {};
-                const aOtherFilters = [];
-                
-                aProcessedFilters.forEach((oFilter) => {
-                    if (!oFilter) return;
-                    
-                    if (oFilter.getFilters && oFilter.getFilters()) {
-                        const aNested = oFilter.getFilters();
-                        const oOptimizedNested = fnOptimizeFilters(aNested);
-                        if (oOptimizedNested) {
-                            aOtherFilters.push(new sap.ui.model.Filter({
-                                filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
-                                and: oFilter.getAnd ? oFilter.getAnd() : true
-                            }));
-                        }
-                        return;
-                    }
-                    
-                    if (!oFilter.getPath) {
-                        aOtherFilters.push(oFilter);
-                        return;
-                    }
-                    
-                    const sPath = oFilter.getPath();
-                    if (!mFiltersByPath[sPath]) {
-                        mFiltersByPath[sPath] = [];
-                    }
-                    
-                    const sValue1 = String(oFilter.getValue1() || "");
-                    const sValue2 = String(oFilter.getValue2() || "");
-                    const sOperator = String(oFilter.getOperator() || "");
-                    const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
-                    
-                    const bIsDuplicate = mFiltersByPath[sPath].some((oExistingFilter) => {
-                        const sExistingValue1 = String(oExistingFilter.getValue1() || "");
-                        const sExistingValue2 = String(oExistingFilter.getValue2() || "");
-                        const sExistingOperator = String(oExistingFilter.getOperator() || "");
-                        const sExistingKey = `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
-                        return sFilterKey === sExistingKey;
-                    });
-                    
-                    if (!bIsDuplicate) {
-                        mFiltersByPath[sPath].push(oFilter);
-                    }
-                });
-                
-                const aOptimizedFilters = [];
-                
-                Object.keys(mFiltersByPath).forEach((sPath) => {
-                    const aFieldFilters = mFiltersByPath[sPath];
-                    if (aFieldFilters.length === 1) {
-                        aOptimizedFilters.push(aFieldFilters[0]);
-                    } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
-                            filters: aFieldFilters,
-                            and: false // OR logic
-                        }));
-                    }
-                });
-                
-                aOtherFilters.forEach((oFilter) => {
-                    aOptimizedFilters.push(oFilter);
-                });
-                
-                if (aOptimizedFilters.length === 0) {
-                    return null;
-                } else if (aOptimizedFilters.length === 1) {
-                    return aOptimizedFilters[0];
-                } else {
-                    return new sap.ui.model.Filter({
-                        filters: aOptimizedFilters,
-                        and: true // AND logic between different fields
-                    });
-                }
-            };
-            
-            const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
-            oBindingInfo.filters = oOptimizedFilter || null;
-        }
 
-        console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[GenericDelegate] Table payload:", oTable.getPayload());
     };
 
-    GenericTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
-        console.log("[GenericDelegate] addItem called for property:", sPropertyName);
-
+    // ✅ Opportunities-specific: addItem method with custom headers
+    OpportunitiesTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
             });
 
             if (!oProperty) {
-                console.error("[GenericDelegate] Property not found:", sPropertyName);
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
@@ -471,9 +126,9 @@ sap.ui.define([
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Opportunities";
                     
-                    const oEnumConfig = GenericTableDelegate._getEnumConfig(sTableId, sPropertyName);
+                    const oEnumConfig = OpportunitiesTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
-                    const oAssocPromise = GenericTableDelegate._detectAssociation(oTable, sPropertyName);
+                    const oAssocPromise = OpportunitiesTableDelegate._detectAssociation(oTable, sPropertyName);
                     
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
@@ -523,7 +178,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
                         } else if (bIsAssoc) {
                             // ✅ ASSOCIATION: Display name from association, but store ID for editing
                             // Determine association path based on property
@@ -608,7 +262,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
                         } else {
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
@@ -629,10 +282,8 @@ sap.ui.define([
                             template: oField
                         });
 
-                        console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[GenericDelegate] Error, using regular field:", oError);
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -656,9 +307,7 @@ sap.ui.define([
         });
     };
 
-    GenericTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
-        console.log("[GenericDelegate] removeItem called for column:", oColumn);
-
+    OpportunitiesTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
         if (oColumn) {
             oColumn.destroy();
         }
@@ -667,7 +316,7 @@ sap.ui.define([
     };
 
     // Provide FilterField creation for Adaptation Filter panel in table p13n
-    GenericTableDelegate.getFilterDelegate = function () {
+    OpportunitiesTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
@@ -716,5 +365,5 @@ sap.ui.define([
         };
     };
 
-    return GenericTableDelegate;
+    return OpportunitiesTableDelegate;
 });

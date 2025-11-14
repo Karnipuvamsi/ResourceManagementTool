@@ -42,16 +42,43 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- Opportunity Name Filter -->
+                            <!-- SAP Opportunity ID Filter -->
                             <mdc:FilterField
-                                id="filterOpportunityName"
-                                label="Opportunity Name"
-                                conditions="{filterModel>/Opportunities/conditions/opportunityName}"
-                                propertyKey="opportunityName"
+                                id="filterSapOppId"
+                                label="SAP Opp ID"
+                                conditions="{filterModel>/Opportunities/conditions/sapOpportunityId}"
+                                propertyKey="sapOpportunityId"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
-                                width="250px"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- SFDC Opportunity ID Filter -->
+                            <mdc:FilterField
+                                id="filterSfdcOppId"
+                                label="SFDC Opp ID"
+                                conditions="{filterModel>/Opportunities/conditions/sfdcOpportunityId}"
+                                propertyKey="sfdcOpportunityId"
+                                maxConditions="-1"
+                                required="false"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- Business Unit Filter -->
+                            <mdc:FilterField
+                                id="filterBusinessUnit"
+                                label="Business Unit"
+                                conditions="{filterModel>/Opportunities/conditions/businessUnit}"
+                                propertyKey="businessUnit"
+                                maxConditions="-1"
+                                required="false"
+                                width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
@@ -65,7 +92,6 @@
                                 propertyKey="Stage"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",

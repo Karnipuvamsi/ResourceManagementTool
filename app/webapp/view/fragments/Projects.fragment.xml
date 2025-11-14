@@ -42,17 +42,31 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- Project Name Filter -->
+                            <!-- SAP PID Filter -->
                             <mdc:FilterField
-                                id="filterProjectName"
-                                label="Project Name"
-                                conditions="{filterModel>/Projects/conditions/projectName}"
-                                propertyKey="projectName"
+                                id="filterSapPId"
+                                label="SAP PID"
+                                conditions="{filterModel>/Projects/conditions/sapPId}"
+                                propertyKey="sapPId"
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
-                                width="250px"
+                                width="200px"
+                                delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+                            />
+                            <!-- SFDC PID Filter -->
+                            <mdc:FilterField
+                                id="filterSfdcPId"
+                                label="SFDC PID"
+                                conditions="{filterModel>/Projects/conditions/sfdcPId}"
+                                propertyKey="sfdcPId"
+                                maxConditions="-1"
+                                required="false"
+                                defaultOperator="EQ"
+                                width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
@@ -67,7 +81,6 @@
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -83,7 +96,6 @@
                                 maxConditions="-1"
                                 required="false"
                                 defaultOperator="EQ"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
