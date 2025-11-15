@@ -410,29 +410,76 @@ sap.ui.define([
      * This provides common filter field creation logic
      * Override in specific delegates for custom filter fields
      * 
-     * @param {object} oTable - MDC Table instance
-     * @param {string} sPropertyName - Property name
-     * @returns {Promise<object>} Promise resolving to filter field configuration
+     * @returns {object} Object with addItem method for filter field creation
      */
-    BaseTableDelegate.getFilterDelegate = function (oTable, sPropertyName) {
-        const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || this._getDefaultTableId();
+    BaseTableDelegate.getFilterDelegate = function () {
+        const oDelegate = this; // Store reference to delegate for use in nested functions
         
-        // Check if it's an enum field
-        const oEnumConfig = this._getEnumConfig(sTableId, sPropertyName);
-        if (oEnumConfig) {
-            return Promise.resolve(this._createEnumFilterField(oTable, sPropertyName, oEnumConfig));
-        }
-        
-        // Check if it's an association field
-        return this._detectAssociation(oTable, sPropertyName)
-            .then((oAssocConfig) => {
-                if (oAssocConfig) {
-                    return this._createAssociationFilterField(oTable, sPropertyName, oAssocConfig);
+        return {
+            addItem: function (vArg1, vArg2, vArg3) {
+                // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
+                var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
+                var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
+                var mPropertyBag = vArg3;
+
+                // Validate oTable
+                if (!oTable) {
+                    return Promise.reject("Table instance is required for filter delegate");
+                }
+
+                // Resolve property name from string, property object, or mPropertyBag
+                const sPropertyName =
+                    (typeof vProperty === "string" && vProperty) ||
+                    (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
+                    (mPropertyBag && (mPropertyBag.name || mPropertyBag.propertyKey)) ||
+                    (mPropertyBag && mPropertyBag.property && (mPropertyBag.property.name || mPropertyBag.property.path || mPropertyBag.property.key));
+                
+                if (!sPropertyName) {
+                    return Promise.reject("Invalid property for filter item");
+                }
+
+                // Get table ID from payload or use default
+                const sTableId = (oTable.getPayload && oTable.getPayload()?.collectionPath?.replace(/^\//, "")) || oDelegate._getDefaultTableId();
+                
+                // Determine data type from metadata
+                let sDataType = "sap.ui.model.type.String";
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = sTableId;
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sPropertyName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
+                            sDataType = "sap.ui.model.type.Integer";
+                        } else if (sEdmType === "Edm.Boolean") {
+                            sDataType = "sap.ui.model.type.Boolean";
+                        } else if (sEdmType === "Edm.Date" || sEdmType === "Edm.DateTimeOffset") {
+                            sDataType = "sap.ui.model.type.Date";
+                        }
+                    }
+                } catch (e) {
+                    // Ignore metadata errors, use default String type
+                }
+
+                // Check if it's an enum field
+                const oEnumConfig = oDelegate._getEnumConfig(sTableId, sPropertyName);
+                if (oEnumConfig) {
+                    return Promise.resolve(oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType));
                 }
                 
-                // Default: create standard filter field
-                return this._createStandardFilterField(oTable, sPropertyName);
-            });
+                // Check if it's an association field
+                return oDelegate._detectAssociation(oTable, sPropertyName)
+                    .then((oAssocConfig) => {
+                        if (oAssocConfig) {
+                            return oDelegate._createAssociationFilterField(oTable, sPropertyName, oAssocConfig, sDataType);
+                        }
+                        
+                        // Default: create standard filter field
+                        return oDelegate._createStandardFilterField(oTable, sPropertyName, sDataType);
+                    });
+            }
+        };
     };
 
     /**
@@ -440,9 +487,10 @@ sap.ui.define([
      * @param {object} oTable - MDC Table instance
      * @param {string} sPropertyName - Property name
      * @param {object} oEnumConfig - Enum configuration
+     * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createEnumFilterField = function(oTable, sPropertyName, oEnumConfig) {
+    BaseTableDelegate._createEnumFilterField = function(oTable, sPropertyName, oEnumConfig, sDataType) {
         const oComboBox = new ComboBox({
             showSecondaryValues: false,
             items: oEnumConfig.values.map((sValue, iIndex) => {
@@ -453,9 +501,16 @@ sap.ui.define([
             })
         });
 
+        // Format label
+        const sLabel = sPropertyName
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, function (str) { return str.toUpperCase(); })
+            .trim();
+
         return new FilterField({
-            label: sPropertyName,
-            dataType: "sap.ui.model.type.String",
+            label: sLabel,
+            propertyKey: sPropertyName,
+            dataType: sDataType || "sap.ui.model.type.String",
             conditions: "{$filters>/conditions/" + sPropertyName + "}",
             control: oComboBox
         });
@@ -466,14 +521,22 @@ sap.ui.define([
      * @param {object} oTable - MDC Table instance
      * @param {string} sPropertyName - Property name
      * @param {object} oAssocConfig - Association configuration
+     * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createAssociationFilterField = function(oTable, sPropertyName, oAssocConfig) {
+    BaseTableDelegate._createAssociationFilterField = function(oTable, sPropertyName, oAssocConfig, sDataType) {
+        // Format label
+        const sLabel = sPropertyName
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, function (str) { return str.toUpperCase(); })
+            .trim();
+
         // For associations, create a value help field
         // This is a simplified version - specific delegates can override for more complex scenarios
         return new FilterField({
-            label: sPropertyName,
-            dataType: "sap.ui.model.type.String",
+            label: sLabel,
+            propertyKey: sPropertyName,
+            dataType: sDataType || "sap.ui.model.type.String",
             conditions: "{$filters>/conditions/" + sPropertyName + "}",
             // Value help would be configured here in specific delegates
         });
@@ -483,12 +546,20 @@ sap.ui.define([
      * Create standard filter field
      * @param {object} oTable - MDC Table instance
      * @param {string} sPropertyName - Property name
+     * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createStandardFilterField = function(oTable, sPropertyName) {
+    BaseTableDelegate._createStandardFilterField = function(oTable, sPropertyName, sDataType) {
+        // Format label
+        const sLabel = sPropertyName
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^./, function (str) { return str.toUpperCase(); })
+            .trim();
+
         return new FilterField({
-            label: sPropertyName,
-            dataType: "sap.ui.model.type.String",
+            label: sLabel,
+            propertyKey: sPropertyName,
+            dataType: sDataType || "sap.ui.model.type.String",
             conditions: "{$filters>/conditions/" + sPropertyName + "}"
         });
     };
