@@ -30,7 +30,6 @@ module.exports = cds.service.impl(async function () {
         // Get the highest existing numeric part of SAPcustId
         const result = await SELECT.one`max(SAPcustId)`.from(Customers);
 
-        console.log(result);
         
 
 
@@ -71,7 +70,6 @@ module.exports = cds.service.impl(async function () {
             // For integer fields, use SELECT with max() function
             // CAP's SELECT.one returns the result directly when using aggregate functions
             const result = await SELECT.one`max(demandId) as max`.from(Demands);
-            console.log("✅ SELECT result for demandId max:", result);
 
             let nextId = 1;
             if (result && result.max != null && result.max !== undefined) {
@@ -84,9 +82,7 @@ module.exports = cds.service.impl(async function () {
 
             // Set the new ID (ensure it's a number, not string)
             req.data.demandId = nextId;
-            console.log("✅ Generated Demand ID:", nextId, "from max:", result?.max);
         } catch (oError) {
-            console.error("❌ Error generating Demand ID:", oError);
             // Fallback: try to get count and use that + 1
             try {
                 const aAllDemands = await SELECT.from(Demands).columns('demandId');
@@ -101,9 +97,7 @@ module.exports = cds.service.impl(async function () {
                 } else {
                     req.data.demandId = 1;
                 }
-                console.log("✅ Generated Demand ID (fallback):", req.data.demandId);
             } catch (oFallbackError) {
-                console.error("❌ Fallback ID generation also failed:", oFallbackError);
                 // Last resort: use 1
                 req.data.demandId = 1;
             }
@@ -131,7 +125,6 @@ module.exports = cds.service.impl(async function () {
                     }
                 }
             } catch (oError) {
-                console.error("❌ Error validating demand quantity:", oError);
                 // Don't block creation if validation fails due to error
             }
         }
@@ -142,11 +135,9 @@ module.exports = cds.service.impl(async function () {
         try {
             const sProjectId = req.data.sapPId;
             if (sProjectId) {
-                console.log(`✅ Demand created for project ${sProjectId}, updating project resource counts...`);
                 await this._updateProjectResourceCounts(sProjectId);
             }
         } catch (oError) {
-            console.error("❌ Error updating project resource counts after demand create:", oError);
         }
     });
 
@@ -198,11 +189,9 @@ module.exports = cds.service.impl(async function () {
             }
             
             if (sProjectId) {
-                console.log(`✅ Demand updated for project ${sProjectId}, updating project resource counts...`);
                 await this._updateProjectResourceCounts(sProjectId);
             }
         } catch (oError) {
-            console.error("❌ Error updating project resource counts after demand update:", oError);
         }
     });
 
@@ -218,7 +207,6 @@ module.exports = cds.service.impl(async function () {
                 }
             }
         } catch (oError) {
-            console.error("❌ Error getting project ID before demand delete:", oError);
         }
     });
 
@@ -228,11 +216,9 @@ module.exports = cds.service.impl(async function () {
             // Get project ID stored in before hook
             const sProjectId = req._deletedDemandProjectId;
             if (sProjectId) {
-                console.log(`✅ Demand deleted for project ${sProjectId}, updating project resource counts...`);
                 await this._updateProjectResourceCounts(sProjectId);
             }
         } catch (oError) {
-            console.error("❌ Error updating project resource counts after demand delete:", oError);
         }
     });
 
@@ -242,13 +228,11 @@ module.exports = cds.service.impl(async function () {
         // ✅ Set default status to 'Active' if not provided
         if (!req.data.status) {
             req.data.status = 'Active';
-            console.log("✅ Set default allocation status to 'Active'");
         }
         
         // Set allocationDate to current date if not provided
         if (!req.data.allocationDate) {
             req.data.allocationDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-            console.log("✅ Set allocationDate to:", req.data.allocationDate);
         }
         
         // ✅ NEW: Validate demandId - if not provided, try to auto-assign from project's first demand
@@ -259,13 +243,11 @@ module.exports = cds.service.impl(async function () {
                     const aDemands = await SELECT.from(Demands).where({ sapPId: req.data.projectId }).limit(1);
                     if (aDemands && aDemands.length > 0) {
                         req.data.demandId = aDemands[0].demandId;
-                        console.log(`✅ Auto-assigned demandId ${req.data.demandId} from project ${req.data.projectId}'s first demand`);
                     } else {
                         req.reject(400, `demandId is required. Project ${req.data.projectId} has no demands. Please create a demand first.`);
                         return;
                     }
                 } catch (oError) {
-                    console.error("❌ Error auto-assigning demandId:", oError);
                     req.reject(400, "demandId is required. Employee must be allocated to a specific demand.");
                     return;
                 }
@@ -293,14 +275,11 @@ module.exports = cds.service.impl(async function () {
                 
                 if (oExistingAllocation) {
                     const sErrorMessage = `Employee ${sEmployeeId} is already allocated to project ${sProjectId}. An employee can only be allocated to a project once.`;
-                    console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
                 }
                 
-                console.log(`✅ Validation passed: Employee ${sEmployeeId} is not already allocated to project ${sProjectId}`);
             } catch (oError) {
-                console.error("❌ Error validating duplicate project allocation:", oError);
                 req.reject(500, `Error validating allocation: ${oError.message}`);
                 return;
             }
@@ -308,11 +287,9 @@ module.exports = cds.service.impl(async function () {
         
         // ✅ Set default allocationPercentage to 100 if not provided
         // ✅ CRITICAL: Log the incoming value to debug
-        console.log(`🔵 Backend received allocationPercentage: type=${typeof req.data.allocationPercentage}, value="${req.data.allocationPercentage}"`);
         
         if (req.data.allocationPercentage === undefined || req.data.allocationPercentage === null || req.data.allocationPercentage === "") {
             req.data.allocationPercentage = 100;
-            console.log("✅ Set default allocationPercentage to 100 (value was missing/empty)");
         } else {
             // ✅ Parse the value - handle string, number, or other types
             let iPercentage;
@@ -345,7 +322,6 @@ module.exports = cds.service.impl(async function () {
             }
             
             req.data.allocationPercentage = iPercentage;
-            console.log(`✅ Parsed allocationPercentage: ${iPercentage}%`);
         }
         
         // ✅ Validate total allocation percentage for employee doesn't exceed 100%
@@ -366,19 +342,14 @@ module.exports = cds.service.impl(async function () {
                 const iCurrentTotal = oEmployee.empallocpercentage || 0;
                 const iNewTotal = iCurrentTotal + iNewPercentage;
                 
-                console.log(`✅ Allocation percentage validation (field-based): Employee ${sEmployeeId} - Current: ${iCurrentTotal}%, New: ${iNewPercentage}%, Total: ${iNewTotal}%`);
                 
                 if (iNewTotal > 100) {
                     const sErrorMessage = `Cannot create allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Current allocation: ${iCurrentTotal}%, New allocation: ${iNewPercentage}%`;
-                    console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
                 }
                 
-                console.log("✅ Allocation percentage validation passed");
             } catch (oError) {
-                console.error("❌ Error validating allocation percentage:", oError);
-                console.error("❌ Error stack:", oError.stack);
                 req.reject(500, `Error validating allocation percentage: ${oError.message}`);
                 return;
             }
@@ -399,7 +370,6 @@ module.exports = cds.service.impl(async function () {
         // ✅ Also store in module-level Map using allocationId as key (if available) or employeeId+projectId
         const sMapKey = oAllocationData.allocationId || `${oAllocationData.employeeId}_${oAllocationData.projectId}_${Date.now()}`;
         mAllocationData.set(sMapKey, oAllocationData);
-        console.log("✅ Stored allocation data for after hook (key:", sMapKey, "):", JSON.stringify(oAllocationData, null, 2));
         
         // ✅ Clean up old entries (keep only last 100 entries to prevent memory leak)
         if (mAllocationData.size > 100) {
@@ -424,12 +394,10 @@ module.exports = cds.service.impl(async function () {
 
                 if (iNewAllocated > iRequiredResources) {
                     const sErrorMessage = `Cannot create allocation: Allocated resources (${iNewAllocated}) would exceed required resources (${iRequiredResources}) for project ${req.data.projectId}. Current allocated: ${iCurrentAllocated}`;
-                    console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
                 }
 
-                console.log(`✅ Allocation CREATE validation: Project ${req.data.projectId} - Required: ${iRequiredResources}, Current allocated: ${iCurrentAllocated}, New allocated: ${iNewAllocated}`);
                 
                 // Auto-fill dates from project if not provided
                 const bNeedsStartDate = !req.data.startDate || req.data.startDate === "" || req.data.startDate.trim() === "";
@@ -437,11 +405,9 @@ module.exports = cds.service.impl(async function () {
                 
                 if (bNeedsStartDate && oProject.startDate) {
                     req.data.startDate = oProject.startDate;
-                    console.log("✅ Auto-filled startDate from project:", req.data.startDate);
                 }
                 if (bNeedsEndDate && oProject.endDate) {
                     req.data.endDate = oProject.endDate;
-                    console.log("✅ Auto-filled endDate from project:", req.data.endDate);
                 }
                 
                 // ✅ CRITICAL: Validate allocation dates are within project date range
@@ -473,7 +439,6 @@ module.exports = cds.service.impl(async function () {
                     }
                 }
             } catch (oError) {
-                console.error("❌ Error validating allocation dates:", oError);
                 req.reject(500, `Error validating allocation dates: ${oError.message}`);
                 return;
             }
@@ -483,7 +448,6 @@ module.exports = cds.service.impl(async function () {
     // ✅ NEW: Update employee statuses after allocation is created
     this.after('CREATE', Allocations, async (req) => {
         try {
-            console.log("🔵 [after CREATE Allocations] Hook triggered");
             
             // ✅ CRITICAL: In batch operations, req.data/req.result/req.keys are often undefined
             // We need to fetch the allocation from the database using the keys
@@ -494,7 +458,6 @@ module.exports = cds.service.impl(async function () {
                 const sMapKey = req.keys.allocationId;
                 oAllocationData = mAllocationData.get(sMapKey);
                 if (oAllocationData) {
-                    console.log("✅ Using stored allocation data from module-level Map (key:", sMapKey, ")");
                     // Clean up - remove from Map after use
                     mAllocationData.delete(sMapKey);
                 }
@@ -503,19 +466,15 @@ module.exports = cds.service.impl(async function () {
             // ✅ METHOD 2: Try to get from req._allocationData (for single operations)
             if (!oAllocationData && req._allocationData) {
                 oAllocationData = req._allocationData;
-                console.log("✅ Using stored allocation data from req._allocationData");
             }
             
             // ✅ METHOD 3: Try to fetch from database using allocationId from keys
             if (!oAllocationData && req.keys && req.keys.allocationId) {
                 try {
-                    console.log(`🔵 Fetching allocation from database using allocationId: ${req.keys.allocationId}`);
                     oAllocationData = await SELECT.one.from(Allocations).where({ allocationId: req.keys.allocationId });
                     if (oAllocationData) {
-                        console.log("✅ Successfully fetched allocation from database using allocationId");
                     }
                 } catch (oFetchError) {
-                    console.error("❌ Error fetching allocation from database using allocationId:", oFetchError);
                 }
             }
             
@@ -523,7 +482,6 @@ module.exports = cds.service.impl(async function () {
             if (!oAllocationData) {
                 oAllocationData = req.data || req.result || req.keys;
                 if (oAllocationData) {
-                    console.log("✅ Using req.data/req.result/req.keys directly");
                 }
             }
             
@@ -533,16 +491,12 @@ module.exports = cds.service.impl(async function () {
                 for (const [sKey, oStoredData] of mAllocationData.entries()) {
                     // Check if this entry matches (we'll use the most recent one)
                     oAllocationData = oStoredData;
-                    console.log("✅ Using allocation data from module-level Map (found by search, key:", sKey, ")");
                     mAllocationData.delete(sKey); // Clean up
                     break;
                 }
             }
             
             if (!oAllocationData) {
-                console.error("❌ No allocation data available in after hook - cannot update employee percentage");
-                console.error("❌ req.keys:", req.keys ? JSON.stringify(req.keys) : "undefined");
-                console.error("❌ req._allocationData:", req._allocationData ? JSON.stringify(req._allocationData) : "undefined");
                 return;
             }
             
@@ -551,11 +505,9 @@ module.exports = cds.service.impl(async function () {
             const sAllocationStatus = oAllocationData.status || 'Active';
             const iAllocationPercentage = oAllocationData.allocationPercentage || 100;
 
-            console.log(`✅ Allocation created - Project: ${sProjectId}, Employee: ${sEmployeeId}, Status: ${sAllocationStatus}, Percentage: ${iAllocationPercentage}%`);
             
             // ✅ Validate we have required data
             if (!sEmployeeId) {
-                console.error("❌ No employeeId found in allocation data");
                 return;
             }
 
@@ -573,46 +525,32 @@ module.exports = cds.service.impl(async function () {
                             .where({ ohrId: sEmployeeId })
                             .with({ empallocpercentage: iNewPercentage }));
                         
-                        console.log(`✅ Updated employee ${sEmployeeId} allocation percentage: ${iCurrentPercentage}% + ${iAllocationPercentage}% = ${iNewPercentage}%`);
                     } else {
-                        console.warn(`⚠️ Employee ${sEmployeeId} not found for percentage update`);
                     }
                 } catch (oPercentError) {
-                    console.error(`❌ ERROR updating employee allocation percentage for ${sEmployeeId}:`, oPercentError);
-                    console.error(`❌ Error stack:`, oPercentError.stack);
                     // Don't throw - continue with other updates
                 }
             }
 
             // ✅ CRITICAL: Update project resource counts
             if (sProjectId) {
-                console.log(`🔄 Updating project resource counts for ${sProjectId} after allocation creation...`);
                 try {
                     await this._updateProjectResourceCounts(sProjectId);
-                    console.log(`✅ Project resource counts updated successfully for ${sProjectId}`);
                 } catch (oUpdateError) {
-                    console.error(`❌ ERROR updating project resource counts for ${sProjectId}:`, oUpdateError);
-                    console.error(`❌ Error stack:`, oUpdateError.stack);
                     // Don't throw - continue with other updates
                 }
             } else {
-                console.warn("⚠️ No projectId found in allocation data");
             }
 
             // ✅ NEW: Update demand resource counts
             const iDemandId = oAllocationData.demandId ? parseInt(oAllocationData.demandId, 10) : null;
             if (iDemandId && !isNaN(iDemandId)) {
-                console.log(`🔄 Updating demand resource counts for ${iDemandId} after allocation creation...`);
                 try {
                     await this._updateDemandResourceCounts(iDemandId);
-                    console.log(`✅ Demand resource counts updated successfully for ${iDemandId}`);
                 } catch (oUpdateError) {
-                    console.error(`❌ ERROR updating demand resource counts for ${iDemandId}:`, oUpdateError);
-                    console.error(`❌ Error stack:`, oUpdateError.stack);
                     // Don't throw - continue with other updates
                 }
             } else {
-                console.warn("⚠️ No valid demandId found in allocation data:", oAllocationData.demandId);
             }
 
             if (sProjectId) {
@@ -623,8 +561,6 @@ module.exports = cds.service.impl(async function () {
                 await this._updateEmployeeStatus(sEmployeeId);
             }
         } catch (oError) {
-            console.error("❌ Error updating employee statuses after allocation creation:", oError);
-            console.error("❌ Error stack:", oError.stack);
         }
     });
 
@@ -646,11 +582,9 @@ module.exports = cds.service.impl(async function () {
                         allocationPercentage: oOldAllocation.allocationPercentage || 0,
                         status: oOldAllocation.status || 'Active'
                     };
-                    console.log(`✅ Stored old allocation data before update: Employee ${oOldAllocation.employeeId}, Project: ${oOldAllocation.projectId}, Demand: ${oOldAllocation.demandId}, Percentage: ${oOldAllocation.allocationPercentage}%, Status: ${oOldAllocation.status}`);
                 }
             }
         } catch (oError) {
-            console.error("❌ Error storing old allocation data before update:", oError);
             // Don't throw - continue with validation
         }
         
@@ -684,16 +618,13 @@ module.exports = cds.service.impl(async function () {
                 
                 const iNewTotal = iNewEmployeeTotal + iAllocationPercentage;
                 
-                console.log(`✅ Allocation employeeId change validation (field-based): Moving to employee ${sNewEmployeeId} - Current: ${iNewEmployeeTotal}%, This allocation: ${iAllocationPercentage}%, Total: ${iNewTotal}%`);
                 
                 if (iNewTotal > 100) {
                     const sErrorMessage = `Cannot move allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sNewEmployeeId}. Current allocation: ${iNewEmployeeTotal}%, This allocation: ${iAllocationPercentage}%`;
-                    console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
                 }
             } catch (oError) {
-                console.error("❌ Error validating allocation percentage for employee change:", oError);
                 req.reject(500, `Error validating allocation percentage: ${oError.message}`);
                 return;
             }
@@ -703,7 +634,6 @@ module.exports = cds.service.impl(async function () {
         if (req.data.allocationPercentage !== undefined && sEmployeeId) {
             try {
                 if (!sEmployeeId) {
-                    console.warn("⚠️ Cannot validate allocation percentage update: employeeId not found");
                 } else {
                     // Handle empty/null values - default to 100
                     let iNewPercentage;
@@ -739,19 +669,15 @@ module.exports = cds.service.impl(async function () {
                     
                     const iNewTotal = iEmployeeTotal + iNewPercentage;
                     
-                    console.log(`✅ Allocation percentage UPDATE validation (field-based): Employee ${sEmployeeId} - Current total: ${iEmployeeTotal}%, Old allocation: ${iCurrentPercentage}%, New allocation: ${iNewPercentage}%, New total: ${iNewTotal}%`);
                     
                     if (iNewTotal > 100) {
                         const sErrorMessage = `Cannot update allocation: Total allocation percentage (${iNewTotal}%) would exceed 100% for employee ${sEmployeeId}. Current total: ${iEmployeeTotal}%, Updated allocation: ${iNewPercentage}%`;
-                        console.error("❌", sErrorMessage);
                         req.reject(400, sErrorMessage);
                         return;
                     }
                     
-                    console.log("✅ Allocation percentage UPDATE validation passed");
                 }
             } catch (oError) {
-                console.error("❌ Error validating allocation percentage update:", oError);
                 req.reject(500, `Error validating allocation percentage: ${oError.message}`);
                 return;
             }
@@ -782,14 +708,11 @@ module.exports = cds.service.impl(async function () {
 
                 if (iNewAllocated > iRequiredResources) {
                     const sErrorMessage = `Cannot move allocation: Allocated resources (${iNewAllocated}) would exceed required resources (${iRequiredResources}) for project ${sNewProjectId}. Current allocated: ${iCurrentAllocated}`;
-                    console.error("❌", sErrorMessage);
                     req.reject(400, sErrorMessage);
                     return;
                 }
 
-                console.log(`✅ Allocation UPDATE validation: Moving to project ${sNewProjectId} - Required: ${iRequiredResources}, Current allocated: ${iCurrentAllocated}, New allocated: ${iNewAllocated}`);
             } catch (oError) {
-                console.error("❌ Error validating allocation update:", oError);
                 req.reject(500, `Error validating allocation update: ${oError.message}`);
                 return;
             }
@@ -826,7 +749,6 @@ module.exports = cds.service.impl(async function () {
                                 await UPDATE(Employees)
                                     .where({ ohrId: sOldEmployeeId })
                                     .with({ empallocpercentage: iNewOldEmpTotal });
-                                console.log(`✅ Updated old employee ${sOldEmployeeId} allocation percentage: ${iOldEmpTotal}% - ${iOldPercentage}% = ${iNewOldEmpTotal}%`);
                             }
                         }
                         
@@ -839,7 +761,6 @@ module.exports = cds.service.impl(async function () {
                                 await UPDATE(Employees)
                                     .where({ ohrId: sEmployeeId })
                                     .with({ empallocpercentage: iNewNewEmpTotal });
-                                console.log(`✅ Updated new employee ${sEmployeeId} allocation percentage: ${iNewEmpTotal}% + ${iNewPercentage}% = ${iNewNewEmpTotal}%`);
                             }
                         }
                     } else if (sEmployeeId) {
@@ -856,11 +777,9 @@ module.exports = cds.service.impl(async function () {
                                 .where({ ohrId: sEmployeeId })
                                 .with({ empallocpercentage: iEmployeeTotal });
                             
-                            console.log(`✅ Updated employee ${sEmployeeId} allocation percentage: ${oEmployee.empallocpercentage}% → ${iEmployeeTotal}% (old: ${iOldPercentage}%, new: ${iNewPercentage}%)`);
                         }
                     }
                 } catch (oPercentError) {
-                    console.error(`❌ ERROR updating employee allocation percentage:`, oPercentError);
                     // Don't throw - continue with other updates
                 }
             }
@@ -882,26 +801,21 @@ module.exports = cds.service.impl(async function () {
             
             if (iOldDemandId && iNewDemandId && !isNaN(iOldDemandId) && !isNaN(iNewDemandId) && iOldDemandId !== iNewDemandId) {
                 // Demand changed - update both old and new demands
-                console.log(`🔄 Demand changed from ${iOldDemandId} to ${iNewDemandId}, updating both...`);
                 try {
                     await this._updateDemandResourceCounts(iOldDemandId);
                     await this._updateDemandResourceCounts(iNewDemandId);
                 } catch (oUpdateError) {
-                    console.error(`❌ ERROR updating demand resource counts:`, oUpdateError);
                 }
             } else if (iNewDemandId && !isNaN(iNewDemandId)) {
                 // Same demand or new allocation - update demand counts
-                console.log(`🔄 Updating demand resource counts for ${iNewDemandId}...`);
                 try {
                     await this._updateDemandResourceCounts(iNewDemandId);
                 } catch (oUpdateError) {
-                    console.error(`❌ ERROR updating demand resource counts for ${iNewDemandId}:`, oUpdateError);
                 }
             }
 
             // ✅ If allocation status changed to Completed or Cancelled, update employee status
             if (sEmployeeId && (req.data.status === 'Completed' || req.data.status === 'Cancelled')) {
-                console.log(`✅ Allocation status changed to ${req.data.status} for employee ${sEmployeeId}, updating status`);
                 await this._updateEmployeeStatus(sEmployeeId);
             } else if (sEmployeeId && req.data.status === 'Active') {
                 // ✅ If allocation was reactivated, also update status
@@ -911,7 +825,6 @@ module.exports = cds.service.impl(async function () {
                 await this._updateEmployeeStatus(sEmployeeId);
             }
         } catch (oError) {
-            console.error("❌ Error updating employee statuses after allocation update:", oError);
         }
     });
 
@@ -930,11 +843,9 @@ module.exports = cds.service.impl(async function () {
                         allocationPercentage: oAllocation.allocationPercentage || 0,
                         status: oAllocation.status || 'Active'
                     };
-                    console.log(`✅ Stored allocation data before deletion: Employee ${oAllocation.employeeId}, Project: ${oAllocation.projectId}, Demand: ${oAllocation.demandId}, Percentage: ${oAllocation.allocationPercentage}%, Status: ${oAllocation.status}`);
                 }
             }
         } catch (oError) {
-            console.error("❌ Error storing allocation data before deletion:", oError);
             // Don't throw - continue with deletion
         }
     });
@@ -959,10 +870,8 @@ module.exports = cds.service.impl(async function () {
                             .where({ ohrId: sEmployeeId })
                             .with({ empallocpercentage: iNewPercentage });
                         
-                        console.log(`✅ Updated employee ${sEmployeeId} allocation percentage after deletion: ${iCurrentPercentage}% - ${iDeletedPercentage}% = ${iNewPercentage}%`);
                     }
                 } catch (oPercentError) {
-                    console.error(`❌ ERROR updating employee allocation percentage after deletion:`, oPercentError);
                     // Don't throw - continue with other updates
                 }
             }
@@ -976,21 +885,16 @@ module.exports = cds.service.impl(async function () {
             const iDemandIdRaw = req._deletedAllocation?.demandId || req.keys?.demandId || null;
             const iDemandId = iDemandIdRaw ? parseInt(iDemandIdRaw, 10) : null;
             if (iDemandId && !isNaN(iDemandId)) {
-                console.log(`🔄 Updating demand resource counts for ${iDemandId} after allocation deletion...`);
                 try {
                     await this._updateDemandResourceCounts(iDemandId);
-                    console.log(`✅ Demand resource counts updated successfully for ${iDemandId}`);
                 } catch (oUpdateError) {
-                    console.error(`❌ ERROR updating demand resource counts for ${iDemandId}:`, oUpdateError);
                 }
             }
 
             if (sEmployeeId) {
-                console.log(`✅ Allocation deleted for employee ${sEmployeeId}, updating status`);
                 await this._updateEmployeeStatus(sEmployeeId);
             }
         } catch (oError) {
-            console.error("❌ Error updating employee statuses after allocation deletion:", oError);
         }
     });
 
@@ -1001,7 +905,6 @@ module.exports = cds.service.impl(async function () {
         // If requiredResources is being manually updated, warn that it will be recalculated
         if (req.data.requiredResources !== undefined) {
             const sProjectId = req.data.sapPId || req.keys?.sapPId;
-            console.log(`⚠️ Warning: requiredResources is being manually updated for project ${sProjectId}. This will be recalculated from demands in the after hook.`);
         }
     });
 
@@ -1024,7 +927,6 @@ module.exports = cds.service.impl(async function () {
                 
                 // Only process if project was not already closed
                 if (oCurrentProject && oCurrentProject.status === 'Closed') {
-                    console.log(`✅ Project ${sProjectId} status changed to Closed, marking all allocations as Completed`);
                     
                     // Mark all active allocations to this project as Completed
                     const aProjectAllocations = await SELECT.from(Allocations)
@@ -1043,7 +945,6 @@ module.exports = cds.service.impl(async function () {
                             }
                         }
                         
-                        console.log(`✅ Marked ${aProjectAllocations.length} allocation(s) as Completed for closed project ${sProjectId}`);
                     }
                     
                     // Update employee statuses
@@ -1051,7 +952,6 @@ module.exports = cds.service.impl(async function () {
                         try {
                             await this._updateEmployeeStatus(sEmployeeId);
                         } catch (oError) {
-                            console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
                         }
                     }
                     
@@ -1068,21 +968,17 @@ module.exports = cds.service.impl(async function () {
             
             // ✅ Always recalculate project resource counts on any project update
             // This ensures requiredResources is always calculated from demands
-            console.log(`✅ Project ${sProjectId} updated, recalculating resource counts from demands...`);
             await this._updateProjectResourceCounts(sProjectId);
             
             // ✅ Update employee statuses if relevant fields were updated
             if (bSfdcPIdUpdated || bStartDateUpdated) {
                 if (bSfdcPIdUpdated) {
-                    console.log(`✅ Project ${sProjectId} updated with sfdcPId: ${req.data.sfdcPId}`);
                 }
                 if (bStartDateUpdated) {
-                    console.log(`✅ Project ${sProjectId} start date updated: ${req.data.startDate}`);
                 }
                 await this._updateEmployeeStatusesForProject(sProjectId);
             }
         } catch (oError) {
-            console.error("❌ Error updating employee statuses after project update:", oError);
         }
     });
 
@@ -1131,7 +1027,6 @@ module.exports = cds.service.impl(async function () {
             
             return aDemands;
         } catch (oError) {
-            console.warn("⚠️ Error calculating demand allocatedCount/remaining:", oError);
             // Return the original result even if calculation fails
             return await next();
         }
@@ -1176,7 +1071,6 @@ module.exports = cds.service.impl(async function () {
 
             return iCount;
         } catch (oError) {
-            console.error("❌ Error calculating demand allocatedCount:", oError);
             return 0;
         }
     };
@@ -1216,7 +1110,6 @@ module.exports = cds.service.impl(async function () {
                             req._employeeStatusUpdateChecked.add(oProject.sapPId);
                             // Update statuses asynchronously (don't block the read)
                             this._updateEmployeeStatusesForProject(oProject.sapPId).catch((oError) => {
-                                console.warn(`⚠️ Background status update failed for project ${oProject.sapPId}:`, oError);
                             });
                         }
                     }
@@ -1224,7 +1117,6 @@ module.exports = cds.service.impl(async function () {
             }
         } catch (oError) {
             // Don't fail the read if status update check fails
-            console.warn("⚠️ Error checking employee statuses before read:", oError);
         }
     });
 
@@ -1237,13 +1129,11 @@ module.exports = cds.service.impl(async function () {
         try {
             const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
             if (!oEmployee) {
-                console.warn("⚠️ Employee not found:", sEmployeeId);
                 return;
             }
 
             // ✅ Don't change status if employee is Resigned
             if (oEmployee.status === 'Resigned') {
-                console.log(`✅ Employee ${sEmployeeId} is Resigned, keeping status unchanged`);
                 return;
             }
 
@@ -1259,7 +1149,6 @@ module.exports = cds.service.impl(async function () {
                 if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
                     // Default to UnproductiveBench if not already on bench
                     await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
-                    console.log(`✅ Employee ${sEmployeeId} has no active allocations, status set to UnproductiveBench`);
                 }
                 return;
             }
@@ -1311,19 +1200,15 @@ module.exports = cds.service.impl(async function () {
             } else {
                 // ✅ Employee has active allocations but none have started yet
                 // Keep current status (don't change to Bench yet)
-                console.log(`✅ Employee ${sEmployeeId} has active allocations but none have started yet, keeping current status`);
                 return;
             }
 
             // Update employee status if different
             if (sFinalStatus && oEmployee.status !== sFinalStatus) {
                 await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sFinalStatus });
-                console.log(`✅ Updated employee ${sEmployeeId} status from "${oEmployee.status}" to "${sFinalStatus}" (based on ${aAllocations.length} active allocation(s))`);
             } else if (oEmployee.status === sFinalStatus) {
-                console.log(`✅ Employee ${sEmployeeId} already has correct status "${sFinalStatus}"`);
             }
         } catch (oError) {
-            console.error("❌ Error in _updateEmployeeStatus:", oError);
             throw oError;
         }
     };
@@ -1340,10 +1225,8 @@ module.exports = cds.service.impl(async function () {
                 return sum + (demand.quantity || 0);
             }, 0);
             
-            console.log(`✅ Calculated requiredResources for project ${sProjectId} from demands: ${iRequiredResources}`);
             return iRequiredResources;
         } catch (oError) {
-            console.error("❌ Error calculating requiredResources from demands:", oError);
             return 0;
         }
     };
@@ -1358,7 +1241,6 @@ module.exports = cds.service.impl(async function () {
             // Get project details
             const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
             if (!oProject) {
-                console.warn("⚠️ Project not found for resource count update:", sProjectId);
                 return;
             }
 
@@ -1372,10 +1254,7 @@ module.exports = cds.service.impl(async function () {
             // Calculate toBeAllocated
             const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
 
-            console.log(`🔄 Updating project ${sProjectId} resource counts: Required=${iRequiredResources} (manual), Current Allocated=${oProject.allocatedResources || 0}, New Allocated=${iAllocatedResources}, ToBeAllocated=${iToBeAllocated}`);
-            console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for project ${sProjectId}`);
             if (aAllocations && aAllocations.length > 0) {
-                console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
             }
 
             // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
@@ -1390,28 +1269,20 @@ module.exports = cds.service.impl(async function () {
                 
                 const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with(oUpdateData);
 
-                console.log(`✅ UPDATE executed for project ${sProjectId}. Rows updated:`, iUpdated);
             } catch (oUpdateError) {
-                console.error(`❌ ERROR executing UPDATE for project ${sProjectId}:`, oUpdateError);
-                console.error(`❌ Error details:`, JSON.stringify(oUpdateError, null, 2));
                 throw oUpdateError;
             }
             
             // ✅ Verify the update by reading back the project
             const oUpdatedProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
             if (oUpdatedProject) {
-                console.log(`✅ Verified update - Project ${sProjectId} now has: requiredResources=${oUpdatedProject.requiredResources} (unchanged), allocatedResources=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 
                 // ✅ Double-check: if values don't match, log warning
                 if (oUpdatedProject.allocatedResources !== iAllocatedResources || oUpdatedProject.toBeAllocated !== iToBeAllocated) {
-                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}, Got: allocated=${oUpdatedProject.allocatedResources}, toBeAllocated=${oUpdatedProject.toBeAllocated}`);
                 }
             } else {
-                console.warn(`⚠️ Could not verify update for project ${sProjectId}`);
             }
         } catch (oError) {
-            console.error("❌ Error updating project resource counts:", oError);
-            console.error("❌ Error details:", JSON.stringify(oError, null, 2));
             throw oError;
         }
     };
@@ -1425,7 +1296,6 @@ module.exports = cds.service.impl(async function () {
             // Get demand details
             const oDemand = await SELECT.one.from(Demands).where({ demandId: iDemandId });
             if (!oDemand) {
-                console.warn("⚠️ Demand not found for resource count update:", iDemandId);
                 return;
             }
 
@@ -1436,7 +1306,6 @@ module.exports = cds.service.impl(async function () {
             // ✅ CRITICAL: Ensure demandId is integer for proper query matching
             const iDemandIdInt = parseInt(iDemandId, 10);
             if (isNaN(iDemandIdInt)) {
-                console.error(`❌ Invalid demandId: ${iDemandId} (not a number)`);
                 return;
             }
             
@@ -1447,10 +1316,7 @@ module.exports = cds.service.impl(async function () {
             // Calculate remaining
             const iRemaining = Math.max(0, iQuantity - iAllocatedCount);
 
-            console.log(`🔄 Updating demand ${iDemandId} resource counts: Quantity=${iQuantity}, Current Allocated=${oDemand.allocatedCount || 0}, New Allocated=${iAllocatedCount}, Remaining=${iRemaining}`);
-            console.log(`🔍 DEBUG: Found ${aAllocations ? aAllocations.length : 0} active allocations for demand ${iDemandId}`);
             if (aAllocations && aAllocations.length > 0) {
-                console.log(`🔍 DEBUG: Active allocation IDs:`, aAllocations.map(a => a.allocationId).join(', '));
             }
 
             // Update demand
@@ -1461,28 +1327,20 @@ module.exports = cds.service.impl(async function () {
                 };
                 
                 const iUpdated = await UPDATE(Demands).where({ demandId: iDemandId }).with(oUpdateData);
-                console.log(`✅ UPDATE executed for demand ${iDemandId}. Rows updated:`, iUpdated);
             } catch (oUpdateError) {
-                console.error(`❌ ERROR executing UPDATE for demand ${iDemandId}:`, oUpdateError);
-                console.error(`❌ Error details:`, JSON.stringify(oUpdateError, null, 2));
                 throw oUpdateError;
             }
             
             // ✅ Verify the update by reading back the demand
             const oUpdatedDemand = await SELECT.one.from(Demands).where({ demandId: iDemandId });
             if (oUpdatedDemand) {
-                console.log(`✅ Verified update - Demand ${iDemandId} now has: quantity=${oUpdatedDemand.quantity}, allocatedCount=${oUpdatedDemand.allocatedCount}, remaining=${oUpdatedDemand.remaining}`);
                 
                 // ✅ Double-check: if values don't match, log warning
                 if (oUpdatedDemand.allocatedCount !== iAllocatedCount || oUpdatedDemand.remaining !== iRemaining) {
-                    console.warn(`⚠️ WARNING: Update may not have worked correctly! Expected: allocated=${iAllocatedCount}, remaining=${iRemaining}, Got: allocated=${oUpdatedDemand.allocatedCount}, remaining=${oUpdatedDemand.remaining}`);
                 }
             } else {
-                console.warn(`⚠️ Could not verify update for demand ${iDemandId}`);
             }
         } catch (oError) {
-            console.error("❌ Error updating demand resource counts:", oError);
-            console.error("❌ Error details:", JSON.stringify(oError, null, 2));
             throw oError;
         }
     };
@@ -1494,7 +1352,6 @@ module.exports = cds.service.impl(async function () {
             // Get project details
             const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
             if (!oProject) {
-                console.warn("⚠️ Project not found:", sProjectId);
                 return;
             }
 
@@ -1503,14 +1360,12 @@ module.exports = cds.service.impl(async function () {
             
             const bHasSfdcPId = oProject.sfdcPId && oProject.sfdcPId.trim() !== "";
 
-            console.log(`✅ Checking project ${sProjectId}: HasSFDC=${bHasSfdcPId}`);
 
             // Get all active allocations for this project
             const aAllocations = await SELECT.from(Allocations)
                 .where({ projectId: sProjectId, status: 'Active' });
 
             if (!aAllocations || aAllocations.length === 0) {
-                console.log("✅ No active allocations found for project:", sProjectId);
                 return;
             }
 
@@ -1552,9 +1407,7 @@ module.exports = cds.service.impl(async function () {
                 } else {
                     // Either allocation hasn't started OR project hasn't started → Don't change status
                     if (!bAllocationStarted) {
-                        console.log(`✅ Allocation for employee ${sEmployeeId} hasn't started yet (starts: ${oAllocation.startDate}), keeping status unchanged`);
                     } else if (!bProjectStarted) {
-                        console.log(`✅ Project ${sProjectId} hasn't started yet (starts: ${oProject.startDate}), keeping employee ${sEmployeeId} status unchanged`);
                     }
                     continue;
                 }
@@ -1566,9 +1419,7 @@ module.exports = cds.service.impl(async function () {
                     if (oEmployee && oEmployee.status !== sNewStatus) {
                         // Only update if status is different
                         await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sNewStatus });
-                        console.log(`✅ Updated employee ${sEmployeeId} status from "${oEmployee.status}" to "${sNewStatus}" (allocation started: ${oAllocation.startDate}, project started: ${oProject.startDate}, has SFDC: ${bHasSfdcPId})`);
                     } else if (oEmployee) {
-                        console.log(`✅ Employee ${sEmployeeId} already has status "${sNewStatus}", no update needed`);
                     }
                 }
             }
@@ -1580,11 +1431,9 @@ module.exports = cds.service.impl(async function () {
                 try {
                     await this._updateEmployeeStatus(sEmployeeId);
                 } catch (oError) {
-                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status (individual check):`, oError);
                 }
             }
         } catch (oError) {
-            console.error("❌ Error in _updateEmployeeStatusesForProject:", oError);
             throw oError;
         }
     };
@@ -1596,14 +1445,12 @@ module.exports = cds.service.impl(async function () {
             const oToday = new Date();
             oToday.setHours(0, 0, 0, 0);
 
-            console.log("🔄 Checking for expired allocations...");
 
             // Find all active allocations where endDate has passed
             const aExpiredAllocations = await SELECT.from(Allocations)
                 .where({ status: 'Active' });
 
             if (!aExpiredAllocations || aExpiredAllocations.length === 0) {
-                console.log("✅ No active allocations found");
                 return { updated: 0, employees: [] };
             }
 
@@ -1621,7 +1468,6 @@ module.exports = cds.service.impl(async function () {
                     const sAllocationId = oAllocation.allocationId;
                     const sEmployeeId = oAllocation.employeeId;
 
-                    console.log(`✅ Marking expired allocation ${sAllocationId} as Completed (ended: ${oAllocation.endDate})`);
 
                     // Mark allocation as Completed
                     await UPDATE(Allocations)
@@ -1645,14 +1491,11 @@ module.exports = cds.service.impl(async function () {
                 try {
                     await this._updateEmployeeStatus(sEmployeeId);
                 } catch (oError) {
-                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
                 }
             }
 
-            console.log(`✅ Marked ${iUpdatedCount} expired allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
             return { updated: iUpdatedCount, employees: Array.from(aAffectedEmployees) };
         } catch (oError) {
-            console.error("❌ Error in _markExpiredAllocationsAsCompleted:", oError);
             throw oError;
         }
     };
@@ -1664,14 +1507,12 @@ module.exports = cds.service.impl(async function () {
             const oToday = new Date();
             oToday.setHours(0, 0, 0, 0);
 
-            console.log("🔄 Checking for expired projects...");
 
             // Find all active or planned projects where endDate has passed
             const aExpiredProjects = await SELECT.from(Projects)
                 .where({ status: { in: ['Active', 'Planned'] } });
 
             if (!aExpiredProjects || aExpiredProjects.length === 0) {
-                console.log("✅ No active/planned projects found");
                 return { updated: 0, allocations: 0, employees: [] };
             }
 
@@ -1689,7 +1530,6 @@ module.exports = cds.service.impl(async function () {
                 if (oEndDate < oToday) {
                     const sProjectId = oProject.sapPId;
 
-                    console.log(`✅ Marking expired project ${sProjectId} as Closed (ended: ${oProject.endDate})`);
 
                     // Mark project as Closed
                     await UPDATE(Projects)
@@ -1725,18 +1565,15 @@ module.exports = cds.service.impl(async function () {
                 try {
                     await this._updateEmployeeStatus(sEmployeeId);
                 } catch (oError) {
-                    console.warn(`⚠️ Error updating employee ${sEmployeeId} status:`, oError);
                 }
             }
 
-            console.log(`✅ Marked ${iUpdatedProjects} expired project(s) as Closed, ${iUpdatedAllocations} allocation(s) as Completed, updated ${aAffectedEmployees.size} employee(s)`);
             return { 
                 updated: iUpdatedProjects, 
                 allocations: iUpdatedAllocations, 
                 employees: Array.from(aAffectedEmployees) 
             };
         } catch (oError) {
-            console.error("❌ Error in _markExpiredProjectsAsClosed:", oError);
             throw oError;
         }
     };
@@ -1745,7 +1582,6 @@ module.exports = cds.service.impl(async function () {
     // This can be called on-demand or scheduled
     this._checkAndUpdateExpiredItems = async function() {
         try {
-            console.log("🔄 Starting expired items check...");
             
             // First check expired allocations
             const oAllocationResult = await this._markExpiredAllocationsAsCompleted();
@@ -1756,7 +1592,6 @@ module.exports = cds.service.impl(async function () {
             const iTotalUpdated = oAllocationResult.updated + oProjectResult.allocations;
             const aAllEmployees = [...new Set([...oAllocationResult.employees, ...oProjectResult.employees])];
             
-            console.log(`✅ Expired items check completed: ${iTotalUpdated} items updated, ${aAllEmployees.length} employees affected`);
             
             return {
                 allocations: oAllocationResult.updated,
@@ -1765,7 +1600,6 @@ module.exports = cds.service.impl(async function () {
                 employees: aAllEmployees
             };
         } catch (oError) {
-            console.error("❌ Error in _checkAndUpdateExpiredItems:", oError);
             throw oError;
         }
     };
@@ -1781,7 +1615,6 @@ module.exports = cds.service.impl(async function () {
                 ...oResult
             };
         } catch (oError) {
-            console.error("❌ Error in checkExpiredItems:", oError);
             return {
                 success: false,
                 error: oError.message
@@ -1836,7 +1669,6 @@ module.exports = cds.service.impl(async function () {
                 }
             }
         } catch (oError) {
-            console.error("❌ Error in Employee READ after hook:", oError);
             // Don't fail the read, just log the error
         }
     });
@@ -1876,7 +1708,6 @@ module.exports = cds.service.impl(async function () {
             
             return aEnumMetadata;
         } catch (oError) {
-            console.error("❌ Error in getEnumMetadata:", oError);
             req.reject(500, `Error getting enum metadata: ${oError.message}`);
         }
     });
@@ -1919,7 +1750,6 @@ module.exports = cds.service.impl(async function () {
             
             return aMappings;
         } catch (oError) {
-            console.error("❌ Error in getCountryCityMappings:", oError);
             req.reject(500, `Error getting country-city mappings: ${oError.message}`);
         }
     });
@@ -1943,7 +1773,6 @@ module.exports = cds.service.impl(async function () {
             
             return aMappings;
         } catch (oError) {
-            console.error("❌ Error in getBandDesignationMappings:", oError);
             req.reject(500, `Error getting band-designation mappings: ${oError.message}`);
         }
     });

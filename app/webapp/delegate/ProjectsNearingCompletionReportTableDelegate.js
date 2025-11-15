@@ -50,11 +50,9 @@ sap.ui.define([
     };
 
     ProjectsNearingCompletionReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [ProjectsNearingCompletionReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[ProjectsNearingCompletionReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -96,7 +94,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[ProjectsNearingCompletionReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };

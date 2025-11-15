@@ -13,7 +13,6 @@ sap.ui.define([
     return Controller.extend("glassboard.utility.CustomUtility", {
         onInit: function () {
 
-            console.log("=== [Controller] onInit called ===");
 
             const oModel = this.getOwnerComponent().getModel();
             this.getView().setModel(oModel);
@@ -74,21 +73,17 @@ sap.ui.define([
             for (const sId of aTableIds) {
                 oTable = this.byId(sId);
                 if (oTable) {
-                    console.log("[Controller] Found table:", sId);
                     break;
                 }
             }
 
             if (!oTable) {
-                console.warn("[Controller] No table found, skipping initialization");
                 return Promise.resolve();
             }
 
-            console.log("[Controller] Starting table initialization");
 
             // ✅ Return a promise so callers can wait for initialization
             return oTable.initialized().then(() => {
-                console.log("[Controller] Table initialized");
 
                 // Get the delegate
                 const oDelegate = oTable.getControlDelegate();
@@ -96,7 +91,6 @@ sap.ui.define([
                 // Build initial state using delegate properties to align with MDC p13n
                 return oDelegate.fetchProperties(oTable)
                     .then((aProperties) => {
-                        console.log("[Controller] Properties fetched:", aProperties);
 
                         // Prepare items for external state (visible true for all non-$ props)
                         const aItems = aProperties
@@ -111,7 +105,6 @@ sap.ui.define([
                         return StateUtil.applyExternalState(oTable, oExternalState);
                     })
                     .then(() => {
-                        console.log("[Controller] External state applied; rebinding table");
                         // Check if this is a read-only report table (has "Report" in ID or is readonly)
                         const sTableId = oTable.getId() || "";
                         const bIsReportTable = sTableId.includes("Report") || oTable.getMetadata().getName() === "sap.ui.mdc.Table";
@@ -149,11 +142,9 @@ sap.ui.define([
                             oModel.attachPropertyChange(this._updatePendingState, this);
                         }
 
-                        console.log("[Controller] Table initialization completed");
                         return Promise.resolve();
                     })
                     .catch((err) => {
-                        console.error("[Controller] Error during initial column setup:", err);
                         return Promise.reject(err);
                     });
             });
@@ -202,7 +193,6 @@ sap.ui.define([
 
             const config = buttonMap[sTableId];
             if (!config) {
-                console.warn("No button mapping found for table:", sTableId);
                 return;
             }
 
@@ -412,7 +402,6 @@ sap.ui.define([
                             }
                         });
                     }).catch(err => {
-                        console.error("Error fetching allocation data:", err);
                     });
                 }
             }
@@ -424,7 +413,6 @@ sap.ui.define([
 
                 const vbox = this.byId("projectAllocationDetailsVBox");
                 if (!vbox) {
-                    console.warn("⚠️ projectAllocationDetailsVBox not found");
                     return;
                 }
 
@@ -519,7 +507,6 @@ sap.ui.define([
                             vbox.addItem(allocationPanel);
                         }
                     }).catch(err => {
-                        console.error("Error fetching project allocation data:", err);
                             vbox.addItem(new sap.m.Text({
                                 text: "Error loading allocation details"
                             }));
@@ -622,7 +609,6 @@ sap.ui.define([
                     // For now, just clear - Employees might use manual OHR IDs
                     sNextId = "";
                 } catch (e) {
-                    console.log("Could not generate next Employee ID");
                 }
 
                 this.byId("inputOHRId_emp")?.setValue(sNextId);
@@ -739,7 +725,6 @@ sap.ui.define([
                         sNextId = this._generateNextIdFromBinding(oTable, "Opportunities", "sapOpportunityId", "O") || sNextId;
                     }
                 } catch (e) {
-                    console.log("Could not generate next Opportunity ID, using default:", sNextId);
                 }
 
                 this.byId("inputSapOppId_oppr")?.setValue(sNextId);
@@ -894,7 +879,6 @@ sap.ui.define([
                         }
                     })
                     .catch((oError) => {
-                        console.log("Error loading customer name:", oError);
                         // Fallback: try to read from Customers collection
                         const oCustomersBinding = oModel.bindList("/Customers");
                         oCustomersBinding.attachEventOnce("dataReceived", () => {
@@ -974,7 +958,6 @@ sap.ui.define([
                         sNextId = this._generateNextIdFromBinding(oTable, "Projects", "sapPId", "P") || sNextId;
                     }
                 } catch (e) {
-                    console.log("Could not generate next Project ID, using default:", sNextId);
                 }
 
                 // ✅ CRITICAL: Clear the model first (form fields are bound to model)
@@ -1084,7 +1067,6 @@ sap.ui.define([
             // ✅ Opportunity field - same pattern as Employee Supervisor
             const sOppId = oObj.oppId || "";
             const oOppInput = this.byId("inputOppId_proj");
-            console.log("[Project Form] Opportunity field - oppId:", sOppId, "to_Opportunity:", oObj.to_Opportunity, "oOppInput exists:", !!oOppInput);
             if (sOppId && oOppInput) {
                 // ✅ Set immediately with ID first (like GPM)
                 oOppInput.setValue(sOppId);
@@ -1095,23 +1077,18 @@ sap.ui.define([
                     // Association expanded - update with name immediately
                     oOppInput.setValue(oObj.to_Opportunity.opportunityName);
                     oOppInput.data("selectedId", sOppId);
-                    console.log("[Project Form] ✅ Opportunity set from association:", oObj.to_Opportunity.opportunityName);
                 } else {
                     // Load async (same as Supervisor)
-                    console.log("[Project Form] Loading Opportunity name async for ID:", sOppId);
                     const oModel = this.getView().getModel();
                     if (oModel) {
                         const oOppContext = oModel.bindContext(`/Opportunities('${sOppId}')`, null, { deferred: true });
                         oOppContext.execute().then(() => {
                             const oOpportunity = oOppContext.getObject();
-                            console.log("[Project Form] Opportunity loaded:", oOpportunity);
                             if (oOpportunity && oOpportunity.opportunityName) {
                                 oOppInput.setValue(oOpportunity.opportunityName);
                                 oOppInput.data("selectedId", sOppId);
-                                console.log("[Project Form] ✅ Opportunity field updated with name:", oOpportunity.opportunityName);
                             }
                         }).catch((oError) => {
-                            console.warn("[Project Form] Error loading Opportunity name:", oError);
                         });
                     }
                 }
@@ -1143,7 +1120,6 @@ sap.ui.define([
                         }
                     })
                     .catch((oError) => {
-                        console.log("Error loading opportunity name:", oError);
                         // Fallback: try to read from Opportunities collection
                         const oOppsBinding = oModel.bindList("/Opportunities");
                         oOppsBinding.attachEventOnce("dataReceived", () => {
@@ -1271,7 +1247,6 @@ sap.ui.define([
                                 sNextId = this._generateNextIdFromBinding(oTable, "Customers", "SAPcustId", "C") || sNextId;
                             }
                         } catch (e) {
-                            console.log("Could not generate next ID, using default:", sNextId);
                         }
                         oCustomerIdInput.setValue(sNextId);
                     }
@@ -1352,10 +1327,8 @@ sap.ui.define([
                     oView.setBusy(true);
 
                     try {
-                        console.log("Starting delete operation for", aSelectedContexts.length, "contexts");
 
                         // IMMEDIATELY clear busy state since we're using in-memory data
-                        console.log("Clearing busy state immediately (in-memory data)");
                         oView.setBusy(false);
 
                         // Delete contexts one by one with immediate UI update
@@ -1363,84 +1336,66 @@ sap.ui.define([
                         let sErrorMessage = "";
 
                         // 🚨 OFFICIAL SAP APPROACH: Use oContext.delete().then() pattern
-                        console.log(`=== OFFICIAL SAP DELETE START ===`);
-                        console.log(`Selected contexts: ${aSelectedContexts.length}`);
 
                         try {
                             // Use OData V4 update group so deletes are persisted server-side
-                            console.log(`⏳ Deleting with update group "changesGroup"...`);
                             const oModel = this.getView().getModel();
                             const sGroupId = "changesGroup";
                             let queued = 0;
                             aSelectedContexts.forEach((oContext, index) => {
                                 try {
                                     const sPath = oContext.getPath && oContext.getPath();
-                                    console.log(`⏳ Queue DELETE ${index + 1}/${aSelectedContexts.length}: ${sPath}`);
                                     oContext.delete(sGroupId);
                                     queued++;
                                 } catch (e) {
-                                    console.log("❌ Failed to queue delete:", e);
                                 }
                             });
                             if (queued > 0 && oModel && oModel.submitBatch) {
                                 await oModel.submitBatch(sGroupId);
-                                console.log(`✅ Batch submitted for ${queued} deletes`);
                                 bAllDeleted = true;
                             } else {
                                 bAllDeleted = false;
                             }
 
                         } catch (deleteError) {
-                            console.log(`❌ Official delete failed:`, deleteError.message);
                             bAllDeleted = false;
                         }
 
-                        console.log(`=== DELETE OPERATION END ===`);
 
                         // 🚨 OFFICIAL SAP PATTERN: Handle UI changes and refresh
-                        console.log("🔄 Following official SAP pattern for UI updates...");
 
                         try {
                             // Set UI changes state (official SAP pattern)
                             this._setUIChanges(true);
-                            console.log("✅ UI changes state set");
 
                             // Wait a moment for backend to process deletions
                             setTimeout(() => {
                                 try {
                                     // Call the existing initializeTable function to update the table
                                     this.initializeTable(sTableId);
-                                    console.log("✅ Table updated successfully");
 
                                     // Reset UI changes state after successful update
                                     this._setUIChanges(false);
-                                    console.log("✅ UI changes state reset");
 
                                 } catch (updateError) {
-                                    console.log("❌ Table update error:", updateError);
                                     // Reset UI changes state on error
                                     this._setUIChanges(false);
                                 }
                             }, 500); // Small delay to allow backend processing
 
                         } catch (updateError) {
-                            console.log("❌ Table update error:", updateError);
                             // Reset UI changes state on error
                             this._setUIChanges(false);
                         }
 
-                        console.log("All delete operations completed. Success:", bAllDeleted);
 
                         // Clear selection and force complete UI update
                         oTable.clearSelection();
 
                         // 🚨 SIMPLE: Just call the table update function again
                         try {
-                            console.log("🔄 Final table update...");
                             this.initializeTable(sTableId);
-                            console.log("✅ Final table update completed");
                         } catch (finalUpdateError) {
-                            console.log("Final table update error:", finalUpdateError);
                         }
 
                         if (bAllDeleted) {
@@ -1453,9 +1408,7 @@ sap.ui.define([
                                 if (oTable.rebind) {
                                     try {
                                         oTable.rebind();
-                                        console.log(`✅ Table ${sTableId} rebinded after delete`);
                                     } catch (e) {
-                                        console.log(`Rebind error for ${sTableId}:`, e);
                                     }
                                 }
 
@@ -1465,17 +1418,14 @@ sap.ui.define([
 
                                 if (oRowBinding) {
                                     oRowBinding.refresh().then(() => {
-                                        console.log(`✅ Table ${sTableId} row binding refreshed after delete`);
                                     }).catch(() => { });
                                 } else if (oBinding) {
                                     oBinding.refresh().then(() => {
-                                        console.log(`✅ Table ${sTableId} binding refreshed after delete`);
                                     }).catch(() => { });
                                 }
                             }, 200); // Small delay to ensure batch is committed
                         } else {
                             // Some deletions failed
-                            console.error("Some deletions failed:", sErrorMessage);
                             sap.m.MessageBox.error("Some entries could not be deleted. Check console for details.");
 
                             // ✅ Force immediate UI refresh after delete (even if some failed)
@@ -1509,7 +1459,6 @@ sap.ui.define([
                     } catch (error) {
                         // Only show blocking error if delete batch actually failed
                         if (!bAllDeleted) {
-                            console.error("Critical delete operation error:", error);
                             sap.m.MessageBox.error("Delete operation failed completely. Please try again.");
                             // Refresh table to restore state
                             const oBinding = oTable.getBinding("items");
@@ -1518,11 +1467,9 @@ sap.ui.define([
                             }
                         } else {
                             // Non-critical error after successful delete (e.g., UI refresh)
-                            console.warn("Non-critical error after successful delete:", error);
                         }
                     } finally {
                         // ALWAYS clear busy state - this is critical!
-                        console.log("Final busy state clear");
                         oView.setBusy(false);
 
                         // Reset button states
@@ -1603,7 +1550,6 @@ sap.ui.define([
                 }
             }
 
-            console.log(`=== [MULTI-EDIT] Starting edit for ${aSelectedContexts.length} rows ===`);
 
             // 🚀 MULTI-ROW EDITING: Process ALL selected rows
             const aEditingPaths = [];
@@ -1622,7 +1568,6 @@ sap.ui.define([
                 aEditingPaths.push(oContext.getPath());
                 aEditingContexts.push(oContext);
 
-                console.log(`[MULTI-EDIT] Row ${index + 1}: ${oContext.getPath()}`);
             });
 
             // ✅ FIXED: Track editing paths in TABLE-SPECIFIC edit model
@@ -1633,8 +1578,6 @@ sap.ui.define([
             oEditModel.setProperty("/currentTable", sTableId);  // Track active table
 
             // 🚀 DEBUG: Log what we're setting
-            console.log(`[MULTI-EDIT] Setting editing paths: ${sEditingPaths}`);
-            console.log(`[MULTI-EDIT] Edit model data:`, oEditModel.getData());
 
             // Enable Save/Cancel buttons, disable Edit/Delete/Add for the specific table
             const config = buttonMap[sTableId];
@@ -1650,7 +1593,6 @@ sap.ui.define([
             // 🚀 FORCE REFRESH: Additional refresh to ensure edit mode is applied
             setTimeout(() => {
                 oTable.getBinding("items")?.refresh();
-                console.log(`[MULTI-EDIT] Forced refresh completed`);
             }, 100);
 
             sap.m.MessageToast.show(`${aSelectedContexts.length} rows are now in edit mode.`);
@@ -1670,7 +1612,6 @@ sap.ui.define([
             };
 
             // Execute cancel logic directly (without confirmation dialog)
-            console.log("=== [Controller] Starting cancel operation ===");
 
             const oTable = self.byId(sTableId);
             const oView = self.getView();
@@ -1680,9 +1621,6 @@ sap.ui.define([
             const sPath = oEditModel.getProperty(`/${sTableId}/editingPath`) || "";
             const sMode = oEditModel.getProperty(`/${sTableId}/mode`);
 
-            console.log("Current editing path:", sPath);
-            console.log("Edit mode:", sMode);
-            console.log("Table ID:", sTableId);
 
             if (!sPath) {
                 sap.m.MessageToast.show("No row is in edit mode.");
@@ -1704,13 +1642,11 @@ sap.ui.define([
                     }
                     return sPath === sCtxPath || sPath.includes(sCtxPath);
                 });
-                console.log(`=== [SELECTIVE-CANCEL] Canceling ${aContextsToCancel.length} selected rows out of ${aSelectedContexts.length} selected ===`);
             } else if ((sMode === "multi-edit" || sMode === "add-multi") && sPath.includes(",")) {
                 // No selection, but multiple rows in edit mode - cancel ALL of them
                 // (This is the "cancel all" behavior)
                 const aPaths = sPath.split(",").filter(Boolean);
                 aContextsToCancel = aPaths.map(p => self._resolveContextByPath(oTable, p)).filter(Boolean);
-                console.log(`=== [MULTI-CANCEL] Canceling ${aContextsToCancel.length} rows (no selection, canceling all) ===`);
             } else {
                 // Single row editing: resolve the specific context reliably
                 let oContext = self._resolveContextByPath(oTable, sPath);
@@ -1724,7 +1660,6 @@ sap.ui.define([
                     return;
                 }
                 aContextsToCancel = [oContext];
-                console.log(`=== [SINGLE-CANCEL] Canceling 1 row ===`);
             }
 
             if (aContextsToCancel.length === 0) {
@@ -1734,10 +1669,6 @@ sap.ui.define([
 
             try {
                 // 1. Debug the current state
-                console.log("=== [CANCEL] Current Edit State ===");
-                console.log("Edit Model:", oEditModel.getData());
-                console.log("Editing Path:", sPath);
-                console.log("Mode:", sMode);
 
                 // 2. Do not reset all model changes here; cancel is scoped per-context
                 //    We only delete the transient context or restore the single edited context below
@@ -1745,7 +1676,6 @@ sap.ui.define([
                 // 3. Process ALL contexts to cancel
                 aContextsToCancel.forEach((oContext, index) => {
                     const sContextPath = oContext.getPath();
-                    console.log(`[MULTI-CANCEL] Processing row ${index + 1}: ${sContextPath}`);
 
                     try {
                         const oData = oContext.getObject();
@@ -1768,19 +1698,14 @@ sap.ui.define([
                         if (bIsNewRow && bIsTransient && bIsInAddMode) {
                             try {
                                 oContext.delete();
-                                console.log(`[MULTI-CANCEL] Deleted new/transient row ${index + 1}: ${sContextPath}`);
                             } catch (e) {
-                                console.log(`[MULTI-CANCEL] Error deleting transient row: ${e.message}`);
                             }
                             return; // Skip to next row
                         }
 
                         // ✅ For existing rows (saved or being edited), restore original data
-                        console.log(`[MULTI-CANCEL] Row ${index + 1} is existing row, restoring original data...`);
-                        console.log(`[MULTI-CANCEL] Row ${index + 1} original data exists:`, !!oData._originalData);
 
                         if (oData._originalData) {
-                            console.log(`[MULTI-CANCEL] Restoring original data for row ${index + 1}...`);
                             const oOriginalData = oData._originalData;
 
                             // Restore all original properties
@@ -1793,7 +1718,6 @@ sap.ui.define([
                                         }
                                         oContext.setProperty(sKey, vValue);
                                     } catch (propError) {
-                                        console.warn(`[MULTI-CANCEL] Error restoring property ${sKey}:`, propError);
                                     }
                                 }
                             });
@@ -1804,17 +1728,14 @@ sap.ui.define([
                             delete oData.isEditable;
                             // Don't delete _isNew here if it exists (it shouldn't for saved rows)
 
-                            console.log(`[MULTI-CANCEL] Restored original data for row ${index + 1}`);
                         } else {
                             // ✅ If no _originalData, this might be a saved row being edited for the first time
                             // In this case, just clear the edit flags but don't delete
-                            console.log(`[MULTI-CANCEL] No original data found for row ${index + 1}, clearing edit flags only`);
                             delete oData.isEditable;
                             delete oData._hasChanged;
                             // Don't delete the row - it's an existing saved row
                         }
                     } catch (contextError) {
-                        console.error(`[MULTI-CANCEL] Error processing context ${index + 1}:`, contextError);
                     }
                 });
 
@@ -1832,7 +1753,6 @@ sap.ui.define([
                         sRemainingPath = aRemainingPaths.join(",");
                         oEditModel.setProperty(`/${sTableId}/editingPath`, sRemainingPath);
                         // Keep mode as is (add-multi or multi-edit)
-                        console.log(`[MULTI-CANCEL] Updated editingPath, remaining rows: ${aRemainingPaths.length}`);
                     } else {
                         // All rows canceled, clear edit state
                         oEditModel.setProperty(`/${sTableId}/editingPath`, "");
@@ -1840,7 +1760,6 @@ sap.ui.define([
                         if (oEditModel.getProperty("/currentTable") === sTableId) {
                             oEditModel.setProperty("/currentTable", null);
                         }
-                        console.log(`[MULTI-CANCEL] All rows canceled, edit state cleared`);
                     }
                 } else {
                     // No canceled paths (shouldn't happen, but handle gracefully)
@@ -1852,33 +1771,27 @@ sap.ui.define([
                 }
 
                 // 🚨 CRITICAL: Discard pending changes for edited contexts only
-                console.log("[MULTI-CANCEL] Discarding pending changes for edited contexts...");
                 try {
                     const oModel = self.getView().getModel();
                     if (oModel && oModel.getPendingChanges) {
                         const aPendingChanges = oModel.getPendingChanges();
-                        console.log("[MULTI-CANCEL] Pending changes found:", aPendingChanges.length);
 
                         // Discard changes for specific contexts
                         aContextsToCancel.forEach((oContext, index) => {
                             if (oContext && oContext.getPath) {
                                 const sContextPath = oContext.getPath();
-                                console.log(`[MULTI-CANCEL] Discarding changes for context ${index + 1}: ${sContextPath}`);
 
                                 // Try to discard changes for this specific context
                                 try {
                                     if (oContext.reset) {
                                         oContext.reset();
-                                        console.log(`[MULTI-CANCEL] Reset context ${index + 1}`);
                                     }
                                 } catch (resetError) {
-                                    console.log(`[MULTI-CANCEL] Context reset failed for ${index + 1}:`, resetError);
                                 }
                             }
                         });
                     }
                 } catch (discardError) {
-                    console.log("[MULTI-CANCEL] Error discarding pending changes:", discardError);
                 }
 
                 // 5. Update button states based on remaining rows in edit mode
@@ -1896,7 +1809,6 @@ sap.ui.define([
                     self.byId(config.edit)?.setEnabled(false);
                     self.byId(config.delete)?.setEnabled(false);
                     self.byId(config.add)?.setEnabled(true);
-                    console.log(`[MULTI-CANCEL] Buttons remain enabled (${sRemainingPathAfterCancel.split(',').length} rows still in edit)`);
                 } else {
                     // All rows canceled - disable Save/Cancel
                     self.byId(config.save)?.setEnabled(false);
@@ -1906,7 +1818,6 @@ sap.ui.define([
                     self.byId(config.add)?.setEnabled(true);
                     // Clear selection only if all rows are canceled
                     oTable.clearSelection();
-                    console.log(`[MULTI-CANCEL] All rows canceled, buttons disabled`);
                 }
 
                 // 6. Reset binding changes per SAP pattern, then force table refresh to exit edit mode
@@ -1916,11 +1827,9 @@ sap.ui.define([
                     const oRowBinding = oTable.getRowBinding && oTable.getRowBinding();
                     if (oBinding && oBinding.resetChanges) {
                         oBinding.resetChanges();
-                        console.log("[MULTI-CANCEL] Binding changes reset");
                     }
                     if (oRowBinding && oRowBinding.resetChanges) {
                         oRowBinding.resetChanges();
-                        console.log("[MULTI-CANCEL] Row binding changes reset");
                     }
 
                     // Force refresh all bindings
@@ -1942,23 +1851,15 @@ sap.ui.define([
                             if (oBinding2) {
                                 oBinding2.refresh();
                             }
-                            console.log("[MULTI-CANCEL] Secondary refresh completed");
                         } catch (e) {
-                            console.warn("[MULTI-CANCEL] Secondary refresh error:", e);
                         }
                     }, 100);
 
-                    console.log("[MULTI-CANCEL] Table refreshed and selection cleared");
                 } catch (refreshError) {
-                    console.warn("[MULTI-CANCEL] Error refreshing table:", refreshError);
                 }
 
                 // 7. Additional verification
                 setTimeout(() => {
-                    console.log("=== [Controller] Post-cancel state check ===");
-                    console.log("Edit Model after cancel:", oEditModel.getData());
-                    console.log("Save Button Enabled:", self.byId(config.save)?.getEnabled());
-                    console.log("Cancel Button Enabled:", self.byId(config.cancel)?.getEnabled());
                 }, 200);
 
                 // 8. 🚨 CRITICAL: Force refresh from database to show original data
@@ -1966,7 +1867,6 @@ sap.ui.define([
                 if (oBinding) {
                     // Force refresh from server to get original data
                     oBinding.refresh(true); // true = force refresh from server
-                    console.log("[MULTI-CANCEL] Forced table refresh from database to show original data");
                 }
 
                 // 9. Force exit edit mode completely
@@ -1986,16 +1886,13 @@ sap.ui.define([
                         });
                     }
 
-                    console.log("[MULTI-CANCEL] Forced exit from edit mode");
                 } catch (editModeError) {
-                    console.warn("[MULTI-CANCEL] Error forcing exit from edit mode:", editModeError);
                 }
 
                 // 10. Additional refresh to ensure UI shows original data
                 setTimeout(() => {
                     if (oBinding) {
                         oBinding.refresh(true);
-                        console.log("[MULTI-CANCEL] Secondary refresh from database");
                     }
                 }, 100);
 
@@ -2003,12 +1900,7 @@ sap.ui.define([
                     sap.m.MessageToast.show("Changes discarded successfully.");
                 }
             } catch (error) {
-                console.error("Error during cancel operation:", error);
-                console.error("Error details:", {
-                    message: error.message,
-                    stack: error.stack,
-                    name: error.name
-                });
+                // Error handling
                 if (!bSkipConfirmation) {
                     sap.m.MessageBox.error(`Error discarding changes: ${error.message}. Please check console for details.`);
                 }
@@ -2062,9 +1954,7 @@ sap.ui.define([
 
                 if (oAppModel) {
                     oAppModel.setProperty("/hasUIChanges", bHasChanges);
-                    console.log(`UI changes state set to: ${bHasChanges}`);
                 } else {
-                    console.log("App model not found, creating new one");
                     const oViewModel = new JSONModel({
                         busy: false,
                         hasUIChanges: bHasChanges,
@@ -2072,10 +1962,8 @@ sap.ui.define([
                         order: 0
                     });
                     oView.setModel(oViewModel, "appView");
-                    console.log(`New app model created with UI changes: ${bHasChanges}`);
                 }
             } catch (error) {
-                console.log("Error setting UI changes state:", error);
             }
         },
 
@@ -2132,7 +2020,6 @@ sap.ui.define([
             // Ensure no hyphens - replace any that might exist
             let sSafeTableId = sTableId.replace(/-/g, ""); // Remove any hyphens
             const GROUP_ID = `changesGroup${sSafeTableId}`;
-            console.log(`[SAVE] Using GROUP_ID: ${GROUP_ID} for table: ${sTableId}`);
 
             const oTable = this.byId(sTableId);
             const oView = this.getView();
@@ -2154,12 +2041,10 @@ sap.ui.define([
                 // Multi-row editing: get all selected contexts
                 const aSelectedContexts = oTable.getSelectedContexts();
                 aContextsToSave = aSelectedContexts;
-                console.log(`=== [MULTI-SAVE] Saving ${aContextsToSave.length} rows ===`);
             } else if (sMode === "add-multi" && sPath.includes(",")) {
                 // Multi-add: resolve all transient contexts from the stored paths
                 const aPaths = sPath.split(",").filter(Boolean);
                 aContextsToSave = aPaths.map(p => this._resolveContextByPath(oTable, p)).filter(Boolean);
-                console.log(`=== [MULTI-SAVE][ADD] Saving ${aContextsToSave.length} new rows ===`);
             } else {
                 // Single row editing: find the specific context
                 let oContext = this._resolveContextByPath(oTable, sPath);
@@ -2173,7 +2058,6 @@ sap.ui.define([
                     return;
                 }
                 aContextsToSave = [oContext];
-                console.log(`=== [SINGLE-SAVE] Saving 1 row ===`);
             }
 
             this.getView().setBusy(true);
@@ -2190,14 +2074,12 @@ sap.ui.define([
                         const oData = oContext.getObject();
                         const bIsNewRow = oData && (oData._isNew || (typeof oContext.isTransient === "function" && oContext.isTransient()));
 
-                        console.log(`[MULTI-SAVE] Processing row ${index + 1}: ${sContextPath}, IsNew: ${bIsNewRow}`);
 
                         if (bIsNewRow) {
                             // ✅ NEW ROW: Properties are set during cell edits (they automatically use "changesGroup")
                             // ✅ CRITICAL: New rows are created with "changesGroup" from manifest.json
                             // ✅ DO NOT call setProperty again - it causes group mismatch errors
                             // ✅ The properties are already set when user edits cells in the table
-                            console.log(`[MULTI-SAVE] New row ${index + 1} - properties already set during editing, skipping setProperty calls`);
 
                             // Remove client-side properties
                             if (oData) {
@@ -2230,7 +2112,6 @@ sap.ui.define([
                                     delete oData.isEditable;
                                     delete oData._hasChanged;
                                     delete oData._originalData;
-                                    console.log(`[MULTI-SAVE] Cleaned client-side properties for row ${index + 1}`);
                                 }
                             }
                         }
@@ -2247,18 +2128,15 @@ sap.ui.define([
 
                 if (aNewRows.length > 0) {
                     // ✅ New rows exist - submit with default "changesGroup"
-                    console.log(`[MULTI-SAVE] Submitting ${aNewRows.length} new rows with default group "changesGroup"`);
                     await oModel.submitBatch("changesGroup");
 
                     // If there are existing rows, submit them separately
                     const aExistingRows = aContextsToSave.filter(ctx => !aNewRows.includes(ctx));
                     if (aExistingRows.length > 0) {
-                        console.log(`[MULTI-SAVE] Submitting ${aExistingRows.length} existing rows with group ${GROUP_ID}`);
                         await oModel.submitBatch(GROUP_ID);
                     }
                 } else {
                     // ✅ Only existing rows - use table-specific group
-                    console.log(`[MULTI-SAVE] Submitting ${aContextsToSave.length} existing rows with group ${GROUP_ID}`);
                     await oModel.submitBatch(GROUP_ID);
                 }
 
@@ -2270,7 +2148,6 @@ sap.ui.define([
                     }
                     delete oData.isEditable;
                     delete oData._isNew; // Clear new row marker
-                    console.log(`[MULTI-SAVE] Cleared original data for row ${index + 1}`);
                 });
 
                 sap.m.MessageToast.show("Changes saved successfully.");
@@ -2302,7 +2179,6 @@ sap.ui.define([
                 }
 
             } catch (err) {
-                console.error("Error saving changes:", err);
                 sap.m.MessageBox.error("Error saving changes. Check console for details.");
             } finally {
                 this.getView().setBusy(false);
@@ -2311,14 +2187,12 @@ sap.ui.define([
 
         // 🚀 ADD NEW ROW FUNCTIONALITY
         onAdd: function (oEvent) {
-            console.log("=== [ADD] Function called ===");
 
             try {
                 // Determine which table this add is for
                 let sTableId = "Customers"; // Default fallback
                 if (oEvent && oEvent.getSource) {
                     const sButtonId = oEvent.getSource().getId().split("--").pop();
-                    console.log("Add Button ID:", sButtonId);
                     // Map button IDs to table IDs
                     if (sButtonId.includes("cus") || sButtonId === "btnAdd") sTableId = "Customers";
                     else if (sButtonId.includes("emp") || sButtonId === "btnAdd_emp") sTableId = "Employees";
@@ -2328,35 +2202,27 @@ sap.ui.define([
                     // ✅ REMOVED: else if (sButtonId.includes("vert") || sButtonId == "btnAdd_vert") sTableId = "Verticals";
                 }
 
-                console.log("Table ID:", sTableId);
                 const oTable = this.byId(sTableId);
                 if (!oTable) {
-                    console.error("Table not found:", sTableId);
                     sap.m.MessageBox.error(`Table '${sTableId}' not found.`);
                     return;
                 }
 
-                console.log(`=== [ADD] Starting add new row for ${sTableId} ===`);
 
                 // Get table binding with retry logic (prefer MDC row binding)
                 let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
                     || oTable.getBinding("items")
                     || oTable.getBinding("rows");
-                console.log("Primary binding check:", oBinding);
 
                 // Optional debug (avoid calling non-existent APIs)
-                try { console.log("Table model:", oTable.getModel()); } catch (e) { }
-                try { console.log("Table binding info (items):", oTable.getBindingInfo && oTable.getBindingInfo("items")); } catch (e) { }
 
                 if (!oBinding) {
-                    console.log("Primary binding not found, retrying shortly...");
                     setTimeout(() => {
                         const oRetryBinding = (oTable.getRowBinding && oTable.getRowBinding())
                             || oTable.getBinding("items")
                             || oTable.getBinding("rows")
                             || oTable.getBinding("data");
                         if (oRetryBinding) {
-                            console.log("Binding found on retry:", oRetryBinding);
                             this._executeAddWithRetry(oTable, oRetryBinding, sTableId);
                         } else {
                             sap.m.MessageBox.error("No data binding available. Please ensure the table is fully loaded and try again.");
@@ -2366,14 +2232,11 @@ sap.ui.define([
                 }
 
                 if (!oBinding) {
-                    console.error("No binding found with any method");
 
                     // Try to get model directly and create binding manually
                     const oModel = oTable.getModel();
                     if (oModel) {
-                        console.log("Model found, trying to create binding manually...");
                         const sPath = "/" + sTableId; // Try direct path
-                        console.log("Trying direct path:", sPath);
 
                         try {
                             // Try to create a new context directly
@@ -2382,7 +2245,6 @@ sap.ui.define([
                             });
 
                             if (oNewContext) {
-                                console.log("Direct context creation successful:", oNewContext.getPath());
 
                                 // 🚨 Add client-side properties AFTER context creation
                                 const oData = oNewContext.getObject();
@@ -2390,23 +2252,19 @@ sap.ui.define([
                                     oData._isNew = true;
                                     oData.isEditable = true;
                                     oData._hasChanged = false;
-                                    console.log("Added client-side properties to direct context");
                                 }
 
                                 this._executeAddWithRetry(oTable, null, sTableId, oNewContext);
                                 return;
                             }
                         } catch (directError) {
-                            console.log("Direct context creation failed:", directError);
                         }
                     }
 
                     // Try one more time with a longer delay
                     setTimeout(() => {
-                        console.log("Retrying binding detection...");
                         oBinding = oTable.getBinding("items") || oTable.getBinding("rows") || oTable.getBinding("data");
                         if (oBinding) {
-                            console.log("Binding found on retry:", oBinding.getPath());
                             this._executeAddWithRetry(oTable, oBinding, sTableId);
                         } else {
                             sap.m.MessageBox.error("No data binding available. Please ensure the table is fully loaded and try again.");
@@ -2443,7 +2301,6 @@ sap.ui.define([
                         oNewRowData[field] = sGeneratedId;
                     }
                 } catch (e) {
-                    console.warn(`Failed to generate ID for ${sTableId}`, e);
                 }
 
                 // ✅ FIXED: Create new context with default "changesGroup" (from manifest)
@@ -2457,7 +2314,6 @@ sap.ui.define([
                     oData._isNew = true;
                     oData.isEditable = true;
                     oData._hasChanged = false;
-                    console.log(`[ADD] Added client-side properties to new context with group: changesGroup`);
                 }
 
                 // Set the new row in edit mode
@@ -2515,13 +2371,11 @@ sap.ui.define([
                 // Force refresh to ensure edit mode is applied
                 setTimeout(() => {
                     oTable.getBinding("items")?.refresh();
-                    console.log(`[ADD] New row added and in edit mode for ${sTableId}`);
                 }, 100);
 
                 sap.m.MessageToast.show("New row added. You can now fill in the data.");
 
             } catch (error) {
-                console.error("Add row error:", error);
                 sap.m.MessageBox.error("Failed to add new row: " + error.message);
             }
         },
@@ -2609,12 +2463,10 @@ sap.ui.define([
                         // Show more: remove show-less, add show-more
                         oTable.removeStyleClass("show-less");
                         oTable.addStyleClass("show-more");
-                        console.log(`[Toggle] Table ${sTableId} set to show-more`);
                     } else {
                         // Show less: remove show-more, add show-less
                         oTable.removeStyleClass("show-more");
                         oTable.addStyleClass("show-less");
-                        console.log(`[Toggle] Table ${sTableId} set to show-less`);
                     }
                 }
             });
@@ -2676,14 +2528,12 @@ sap.ui.define([
                 } catch (e) { }
 
             } catch (e) {
-                console.warn(`Could not scan binding for existing ${sIdField} values`, e);
             }
 
             const next = max + 1;
             return `${sPrefix}-${pad(next)}`;
         },
         onFilterSearch: function (oEvent) {
-            console.log("🔍 FilterBar search triggered - event:", oEvent);
 
             // Get the source FilterBar
             const oFilterBar = oEvent.getSource();
@@ -2710,7 +2560,6 @@ sap.ui.define([
 
             const sTableId = filterToTableMap[sFilterBarId];
             if (!sTableId) {
-                console.warn("❌ No table mapping found for FilterBar ID:", sFilterBarId, "(full ID:", oFilterBar.getId() + ")");
                 return;
             }
 
@@ -2718,7 +2567,6 @@ sap.ui.define([
             const oTable = this.byId(sTableId);
             if (oTable && typeof oTable.rebind === "function") {
                 oTable.rebind();
-                console.log(`✅ Table '${sTableId}' rebound on filter search (isolated for ${sFilterBarId})`);
                 
                 // ✅ NEW: For Res table, apply allocation filter (empallocpercentage <= 95 and status != "Resigned") after rebind
                 if (sTableId === "Res" && this._getAllocationFilter) {
@@ -2743,25 +2591,20 @@ sap.ui.define([
                                 // Combine existing filters with allocation filter
                                 const aCombinedFilters = [...aCurrentFilters, oAllocationFilter];
                                 oBinding.filter(aCombinedFilters);
-                                console.log("✅ Applied allocation filter (empallocpercentage <= 95% and status != Resigned) after filter bar Go button");
                             }
                         }
                     }, 500);
                 }
             } else if (oTable && typeof oTable.bindRows === "function") {
                 oTable.bindRows();
-                console.log(`✅ Table '${sTableId}' rebind fallback called (bindRows) - isolated`);
             } else {
-                console.warn(`❌ Table '${sTableId}' not found or not ready for rebind.`);
             }
         },
         _onUploadPress: function (oEvent) {
-            console.log(oEvent);
 
             var oView = this.getView();
             const oButton = oEvent.getSource();
             const sButtonId = oButton.getId().split('--').pop();
-            console.log("oView in upload press", sButtonId);
 
 
 
@@ -2780,7 +2623,6 @@ sap.ui.define([
 
             this._pDialog.then(function (oDialog) {
                 oDialog.data("uploadButtonId", sButtonId)
-                console.log("oDialog in dialog ", oDialog);
 
                 oDialog.open();
             });
@@ -2826,7 +2668,6 @@ sap.ui.define([
             const oView = this.getView();
             const oDialog = oView.byId("uploadDialog");
 
-            console.log("it is file upload change");
 
 
 
@@ -2841,7 +2682,6 @@ sap.ui.define([
             oReader.onload = function (oE) {
                 const sText = oE.target.result;
                 const aLines = sText.split(/\r?\n/);
-                console.log("aLines", aLines);
 
 
                 if (aLines.length < 2) {
@@ -2865,7 +2705,6 @@ sap.ui.define([
 
 
                 const sButtonId = oDialog.data("uploadButtonId");
-                console.log("sButton", sButtonId);
 
 
                 const mExpectedHeaders = {
@@ -2902,15 +2741,12 @@ sap.ui.define([
                 };
 
                 const aHeaders = aLines[0].split(",").map(h => h.trim());
-                console.log("aHeaders", aHeaders);
 
 
                 // Validate headers
                 const aMissingHeaders = mExpectedHeaders[sButtonId].filter(h => !aHeaders.includes(h));
                 const aExtraHeaders = aHeaders.filter(h => !mExpectedHeaders[sButtonId].includes(h));
 
-                console.log(aMissingHeaders);
-                console.log(aExtraHeaders);
 
                 if (aMissingHeaders.length > 0 || aExtraHeaders.length > 0) {
                     const oMessageManager = sap.ui.getCore().getMessageManager();
@@ -2953,7 +2789,6 @@ sap.ui.define([
                     aPayloadArray.push(oRecord);
                 }
 
-                console.log("✅ Parsed CSV Payload:", aPayloadArray);
                 that._csvPayload = aPayloadArray; // Save parsed payload
                 sap.m.MessageToast.show("✅ CSV file validated and parsed successfully!");
             };
@@ -2961,7 +2796,6 @@ sap.ui.define([
             oReader.readAsText(oFile);
         },
         _onMessagePopoverPress: function (oEvent) {
-            console.log("onMessagePopoverPress");
 
             var oSourceControl = oEvent.getSource(); // The button that was clicked
             this.getMessagePopover(this).then(function (oMessagePopover) {
@@ -2999,7 +2833,6 @@ sap.ui.define([
                 return;
             }
 
-            console.log(sButtonId);
 
             const mEntityMap = {
                 customerUpload: "/Customers",
@@ -3029,7 +2862,6 @@ sap.ui.define([
                 });
                 sCsrfToken = oTokenRes.headers.get("x-csrf-token");
             } catch (oError) {
-                console.warn("CSRF token fetch failed:", oError);
             }
 
             let iSuccessCount = 0, iFailureCount = 0;
@@ -3115,10 +2947,8 @@ sap.ui.define([
         _updateMessageButtonIcon: function (oController) {
             const oView = oController.getView();
             const aMessages = oView.getModel("message").getData();
-            console.log("aMessages in updateMessageButtonIcon", aMessages);
 
             const oButton = oView.byId("uploadLogButton");
-            console.log(oButton);
 
 
             if (oButton) {

@@ -44,11 +44,9 @@ sap.ui.define([
     };
 
     EmployeeSkillReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [EmployeeSkillReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[EmployeeSkillReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -90,7 +88,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[EmployeeSkillReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };

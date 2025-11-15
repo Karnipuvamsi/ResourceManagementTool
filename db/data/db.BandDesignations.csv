@@ -1,0 +1,22 @@
+code;name;bandCode
+Senior Vice President;Senior Vice President;1
+Vice President;Vice President;2
+Assistant Vice President;Assistant Vice President;3
+Consultant;Consultant;4A
+Management Trainee;Management Trainee;4A
+Consultant;Consultant;4B-C
+Assistant Manager;Assistant Manager;4B-C
+Assistant Manager;Assistant Manager;4B-LC
+Lead Consultant;Lead Consultant;4B-LC
+Manager;Manager;4C
+Principal Consultant;Principal Consultant;4C
+Project Manager;Project Manager;4C
+Senior Manager;Senior Manager;4D
+Senior Principal Consultant;Senior Principal Consultant;4D
+Senior Project Manager;Senior Project Manager;4D
+Process Associate;Process Associate;5A
+Senior Associate;Senior Associate;5B
+Technical Associate;Technical Associate;5B
+Subcon;Subcon;Subcon
+
+

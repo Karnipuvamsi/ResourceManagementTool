@@ -29,31 +29,25 @@ sap.ui.define([
     };
 
     ResourcesTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [GenericDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[GenericDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
         const oMetaModel = oModel.getMetaModel();
-        console.log("[GenericDelegate] MetaModel:", oMetaModel);
 
         // Get collection path from payload
         const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
-        console.log("[GenericDelegate] Collection Path:", sCollectionPath);
 
         // Wait for metadata to be loaded
         return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
-                console.log("[GenericDelegate] Entity Type Path:", sEntityTypePath);
 
                 // Request the entity type definition
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
             })
             .then(function (oEntityType) {
-                console.log("[GenericDelegate] Entity Type loaded:", oEntityType);
 
                 const aProperties = [];
 
@@ -65,7 +59,6 @@ sap.ui.define([
                     }
 
                     const oProperty = oEntityType[sPropertyName];
-                    console.log("[GenericDelegate] Processing property:", sPropertyName, oProperty);
 
                     // Check if it's a property (not a navigation property)
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
@@ -86,12 +79,9 @@ sap.ui.define([
                     }
                 });
 
-                console.log("[GenericDelegate] Final properties array:", aProperties);
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[GenericDelegate] Error fetching properties:", oError);
-                console.log("[GenericDelegate] Using fallback properties for", sCollectionPath);
 
                 // Fallback properties for Opportunities
                 const mFallbackProperties = {
@@ -167,7 +157,6 @@ sap.ui.define([
                 aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
                 aFilters.push(oAllocationFilter);
                 oBindingInfo.filters = aFilters.length === 1 ? aFilters[0] : aFilters;
-                console.log("[ResourcesTableDelegate] ✅ Applied base allocation filter (empallocpercentage <= 95% and status != Resigned)");
             }
         }
         
@@ -318,12 +307,9 @@ sap.ui.define([
             oBindingInfo.filters = oOptimizedFilter || null;
         }
 
-        console.log("[GenericDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
-        console.log("[GenericDelegate] Table payload:", oTable.getPayload());
     };
 
     ResourcesTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
-        console.log("[GenericDelegate] addItem called for property:", sPropertyName);
 
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
@@ -331,7 +317,6 @@ sap.ui.define([
             });
 
             if (!oProperty) {
-                console.error("[GenericDelegate] Property not found:", sPropertyName);
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
@@ -438,7 +423,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Enum field detected:", sPropertyName, "→ ComboBox");
                         } else if (bIsAssoc) {
                             // ✅ ASSOCIATION: Display name from association, but store ID for editing
                             // Determine association path based on property
@@ -523,7 +507,6 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
-                            console.log("[GenericDelegate] Association field detected:", sPropertyName, "→ Displaying", sAssocPath, "from association");
                         } else {
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
@@ -544,10 +527,8 @@ sap.ui.define([
                             template: oField
                         });
 
-                        console.log("[GenericDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[GenericDelegate] Error, using regular field:", oError);
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -572,7 +553,6 @@ sap.ui.define([
     };
 
     ResourcesTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
-        console.log("[GenericDelegate] removeItem called for column:", oColumn);
 
         if (oColumn) {
             oColumn.destroy();

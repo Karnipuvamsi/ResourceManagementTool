@@ -51,11 +51,9 @@ sap.ui.define([
     };
 
     RevenueForecastReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [RevenueForecastReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[RevenueForecastReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -97,7 +95,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[RevenueForecastReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };

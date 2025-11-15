@@ -50,11 +50,9 @@ sap.ui.define([
     };
 
     EmployeeAllocationReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [EmployeeAllocationReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[EmployeeAllocationReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -96,7 +94,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[EmployeeAllocationReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };

@@ -85,12 +85,10 @@ sap.ui.define([
             }
         }
 
-        console.log("[EmployeesTableDelegate] updateBindingInfo - path:", sPath, "bindingInfo:", oBindingInfo);
     };
 
     // ✅ Employees-specific: addItem method with custom headers
     EmployeesTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
-        console.log("[EmployeesTableDelegate] addItem called for property:", sPropertyName);
 
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
@@ -98,7 +96,6 @@ sap.ui.define([
             });
 
             if (!oProperty) {
-                console.error("[EmployeesTableDelegate] Property not found:", sPropertyName);
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
@@ -224,7 +221,6 @@ sap.ui.define([
                                 }
                             });
 
-                            console.log("[EmployeesTableDelegate] Enum field detected:", sPropertyName, "→ ComboBox with formatter");
                         } else if (bIsAssoc) {
                             // ✅ METHOD 2: ASSOCIATION - ComboBox bound to OData (compatible with UI5 1.141.1)
                             const oModel = oTable.getModel();
@@ -259,7 +255,6 @@ sap.ui.define([
                                 }
                             });
 
-                            console.log("[EmployeesTableDelegate] Association field detected:", sPropertyName, "→ ComboBox bound to", oAssocConfig.targetEntity);
                         } else {
                             // ✅ Regular text field
                             oField = new Field({
@@ -281,10 +276,8 @@ sap.ui.define([
                             template: oField,
                         });
 
-                        console.log("[EmployeesTableDelegate] Column created via addItem:", sPropertyName);
                         resolve(oColumn);
                     }).catch(function(oError) {
-                        console.warn("[EmployeesTableDelegate] Error detecting association, using regular field:", oError);
                         // Fallback to regular field
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
@@ -310,7 +303,6 @@ sap.ui.define([
     };
 
     EmployeesTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
-        console.log("[EmployeesTableDelegate] removeItem called for column:", oColumn);
 
         if (oColumn) {
             oColumn.destroy();

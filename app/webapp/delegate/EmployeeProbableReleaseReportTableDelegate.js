@@ -49,11 +49,9 @@ sap.ui.define([
     };
 
     EmployeeProbableReleaseReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [EmployeeProbableReleaseReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[EmployeeProbableReleaseReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -95,7 +93,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[EmployeeProbableReleaseReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };

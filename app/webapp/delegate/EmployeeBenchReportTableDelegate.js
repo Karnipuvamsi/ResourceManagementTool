@@ -48,11 +48,9 @@ sap.ui.define([
     };
 
     EmployeeBenchReportTableDelegate.fetchProperties = function (oTable) {
-        console.log("=== [EmployeeBenchReportTableDelegate] fetchProperties called ===");
 
         const oModel = oTable.getModel();
         if (!oModel) {
-            console.error("[EmployeeBenchReportTableDelegate] No model found on table");
             return Promise.resolve([]);
         }
 
@@ -94,7 +92,6 @@ sap.ui.define([
                 return aProperties;
             })
             .catch(function (oError) {
-                console.error("[EmployeeBenchReportTableDelegate] Error fetching properties:", oError);
                 return [];
             });
     };
