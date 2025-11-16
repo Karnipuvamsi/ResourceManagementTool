@@ -4,7 +4,12 @@ sap.ui.define([
     "sap/ui/mdc/p13n/StateUtil",
     "sap/ui/model/json/JSONModel",
     "sap/m/MessageToast",
-], function (Controller, StateUtil, JSONModel, MessageToast) {
+    "glassboard/utility/FormHandler",
+    "glassboard/utility/TableInitializer",
+    "glassboard/utility/CRUDHelper",
+    "glassboard/utility/FileUploadHelper",
+    "glassboard/utility/SelectionManager"
+], function (Controller, StateUtil, JSONModel, MessageToast, FormHandler, TableInitializer, CRUDHelper, FileUploadHelper, SelectionManager) {
     "use strict";
 
     // Fixed syntax error - removed duplicate oData declarations
@@ -65,106 +70,9 @@ sap.ui.define([
         },
 
         // Initialize table-specific functionality when table is available
+        // ✅ Delegated to TableInitializer
         initializeTable: function (sTableId) {
-            // Try different table IDs if not specified
-            const aTableIds = sTableId ? [sTableId] : ["Customers", "Opportunities", "Projects", "SAPIdStatuses", "Employees", "Demands", "Allocations", "Res"];
-            let oTable = null;
-
-            for (const sId of aTableIds) {
-                oTable = this.byId(sId);
-                if (oTable) {
-                    break;
-                }
-            }
-
-            if (!oTable) {
-                return Promise.resolve();
-            }
-
-
-            // ✅ Return a promise so callers can wait for initialization
-            return oTable.initialized().then(() => {
-
-                // Get the delegate
-                const oDelegate = oTable.getControlDelegate();
-
-                // ✅ CRITICAL: Ensure properties are fetched and cached before personalization can use them
-                // This prevents the "0/0 columns" issue in View Settings dialog
-                return oDelegate.fetchProperties(oTable)
-                    .then((aProperties) => {
-                        // ✅ CRITICAL: Verify we have properties before proceeding
-                        if (!aProperties || aProperties.length === 0) {
-                            // If no properties, wait a bit and retry (metadata might still be loading)
-                            return new Promise((resolve) => {
-                                setTimeout(() => {
-                                    oDelegate.fetchProperties(oTable).then((aRetryProperties) => {
-                                        if (aRetryProperties && aRetryProperties.length > 0) {
-                                            resolve(aRetryProperties);
-                                        } else {
-                                            // Still no properties - proceed with empty array
-                                            resolve([]);
-                                        }
-                                    }).catch(() => resolve([]));
-                                }, 500);
-                            });
-                        }
-
-                        // Prepare items for external state (visible true for all non-$ props)
-                        const aItems = aProperties
-                            .filter((p) => !p.name || !String(p.name).startsWith("$"))
-                            .map((p) => ({
-                                name: p.name || p.path,
-                                visible: true
-                            }));
-
-                        const oExternalState = { items: aItems };
-
-                        return StateUtil.applyExternalState(oTable, oExternalState);
-                    })
-                    .then(() => {
-                        // Check if this is a read-only report table (has "Report" in ID or is readonly)
-                        const sTableId = oTable.getId() || "";
-                        const bIsReportTable = sTableId.includes("Report") || oTable.getMetadata().getName() === "sap.ui.mdc.Table";
-
-                        // Only add actions column for editable tables (not reports)
-                        if (!bIsReportTable) {
-                            // Ensure actions column exists for inline accept/cancel
-                            const oDelegateAgain = oTable.getControlDelegate();
-                            // Avoid duplicates by ID
-                            if (!oTable.getColumns().some(function (c) { return c.getId && c.getId().endsWith("--col-actions"); })) {
-                                return oDelegateAgain.addItem(oTable, "_actions").then(function (oCol) {
-                                    oTable.addColumn(oCol);
-                                    oTable.rebind();
-                                }).catch(function () {
-                                    oTable.rebind();
-                                    return Promise.resolve();
-                                });
-                            } else {
-                                oTable.rebind();
-                                return Promise.resolve();
-                            }
-                        } else {
-                            // For report tables, just rebind without actions column
-                            oTable.rebind();
-                            return Promise.resolve();
-                        }
-                    })
-                    .then(() => {
-                        // Keep selection state in sync
-                        oTable.attachSelectionChange(this._updateSelectionState, this);
-
-                        // Track pending changes on default model
-                        const oModel = this.getOwnerComponent().getModel();
-                        if (oModel && oModel.attachPropertyChange) {
-                            oModel.attachPropertyChange(this._updatePendingState, this);
-                        }
-
-                        return Promise.resolve();
-                    })
-                    .catch((err) => {
-                        return Promise.reject(err);
-                    });
-            });
+            return TableInitializer.prototype.initializeTable.call(this, sTableId);
         },
 
         // Utilities
@@ -173,17 +81,32 @@ sap.ui.define([
             return oTable && oTable.getRowBinding && oTable.getRowBinding();
         },
 
+        // ✅ Delegated to SelectionManager
         _getSelectedContexts: function () {
+            return SelectionManager.prototype._getSelectedContexts.call(this);
+        },
+        
+        _getSelectedContexts_legacy: function () {
             const oTable = this.byId("Customers");
             return (oTable && oTable.getSelectedContexts) ? oTable.getSelectedContexts() : [];
         },
 
+        // ✅ Delegated to TableInitializer
         _updateSelectionState: function () {
+            return TableInitializer.prototype._updateSelectionState.call(this);
+        },
+        
+        _updateSelectionState_legacy: function () {
             const bHasSelection = this._getSelectedContexts().length > 0;
             this.getView().getModel("model").setProperty("/hasSelected", bHasSelection);
         },
 
+        // ✅ Delegated to TableInitializer
         _updatePendingState: function () {
+            return TableInitializer.prototype._updatePendingState.call(this);
+        },
+        
+        _updatePendingState_legacy: function () {
             const oModel = this.getOwnerComponent().getModel();
             const bHasChanges = !!(oModel && oModel.hasPendingChanges && oModel.hasPendingChanges());
             this.getView().getModel("model").setProperty("/hasPendingChanges", bHasChanges);
@@ -192,7 +115,12 @@ sap.ui.define([
         // Toolbar actions
 
         // //on selection change functionalities.
+        // ✅ Delegated to SelectionManager
         onSelectionChange: function (oEvent) {
+            return SelectionManager.prototype.onSelectionChange.call(this, oEvent);
+        },
+        
+        onSelectionChange_legacy: function (oEvent) {
             const oTable = oEvent.getSource();
             const sTableId = oTable.getId().split("--").pop(); // Extract ID without view prefix
 
@@ -535,274 +463,17 @@ sap.ui.define([
             }
         },
 
-        // ✅ NEW: Demand form data handler
+        // ✅ Delegated to FormHandler
         _onDemandDialogData: function (aSelectedContexts) {
-            if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                // No selection - clear form for new entry
-                // Clear the model first (form fields are bound to model)
-                let oDemandModel = this.getView().getModel("demandModel");
-                if (!oDemandModel) {
-                    oDemandModel = new sap.ui.model.json.JSONModel({});
-                    this.getView().setModel(oDemandModel, "demandModel");
-                }
-
-                // ✅ Keep the pre-selected project ID (don't clear it)
-                const oController = this.getView().getController();
-                const sPreSelectedProjectId = oController?._sSelectedProjectId || "";
-                const sPreSelectedProjectName = oController?._sSelectedProjectName || "";
-
-                // Clear all model properties except project
-                oDemandModel.setData({
-                    demandId: "",
-                    skill: "",
-                    band: "",
-                    sapPId: sPreSelectedProjectId, // Keep pre-selected project
-                    quantity: ""
-                });
-
-                // ✅ Removed Demand ID field - it's auto-generated by backend
-
-                // ✅ Project field removed from form - project is pre-selected from navigation
-                // The project ID is stored in the model and controller, but not displayed in form
-                // This ensures the project ID is still saved correctly when creating demands
-
-                this.byId("inputSkill_demand")?.removeAllSelectedItems();
-                this.byId("inputBand_demand")?.setSelectedKey("");
-                this.byId("inputQuantity_demand")?.setValue("");
-
-                // Enable Edit button when form is cleared
-                this.byId("editButton_demand")?.setEnabled(false);
-                return;
-            }
-
-            // Row selected - populate form for update
-            let oObj = aSelectedContexts[0].getObject();
-
-            // Update model first (fields are bound to model)
-            let oDemandModel = this.getView().getModel("demandModel");
-            if (!oDemandModel) {
-                oDemandModel = new sap.ui.model.json.JSONModel({});
-                this.getView().setModel(oDemandModel, "demandModel");
-            }
-            oDemandModel.setProperty("/demandId", oObj.demandId || "");
-            oDemandModel.setProperty("/skill", oObj.skill || "");
-            oDemandModel.setProperty("/band", oObj.band || "");
-            oDemandModel.setProperty("/sapPId", oObj.sapPId || "");
-            oDemandModel.setProperty("/quantity", oObj.quantity != null ? oObj.quantity : null);
-
-            // Also set values directly on controls
-            // ✅ Removed Demand ID field - it's auto-generated by backend
-            this.byId("inputBand_demand")?.setSelectedKey(oObj.band || "");
-            this.byId("inputQuantity_demand")?.setValue(oObj.quantity != null ? String(oObj.quantity) : "");
-
-            // ✅ Skill field - load from comma-separated string
-            const sSkill = oObj.skill || "";
-            const oSkillComboBox = this.byId("inputSkill_demand");
-            if (oSkillComboBox && sSkill) {
-                const aSkillNames = sSkill.split(",").map(s => s.trim()).filter(s => s !== "");
-                oSkillComboBox.setSelectedKeys(aSkillNames);
-            } else if (oSkillComboBox) {
-                oSkillComboBox.removeAllSelectedItems();
-            }
-
-            // ✅ Project field removed from form - project is pre-selected from navigation
-            // The project ID is stored in the model and controller, but not displayed in form
-            // This ensures the project ID is still saved correctly when creating/editing demands
-
-            // Enable Edit button when row is selected
-            this.byId("editButton_demand")?.setEnabled(true);
+            FormHandler.prototype.onDemandDialogData.call(this, aSelectedContexts);
         },
 
-        /**
-         * 
-         */
-        // ✅ NEW: Employee form data handler
         _onEmpDialogData: function (aSelectedContexts) {
-            if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                // No selection - clear form for new entry
-                const oTable = this.byId("Employees");
-                let sNextId = ""; // Employees might not have auto-generated IDs
-                try {
-                    // For now, just clear - Employees might use manual OHR IDs
-                    sNextId = "";
-                } catch (e) {
-                }
-
-                this.byId("inputOHRId_emp")?.setValue(sNextId);
-                this.byId("inputOHRId_emp")?.setEnabled(true); // Employees might need manual OHR ID entry
-                this.byId("inputFullName_emp")?.setValue("");
-                this.byId("inputMailId_emp")?.setValue("");
-                this.byId("inputGender_emp")?.setSelectedKey("");
-                this.byId("inputEmployeeType_emp")?.setSelectedKey("");
-                this.byId("inputDoJ_emp")?.setValue("");
-                this.byId("inputBand_emp")?.setSelectedKey("");
-                this.byId("inputRole_emp")?.setSelectedKey("");
-                this.byId("inputLocation_emp")?.setValue("");
-                this.byId("inputCity_emp")?.setValue("");
-                this.byId("inputSupervisor_emp")?.setValue("");
-                this.byId("inputSupervisor_emp")?.data("selectedId", "");
-                this.byId("inputSkills_emp")?.removeAllSelectedItems();
-                this.byId("inputStatus_emp")?.setSelectedKey("");
-                this.byId("inputLWD_emp")?.setValue("");
-                return;
-            }
-
-            // Row selected - populate form for update
-            let oObj = aSelectedContexts[0].getObject();
-            this.byId("inputOHRId_emp")?.setValue(oObj.ohrId || "");
-            this.byId("inputOHRId_emp")?.setEnabled(false); // Disable OHR ID in update mode (key field)
-            this.byId("inputFullName_emp")?.setValue(oObj.fullName || "");
-            this.byId("inputMailId_emp")?.setValue(oObj.mailid || "");
-            this.byId("inputGender_emp")?.setSelectedKey(oObj.gender || "");
-            this.byId("inputEmployeeType_emp")?.setSelectedKey(oObj.employeeType || "");
-            this.byId("inputDoJ_emp")?.setValue(oObj.doj || "");
-            const sBand = oObj.band || "";
-            this.byId("inputBand_emp")?.setSelectedKey(sBand);
-
-            // ✅ Populate Designation dropdown based on Band selection
-            if (sBand && this.getView()) {
-                const oController = this.getView().getController();
-                if (oController && oController.mBandToDesignations) {
-                    const aDesignations = oController.mBandToDesignations[sBand] || [];
-                    const oDesignationSelect = this.byId("inputRole_emp");
-                    if (oDesignationSelect) {
-                        // Clear existing items (except placeholder)
-                        const aItems = oDesignationSelect.getItems();
-                        aItems.forEach((oItem, iIndex) => {
-                            if (iIndex > 0) {
-                                oDesignationSelect.removeItem(oItem);
-                            }
-                        });
-                        // Add designations for selected band
-                        aDesignations.forEach((sDesignation) => {
-                            oDesignationSelect.addItem(new sap.ui.core.Item({
-                                key: sDesignation,
-                                text: sDesignation
-                            }));
-                        });
-                    }
-                }
-            }
-            this.byId("inputRole_emp")?.setSelectedKey(oObj.role || "");
-            this.byId("inputLocation_emp")?.setValue(oObj.location || "");
-            this.byId("inputCity_emp")?.setValue(oObj.city || "");
-
-            // ✅ Supervisor field - display only ID (not name)
-            const sSupervisorId = oObj.supervisorOHR || "";
-            const oSupervisorInput = this.byId("inputSupervisor_emp");
-            if (oSupervisorInput) {
-                oSupervisorInput.setValue(sSupervisorId);
-                oSupervisorInput.data("selectedId", sSupervisorId);
-            }
-
-            // ✅ Load skills from employee.skills field (comma-separated string)
-            const sSkills = oObj.skills || "";
-            const oSkillsComboBox = this.byId("inputSkills_emp");
-            if (oSkillsComboBox && sSkills) {
-                // Split comma-separated skills and set as selected keys
-                const aSkillNames = sSkills.split(",").map(s => s.trim()).filter(s => s !== "");
-                oSkillsComboBox.setSelectedKeys(aSkillNames);
-            } else if (oSkillsComboBox) {
-                oSkillsComboBox.removeAllSelectedItems();
-            }
-            this.byId("inputStatus_emp")?.setSelectedKey(oObj.status || "");
-            this.byId("inputLWD_emp")?.setValue(oObj.lwd || "");
+            FormHandler.prototype.onEmpDialogData.call(this, aSelectedContexts);
         },
 
-        // ✅ NEW: Opportunity form data handler
         _onOppDialogData: function (aSelectedContexts) {
-            if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                // No selection - clear form for new entry
-                const oTable = this.byId("Opportunities");
-                let sNextId = "O-0001"; // Default
-                try {
-                    // Try to generate next ID from existing data
-                    if (oTable) {
-                        sNextId = this._generateNextIdFromBinding(oTable, "Opportunities", "sapOpportunityId", "O") || sNextId;
-                    }
-                } catch (e) {
-                }
-
-                this.byId("inputSapOppId_oppr")?.setValue(sNextId);
-                this.byId("inputSapOppId_oppr")?.setEnabled(false); // Always disabled - auto-generated
-                this.byId("inputSapOppId_oppr")?.setPlaceholder("Auto-generated");
-                this.byId("inputSfdcOppId_oppr")?.setValue("");
-                this.byId("inputOppName_oppr")?.setValue("");
-                this.byId("inputBusinessUnit_oppr")?.setValue("");
-                this.byId("inputProbability_oppr")?.setSelectedKey("");
-                this.byId("inputStage_oppr")?.setSelectedKey("");
-                this.byId("inputSalesSPOC_oppr")?.setValue("");
-                this.byId("inputSalesSPOC_oppr")?.data("selectedId", "");
-                this.byId("inputDeliverySPOC_oppr")?.setValue("");
-                this.byId("inputDeliverySPOC_oppr")?.data("selectedId", "");
-                this.byId("inputExpectedStart_oppr")?.setValue("");
-                this.byId("inputExpectedEnd_oppr")?.setValue("");
-                this.byId("inputTCV_oppr")?.setValue("");
-                this.byId("inputCustomerId_oppr")?.setValue("");
-                this.byId("inputCustomerId_oppr")?.data("selectedId", "");
-                return;
-            }
-
-            // Row selected - populate form for update
-            // ✅ EXACT same pattern as Employee (which works perfectly)
-            let oObj = aSelectedContexts[0].getObject();
-
-            // Update model first (fields are bound to model)
-            let oOppModel = this.getView().getModel("opportunityModel");
-            if (!oOppModel) {
-                oOppModel = new sap.ui.model.json.JSONModel({});
-                this.getView().setModel(oOppModel, "opportunityModel");
-            }
-            oOppModel.setProperty("/sapOpportunityId", oObj.sapOpportunityId || "");
-            oOppModel.setProperty("/sfdcOpportunityId", oObj.sfdcOpportunityId || "");
-            oOppModel.setProperty("/opportunityName", oObj.opportunityName || "");
-            oOppModel.setProperty("/businessUnit", oObj.businessUnit || "");
-            oOppModel.setProperty("/probability", oObj.probability || "");
-            oOppModel.setProperty("/Stage", oObj.Stage || "");
-            oOppModel.setProperty("/salesSPOC", oObj.salesSPOC || "");
-            oOppModel.setProperty("/deliverySPOC", oObj.deliverySPOC || "");
-            oOppModel.setProperty("/expectedStart", oObj.expectedStart || "");
-            oOppModel.setProperty("/expectedEnd", oObj.expectedEnd || "");
-            oOppModel.setProperty("/tcv", oObj.tcv != null ? oObj.tcv : null);
-            oOppModel.setProperty("/customerId", oObj.customerId || "");
-
-            // Also set values directly on controls
-            this.byId("inputSapOppId_oppr")?.setValue(oObj.sapOpportunityId || "");
-            this.byId("inputSapOppId_oppr")?.setEnabled(false);
-            this.byId("inputSapOppId_oppr")?.setPlaceholder("");
-            this.byId("inputSfdcOppId_oppr")?.setValue(oObj.sfdcOpportunityId || "");
-            this.byId("inputOppName_oppr")?.setValue(oObj.opportunityName || "");
-            this.byId("inputBusinessUnit_oppr")?.setValue(oObj.businessUnit || "");
-            this.byId("inputProbability_oppr")?.setSelectedKey(oObj.probability || "");
-            this.byId("inputStage_oppr")?.setSelectedKey(oObj.Stage || "");
-            // ✅ Sales SPOC field - display only ID (not name)
-            const sSalesSPOCId = oObj.salesSPOC || "";
-            const oSalesSPOCInput = this.byId("inputSalesSPOC_oppr");
-            if (oSalesSPOCInput) {
-                oSalesSPOCInput.setValue(sSalesSPOCId);
-                oSalesSPOCInput.data("selectedId", sSalesSPOCId);
-            }
-
-            // ✅ Delivery SPOC field - display only ID (not name)
-            const sDeliverySPOCId = oObj.deliverySPOC || "";
-            const oDeliverySPOCInput = this.byId("inputDeliverySPOC_oppr");
-            if (oDeliverySPOCInput) {
-                oDeliverySPOCInput.setValue(sDeliverySPOCId);
-                oDeliverySPOCInput.data("selectedId", sDeliverySPOCId);
-            }
-
-            this.byId("inputExpectedStart_oppr")?.setValue(oObj.expectedStart || "");
-            this.byId("inputExpectedEnd_oppr")?.setValue(oObj.expectedEnd || "");
-            this.byId("inputTCV_oppr")?.setValue(oObj.tcv != null ? String(oObj.tcv) : "");
-
-            // ✅ Customer field - always load customer name if customerId exists
-            // ✅ Customer field - display only ID (not name)
-            const sCustomerId = oObj.customerId || "";
-            const oCustomerInput = this.byId("inputCustomerId_oppr");
-            if (oCustomerInput) {
-                oCustomerInput.setValue(sCustomerId);
-                oCustomerInput.data("selectedId", sCustomerId);
-            }
+            FormHandler.prototype.onOppDialogData.call(this, aSelectedContexts);
         },
 
         // Helper to set customer ID for opportunity field
@@ -860,111 +531,8 @@ sap.ui.define([
             }
         },
 
-        // ✅ NEW: Project form data handler
         _onProjDialogData: function (aSelectedContexts) {
-            if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                // No selection - clear form for new entry
-                const oTable = this.byId("Projects");
-                let sNextId = "P-0001"; // Default
-                try {
-                    // Try to generate next ID from existing data
-                    if (oTable) {
-                        sNextId = this._generateNextIdFromBinding(oTable, "Projects", "sapPId", "P") || sNextId;
-                    }
-                } catch (e) {
-                }
-
-                // ✅ CRITICAL: Clear the model first (form fields are bound to model)
-                let oProjModel = this.getView().getModel("projectModel");
-                if (!oProjModel) {
-                    oProjModel = new sap.ui.model.json.JSONModel({});
-                    this.getView().setModel(oProjModel, "projectModel");
-                }
-                // Clear all model properties (no default values)
-                oProjModel.setData({
-                    sapPId: sNextId,
-                    sfdcPId: "",
-                    projectName: "",
-                    startDate: "",
-                    endDate: "",
-                    gpm: "",
-                    projectType: "",
-                    status: "",
-                    oppId: "",
-                    requiredResources: "",
-                    allocatedResources: "",
-                    toBeAllocated: "",
-                    SOWReceived: "",
-                    POReceived: ""
-                });
-
-                // Also set controls directly (for non-bound fields and data attributes)
-                this.byId("inputSapProjId_proj")?.setValue(sNextId);
-                this.byId("inputSapProjId_proj")?.setEnabled(false); // Always disabled - auto-generated
-                this.byId("inputSapProjId_proj")?.setPlaceholder("Auto-generated");
-                this.byId("inputOppId_proj")?.setValue("");
-                this.byId("inputOppId_proj")?.data("selectedId", "");
-                this.byId("inputGPM_proj")?.data("selectedId", "");
-                return;
-            }
-
-            // Row selected - populate form for update
-            // ✅ EXACT same pattern as Employee (which works perfectly)
-            let oObj = aSelectedContexts[0].getObject();
-
-            // Update model first (fields are bound to model)
-            let oProjModel = this.getView().getModel("projectModel");
-            if (!oProjModel) {
-                oProjModel = new sap.ui.model.json.JSONModel({});
-                this.getView().setModel(oProjModel, "projectModel");
-            }
-            oProjModel.setProperty("/sapPId", oObj.sapPId || "");
-            oProjModel.setProperty("/sfdcPId", oObj.sfdcPId || "");
-            oProjModel.setProperty("/projectName", oObj.projectName || "");
-            oProjModel.setProperty("/startDate", oObj.startDate || "");
-            oProjModel.setProperty("/endDate", oObj.endDate || "");
-            oProjModel.setProperty("/gpm", oObj.gpm || "");
-            oProjModel.setProperty("/projectType", oObj.projectType || "");
-            oProjModel.setProperty("/status", oObj.status || "");
-            oProjModel.setProperty("/requiredResources", oObj.requiredResources != null ? oObj.requiredResources : null);
-            oProjModel.setProperty("/allocatedResources", oObj.allocatedResources != null ? oObj.allocatedResources : null);
-            oProjModel.setProperty("/toBeAllocated", oObj.toBeAllocated != null ? oObj.toBeAllocated : null);
-            oProjModel.setProperty("/SOWReceived", oObj.SOWReceived || "");
-            oProjModel.setProperty("/POReceived", oObj.POReceived || "");
-            oProjModel.setProperty("/oppId", oObj.oppId || "");
-
-            // Also set values directly on controls
-            this.byId("inputSapProjId_proj")?.setValue(oObj.sapPId || "");
-            this.byId("inputSapProjId_proj")?.setEnabled(false);
-            this.byId("inputSapProjId_proj")?.setPlaceholder("");
-            this.byId("inputSfdcProjId_proj")?.setValue(oObj.sfdcPId || "");
-            this.byId("inputProjectName_proj")?.setValue(oObj.projectName || "");
-            this.byId("inputStartDate_proj")?.setValue(oObj.startDate || "");
-            this.byId("inputEndDate_proj")?.setValue(oObj.endDate || "");
-            this.byId("inputProjectType_proj")?.setSelectedKey(oObj.projectType || "");
-            this.byId("inputStatus_proj")?.setSelectedKey(oObj.status || "");
-            this.byId("inputRequiredResources_proj")?.setValue(oObj.requiredResources != null ? String(oObj.requiredResources) : "");
-            this.byId("inputAllocatedResources_proj")?.setValue(oObj.allocatedResources != null ? String(oObj.allocatedResources) : "");
-            this.byId("inputToBeAllocated_proj")?.setValue(oObj.toBeAllocated != null ? String(oObj.toBeAllocated) : "");
-            this.byId("inputSOWReceived_proj")?.setSelectedKey(oObj.SOWReceived || "");
-            this.byId("inputPOReceived_proj")?.setSelectedKey(oObj.POReceived || "");
-
-            // ✅ GPM field - same pattern as Employee Supervisor
-            const sGPMId = oObj.gpm || "";
-            // ✅ GPM field - display only ID (not name)
-            const oGPMInput = this.byId("inputGPM_proj");
-            if (oGPMInput) {
-                oGPMInput.setValue(sGPMId);
-                oGPMInput.data("selectedId", sGPMId);
-            }
-
-            // ✅ Opportunity field - display only ID (not name)
-            const sOppId = oObj.oppId || "";
-            const oOppInput = this.byId("inputOppId_proj");
-            if (oOppInput) {
-                oOppInput.setValue(sOppId);
-                oOppInput.data("selectedId", sOppId);
-            }
+            FormHandler.prototype.onProjDialogData.call(this, aSelectedContexts);
         },
 
         // Helper to set opportunity ID for project field
@@ -1030,60 +598,18 @@ sap.ui.define([
         },
 
         _onCustDialogData: function (aSelectedContexts) {
-            if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                // No selection - clear form for new entry
-                // Generate next ID to show as placeholder (if not already set)
-                const oCustomerIdInput = this.byId("inputCustomerId");
-                if (oCustomerIdInput) {
-                    // Only generate if field is empty or has default value
-                    const sCurrentValue = oCustomerIdInput.getValue();
-                    if (!sCurrentValue || sCurrentValue === "C-0001") {
-                        const oTable = this.byId("Customers");
-                        let sNextId = "C-0001"; // Default
-                        try {
-                            // Try to generate next ID from existing data
-                            if (oTable) {
-                                sNextId = this._generateNextIdFromBinding(oTable, "Customers", "SAPcustId", "C") || sNextId;
-                            }
-                        } catch (e) {
-                        }
-                        oCustomerIdInput.setValue(sNextId);
-                    }
-                    // Ensure it's always disabled
-                    oCustomerIdInput.setEnabled(false);
-                    oCustomerIdInput.setPlaceholder("Auto-generated");
-                }
-                this.byId("inputCustomerName")?.setValue("");
-                this.byId("inputState")?.setValue("");
-                this.byId("inputCountry")?.setValue("");
-                this.byId("inputStartDate_cus")?.setValue("");
-                this.byId("inputEndDate_cus")?.setValue("");
-                this.byId("inputStatus")?.setSelectedKey("");
-                this.byId("inputVertical")?.setSelectedKey("");
-                return;
-            }
-
-            // Row selected - populate form for update
-            let oObj = aSelectedContexts[0].getObject();
-            this.byId("inputCustomerId")?.setValue(oObj.SAPcustId || "");
-            this.byId("inputCustomerId")?.setEnabled(false); // Always disabled - key field cannot be changed
-            this.byId("inputCustomerId")?.setPlaceholder("");
-            this.byId("inputCustomerName")?.setValue(oObj.customerName || "");
-            this.byId("inputState")?.setValue(oObj.state || "");
-            this.byId("inputCountry")?.setValue(oObj.country || "");
-            this.byId("inputStartDate_cus")?.setValue(oObj.startDate || "");
-            this.byId("inputEndDate_cus")?.setValue(oObj.endDate || "");
-
-            // ✅ Set Status and Vertical
-            this.byId("inputStatus")?.setSelectedKey(oObj.status || "");
-            this.byId("inputVertical")?.setSelectedKey(oObj.vertical || "");
+            FormHandler.prototype.onCustDialogData.call(this, aSelectedContexts);
         },
 
 
 
 
-        // delete functionalities
+        // ✅ Delegated to CRUDHelper
         onDeletePress: function (oEvent) {
+            return CRUDHelper.prototype.onDeletePress.call(this, oEvent);
+        },
+        
+        onDeletePress_legacy: function (oEvent) {
             const buttonMap = {
                 "Customers": { edit: "btnEdit_cus", delete: "btnDelete_cus" },
                 "Employees": { edit: "Edit_emp", delete: "Delete_emp" },
@@ -1283,7 +809,12 @@ sap.ui.define([
                 }
             });
         },
+        // ✅ Delegated to CRUDHelper
         onEditPress: function (oEvent) {
+            return CRUDHelper.prototype.onEditPress.call(this, oEvent);
+        },
+        
+        onEditPress_legacy: function (oEvent) {
             // Button mapping for all tables
             const buttonMap = {
                 "Customers": { edit: "btnEdit_cus", delete: "btnDelete_cus", save: "saveButton", cancel: "cancelButton", add: "btnAdd" },
@@ -1309,45 +840,8 @@ sap.ui.define([
                 return;
             }
 
-            // ✅ CRITICAL: For Opportunities and Projects, populate form fields when Edit button is clicked
-            // This ensures all fields populate immediately when Edit is pressed, avoiding lag
-            if (sTableId === "Opportunities" && aSelectedContexts.length > 0) {
-                // Populate Opportunity form with selected row data
-                const oContext = aSelectedContexts[0];
-                if (oContext.requestObject && typeof oContext.requestObject === "function") {
-                    // Request complete object to ensure all fields are available
-                    oContext.requestObject().then(() => {
-                        const oObj = oContext.getObject();
-                        this._populateOpportunityFormComplete(oObj || {});
-                    }).catch(() => {
-                        // If request fails, use what we have
-                        const oObj = oContext.getObject() || {};
-                        this._populateOpportunityFormComplete(oObj);
-                    });
-                } else {
-                    // No requestObject, populate with what we have
-                    const oObj = oContext.getObject() || {};
-                    this._populateOpportunityFormComplete(oObj);
-                }
-            } else if (sTableId === "Projects" && aSelectedContexts.length > 0) {
-                // Populate Project form with selected row data
-                const oContext = aSelectedContexts[0];
-                if (oContext.requestObject && typeof oContext.requestObject === "function") {
-                    // Request complete object to ensure all fields are available
-                    oContext.requestObject().then(() => {
-                        const oObj = oContext.getObject();
-                        this._populateProjectFormComplete(oObj || {});
-                    }).catch(() => {
-                        // If request fails, use what we have
-                        const oObj = oContext.getObject() || {};
-                        this._populateProjectFormComplete(oObj);
-                    });
-                } else {
-                    // No requestObject, populate with what we have
-                    const oObj = oContext.getObject() || {};
-                    this._populateProjectFormComplete(oObj);
-                }
-            }
+            // ✅ Note: Form population is now handled by Edit button handlers in Home.controller.js
+            // This section is kept for backward compatibility but form population happens via onEditXxxForm handlers
 
 
             // 🚀 MULTI-ROW EDITING: Process ALL selected rows
@@ -1376,8 +870,6 @@ sap.ui.define([
             oEditModel.setProperty(`/${sTableId}/mode`, "multi-edit");
             oEditModel.setProperty("/currentTable", sTableId);  // Track active table
 
-            // 🚀 DEBUG: Log what we're setting
-
             // Enable Save/Cancel buttons, disable Edit/Delete/Add for the specific table
             const config = buttonMap[sTableId];
             this.byId(config.save)?.setEnabled(true);
@@ -1396,8 +888,12 @@ sap.ui.define([
 
             sap.m.MessageToast.show(`${aSelectedContexts.length} rows are now in edit mode.`);
         },
-        // ✅ NEW: Internal method to perform the actual cancel operation (can skip confirmation)
+        // ✅ Delegated to CRUDHelper
         _performCancelOperation: function (sTableId, bSkipConfirmation) {
+            return CRUDHelper.prototype._performCancelOperation.call(this, sTableId, bSkipConfirmation);
+        },
+        
+        _performCancelOperation_legacy: function (sTableId, bSkipConfirmation) {
             const self = this; // Store reference to this
 
             // Button mapping for all tables
@@ -1745,25 +1241,9 @@ sap.ui.define([
                 }
             );
         },
-        // Official SAP pattern: Handle UI changes state
+        // ✅ Delegated to CRUDHelper
         _setUIChanges: function (bHasChanges) {
-            try {
-                const oView = this.getView();
-                const oAppModel = oView.getModel("appView");
-
-                if (oAppModel) {
-                    oAppModel.setProperty("/hasUIChanges", bHasChanges);
-                } else {
-                    const oViewModel = new JSONModel({
-                        busy: false,
-                        hasUIChanges: bHasChanges,
-                        usernameEmpty: false,
-                        order: 0
-                    });
-                    oView.setModel(oViewModel, "appView");
-                }
-            } catch (error) {
-            }
+            return CRUDHelper.prototype._setUIChanges.call(this, bHasChanges);
         },
 
         // 🚀 HELPERS: Row binding and context resolution
@@ -1772,7 +1252,12 @@ sap.ui.define([
                 || (oTable && oTable.getBinding && (oTable.getBinding("items") || oTable.getBinding("rows")))
                 || null;
         },
+        // ✅ Delegated to CRUDHelper
         _resolveContextByPath: function (oTable, sPath) {
+            return CRUDHelper.prototype._resolveContextByPath.call(this, oTable, sPath);
+        },
+        
+        _resolveContextByPath_legacy: function (oTable, sPath) {
             if (!oTable || !sPath) return null;
             const oBinding = this._getRowBinding(oTable);
             if (oBinding) {
@@ -1985,7 +1470,12 @@ sap.ui.define([
         },
 
         // 🚀 ADD NEW ROW FUNCTIONALITY
+        // ✅ Delegated to CRUDHelper
         onAdd: function (oEvent) {
+            return CRUDHelper.prototype.onAdd.call(this, oEvent);
+        },
+        
+        onAdd_legacy: function (oEvent) {
 
             try {
                 // Determine which table this add is for
@@ -2012,8 +1502,6 @@ sap.ui.define([
                 let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
                     || oTable.getBinding("items")
                     || oTable.getBinding("rows");
-
-                // Optional debug (avoid calling non-existent APIs)
 
                 if (!oBinding) {
                     setTimeout(() => {
@@ -2073,19 +1561,7 @@ sap.ui.define([
                 }
 
                 // Create new empty row data and create via V4 ListBinding.create
-                // const oNewRowData = this._createEmptyRowData(sTableId);
-                // console.log("New row data:", oNewRowData);
-                // const oNewContext = oBinding.create(oNewRowData);
-
-                // if (!oNewContext) {
-                //     console.error("Failed to create new context");
-                //     sap.m.MessageBox.error("Failed to create new row.");
-                //     return;
-                // }
-
-                // console.log("New context created:", oNewContext.getPath());
                 const oNewRowData = this._createEmptyRowData(sTableId);
-                // console.log("New row data before ID:", oNewRowData);
 
                 try {
                     const idMap = {
@@ -2197,8 +1673,12 @@ sap.ui.define([
             }
         },
 
-        // 🚀 HELPER: Create empty row data based on table type
+        // ✅ Delegated to CRUDHelper
         _createEmptyRowData: function (sTableId) {
+            return CRUDHelper.prototype._createEmptyRowData.call(this, sTableId);
+        },
+        
+        _createEmptyRowData_legacy: function (sTableId) {
             const oEmptyData = {};
 
             // Create specific default values based on table type
@@ -2288,7 +1768,13 @@ sap.ui.define([
                 }
             });
         },
+        // ✅ Delegated to FormHandler - kept here for backward compatibility
         _generateNextIdFromBinding: function (oTable, sEntitySet, sIdField, sPrefix) {
+            return FormHandler.prototype._generateNextIdFromBinding.call(this, oTable, sEntitySet, sIdField, sPrefix);
+        },
+        
+        // Legacy implementation (kept for reference, but delegated above)
+        _generateNextIdFromBinding_legacy: function (oTable, sEntitySet, sIdField, sPrefix) {
             const pad = (n) => String(n).padStart(4, "0");
             const pattern = /(\d+)$/;
             let max = 0;
@@ -2417,7 +1903,12 @@ sap.ui.define([
             } else {
             }
         },
+        // ✅ Delegated to FileUploadHelper
         _onUploadPress: function (oEvent) {
+            return FileUploadHelper.prototype._onUploadPress.call(this, oEvent);
+        },
+        
+        _onUploadPress_legacy: function (oEvent) {
 
             var oView = this.getView();
             const oButton = oEvent.getSource();
@@ -2445,7 +1936,12 @@ sap.ui.define([
             });
 
         },
+        // ✅ Delegated to FileUploadHelper
         _onCloseUpload: function () {
+            return FileUploadHelper.prototype._onCloseUpload.call(this);
+        },
+        
+        _onCloseUpload_legacy: function () {
             const oDialog = this.byId("uploadDialog");
             if (oDialog && oDialog.close) {
                 oDialog.close();
@@ -2475,7 +1971,12 @@ sap.ui.define([
             this._oMenu.openBy(oSource);
 
         },
+        // ✅ Delegated to FileUploadHelper
         _onFileUploadChange: function (oEvent) {
+            return FileUploadHelper.prototype._onFileUploadChange.call(this, oEvent);
+        },
+        
+        _onFileUploadChange_legacy: function (oEvent) {
             const oMessageManager = sap.ui.getCore().getMessageManager();
             oMessageManager.removeAllMessages(); //  Clear old messages first
             const oFileUploader = oEvent.getSource();
@@ -2632,7 +2133,12 @@ sap.ui.define([
             }
             return oController._pMessagePopover;
         },
+        // ✅ Delegated to FileUploadHelper
         _onFileUploadSubmit: async function () {
+            return FileUploadHelper.prototype._onFileUploadSubmit.call(this);
+        },
+        
+        _onFileUploadSubmit_legacy: async function () {
             const oView = this.getView();
             const oDialog = oView.byId("uploadDialog");
 
@@ -2790,7 +2296,12 @@ sap.ui.define([
                 }
             }
         },
+        // ✅ Delegated to FileUploadHelper
         _exportUploadTemplate: function (oEvent) {
+            return FileUploadHelper.prototype._exportUploadTemplate.call(this, oEvent);
+        },
+        
+        _exportUploadTemplate_legacy: function (oEvent) {
 
 
             const sButtonId = oEvent.getSource().getId().split("--").pop();
@@ -2847,7 +2358,12 @@ sap.ui.define([
             this.downloadCSV(sCSV, sFileName);
 
         },
+        // ✅ Delegated to FileUploadHelper
         _downloadCSV: function (sContent, sFileName) {
+            return FileUploadHelper.prototype._downloadCSV.call(this, sContent, sFileName);
+        },
+        
+        _downloadCSV_legacy: function (sContent, sFileName) {
             const oLink = document.createElement("a");
             oLink.href = URL.createObjectURL(new Blob([sContent], { type: "text/csv;charset=utf-8;" }));
             oLink.download = sFileName;

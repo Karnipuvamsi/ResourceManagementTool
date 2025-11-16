@@ -4821,11 +4821,6 @@ sap.ui.define([
             this.byId("editButton_cus")?.setEnabled(false);
         },
 
-        // ✅ DEPRECATED: Old create function (kept for reference, can be removed)
-        onCreateCustomer: function () {
-            // Redirect to new submit function
-            this.onSubmitCustomer();
-        },
 
         // ✅ NEW: Submit function for Employee (handles both Create and Update)
         onSubmitEmployee: function () {
@@ -7202,12 +7197,9 @@ sap.ui.define([
         onMessagePopoverPress: CustomUtility.prototype._onMessagePopoverPress,
         onFileUploadChange: CustomUtility.prototype._onFileUploadChange,
         updateMessageButtonIcon: CustomUtility.prototype._updateMessageButtonIcon,
-        onMessagePopoverPress: CustomUtility.prototype._onMessagePopoverPress,
         onCloseUpload: CustomUtility.prototype._onCloseUpload,
         getMessagePopover: CustomUtility.prototype._getMessagePopover,
-        onDownload: CustomUtility.prototype._onDownloadPress,
         downloadCSV: CustomUtility.prototype._downloadCSV,
-        OnTemplateDownloadBtn: CustomUtility.prototype._OnTemplateDownloadBtn,
         onSplitButtonArrowPress: CustomUtility.prototype._onSplitButtonArrowPress,
         exportUploadTemplate: CustomUtility.prototype._exportUploadTemplate,
 
