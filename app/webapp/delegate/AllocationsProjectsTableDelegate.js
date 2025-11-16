@@ -13,41 +13,42 @@ sap.ui.define([
     "use strict";
 
     /**
-     * Projects Table Delegate
-     * Extends BaseTableDelegate with Projects-specific logic
+     * Allocations Projects Table Delegate
+     * Extends BaseTableDelegate with Projects-specific logic for Allocations Overview
+     * This is a separate delegate from ProjectsTableDelegate to avoid conflicts
      */
-    const ProjectsTableDelegate = Object.assign({}, BaseTableDelegate);
+    const AllocationsProjectsTableDelegate = Object.assign({}, BaseTableDelegate);
 
-    // ✅ Override default table ID for Projects
-    ProjectsTableDelegate._getDefaultTableId = function() {
+    // ✅ Override default table ID for Allocations Projects
+    AllocationsProjectsTableDelegate._getDefaultTableId = function() {
         return "Projects";
     };
 
     // ✅ Override delegate name for logging
-    ProjectsTableDelegate._getDelegateName = function() {
-        return "ProjectsTableDelegate";
+    AllocationsProjectsTableDelegate._getDelegateName = function() {
+        return "AllocationsProjectsTableDelegate";
     };
 
     // ✅ fetchProperties is inherited from BaseTableDelegate
-    // Only override if Projects-specific logic is needed
+    // Only override if Allocations Projects-specific logic is needed
 
-    // ✅ Projects-specific: Override updateBindingInfo to expand Opportunity and GPM associations
-    ProjectsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // ✅ Allocations Projects-specific: Override updateBindingInfo to expand Opportunity and GPM associations
+    AllocationsProjectsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         // Call parent implementation first (handles common logic)
         BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
         const sPath = oTable.getPayload()?.collectionPath || "Projects";
         const sCollectionPath = sPath.replace(/^\//, "");
         
-        // ✅ Projects-specific: Expand Opportunity and GPM associations
+        // ✅ Allocations Projects-specific: Expand Opportunity and GPM associations
         if (sCollectionPath === "Projects") {
             // ✅ Expand Opportunity and GPM associations (like Supervisor in Employees)
             oBindingInfo.parameters.$expand = "to_Opportunity,to_GPM";
         }
     };
 
-    // ✅ Projects-specific: addItem method with custom headers
-    ProjectsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
+    // ✅ Allocations Projects-specific: addItem method with custom headers
+    AllocationsProjectsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
@@ -57,13 +58,7 @@ sap.ui.define([
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
-            // Format label
-            // const sLabel = sPropertyName
-            //     // .replace(/([A-Z])/g, ' $1')
-            //     .replace(/([a-z])([A-Z])/g, '$1 $2')
-            //     .replace(/^./, function(str) { return str.toUpperCase(); })
-            //     .trim();
-            // Custom header mapping for Projects table
+            // Custom header mapping for Allocations Projects table
             const mCustomHeaders = {
                 "sapPId": "SAP PID",
                 "sfdcPId": "SFDC PID",
@@ -95,7 +90,7 @@ sap.ui.define([
 
                 sTooltip = `${sLabel} (Field: ${sPropertyName})`;
 
-                // console.log(`[ProjectTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
+                // console.log(`[AllocationsProjectsTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
             }
 
             // Assign to property metadata
@@ -108,9 +103,9 @@ sap.ui.define([
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
                     
-                    const oEnumConfig = ProjectsTableDelegate._getEnumConfig(sTableId, sPropertyName);
+                    const oEnumConfig = AllocationsProjectsTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
-                    const oAssocPromise = ProjectsTableDelegate._detectAssociation(oTable, sPropertyName);
+                    const oAssocPromise = AllocationsProjectsTableDelegate._detectAssociation(oTable, sPropertyName);
                     
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
@@ -261,7 +256,7 @@ sap.ui.define([
         });
     };
 
-    ProjectsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+    AllocationsProjectsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
         if (oColumn) {
             oColumn.destroy();
         }
@@ -270,7 +265,7 @@ sap.ui.define([
     };
 
     // Provide FilterField creation for Adaptation Filter panel in table p13n
-    ProjectsTableDelegate.getFilterDelegate = function () {
+    AllocationsProjectsTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
@@ -293,7 +288,7 @@ sap.ui.define([
                     const oModel = oTable.getModel();
                     const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
                     if (oMetaModel) {
-                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
                         const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
                         const sEdmType = oProp && oProp.$Type;
                         if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
@@ -319,5 +314,6 @@ sap.ui.define([
         };
     };
 
-    return ProjectsTableDelegate;
+    return AllocationsProjectsTableDelegate;
 });
+

@@ -22,7 +22,7 @@ sap.ui.define([
     CustomersTableDelegate._getDefaultTableId = function() {
         return "Customers";
     };
-
+        
     // ✅ Override delegate name for logging
     CustomersTableDelegate._getDelegateName = function() {
         return "CustomersTableDelegate";

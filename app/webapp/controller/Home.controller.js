@@ -3,8 +3,9 @@ sap.ui.define([
     "sap/ui/core/Fragment",
     "sap/ui/mdc/p13n/StateUtil",
     "sap/m/MessageToast",
-    "glassboard/utility/CustomUtility"
-], (Controller, Fragment, StateUtil, MessageToast, CustomUtility) => {
+    "glassboard/utility/CustomUtility",
+    "glassboard/delegate/BaseTableDelegate"
+], (Controller, Fragment, StateUtil, MessageToast, CustomUtility, BaseTableDelegate) => {
     "use strict";
 
     return Controller.extend("glassboard.controller.Home", {
@@ -211,9 +212,33 @@ sap.ui.define([
         // ✅ NEW: Extract fragment loading logic
         _loadFragmentIfNeeded: function (sKey, sPageId) {
             var oLogButton = this.byId("uploadLogButton");
+            
+            // ✅ CRITICAL: Clear property cache for this collection to force fresh property fetch
+            // This prevents the "0/0 columns" issue in View Settings dialog
+            const sCollectionMap = {
+                "customers": "Customers",
+                "opportunities": "Opportunities",
+                "projects": "Projects",
+                "employees": "Employees",
+                "sapid": "SAPIdStatuses",
+                "requirements": "Demands",
+                "overview": "Projects" // Allocations overview uses Projects collection
+            };
+            const sCollectionPath = sCollectionMap[sKey];
+            if (sCollectionPath && BaseTableDelegate && BaseTableDelegate.clearPropertyCache) {
+                BaseTableDelegate.clearPropertyCache(sCollectionPath);
+            }
+            
             if (sKey === "customers") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bCustomersLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("Customers");
+                    if (oTable) {
+                        this.initializeTable("Customers").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
                     return;
                 }
                 
@@ -324,6 +349,13 @@ sap.ui.define([
             } else if (sKey === "opportunities") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bOpportunitiesLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("Opportunities");
+                    if (oTable) {
+                        this.initializeTable("Opportunities").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
                     return;
                 }
                 
@@ -427,6 +459,13 @@ sap.ui.define([
                 
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bProjectsLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("Projects");
+                    if (oTable) {
+                        this.initializeTable("Projects").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
                     return;
                 }
                 
@@ -542,6 +581,13 @@ sap.ui.define([
             } else if (sKey === "employees") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeesLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("Employees");
+                    if (oTable) {
+                        this.initializeTable("Employees").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
                     return;
                 }
                 
@@ -1376,23 +1422,12 @@ sap.ui.define([
                 const oModel = this.getOwnerComponent().getModel();
                 if (oModel) {
                     // Use read instead of bindContext to avoid deferred binding issues
-                    oModel.read(`/Projects('${sProjectId}')`).then((oResult) => {
-                        if (oResult && oResult.projectName) {
-                            this._sSelectedProjectName = oResult.projectName;
-                            // Update the input field if it exists - ALWAYS set both value and selectedId
-                            const oProjectInput = this.byId("inputSapPId_demand");
-                            if (oProjectInput) {
-                                oProjectInput.setValue(oResult.projectName);
-                                oProjectInput.data("selectedId", sProjectId); // ✅ CRITICAL: Always set the ID
-                            }
-                        }
-                    }).catch((oError) => {
-                        // Even if fetch fails, ensure selectedId is set
-                        const oProjectInput = this.byId("inputSapPId_demand");
-                        if (oProjectInput) {
-                            oProjectInput.data("selectedId", sProjectId);
-                        }
-                    });
+                    // ✅ Display only ID (not name) for association fields
+                    const oProjectInput = this.byId("inputSapPId_demand");
+                    if (oProjectInput) {
+                        oProjectInput.setValue(sProjectId);
+                        oProjectInput.data("selectedId", sProjectId);
+                    }
                 }
             } else {
                 // ✅ Ensure selectedId is always set even if name is already available
@@ -2520,6 +2555,16 @@ sap.ui.define([
                     const aEmployeeNames = aEmployees.map(o => o.fullName).join(", ");
                     sap.m.MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
                     
+                    // ✅ CRITICAL: Clear selection from Find Resources table BEFORE closing dialog
+                    const oFindResourcesTable = this.byId("findResourcesTable");
+                    if (oFindResourcesTable) {
+                        if (oFindResourcesTable.removeSelections) {
+                            oFindResourcesTable.removeSelections();
+                        } else if (oFindResourcesTable.clearSelection) {
+                            oFindResourcesTable.clearSelection();
+                        }
+                    }
+                    
                     // Close dialog
                     this.onFindResourcesDialogClose();
                     
@@ -2540,7 +2585,6 @@ sap.ui.define([
                     }, 800);
                     
                     // ✅ NEW: Refresh Find Resources table and re-apply allocation filter
-                    const oFindResourcesTable = this.byId("findResourcesTable");
                     if (oFindResourcesTable && oFindResourcesTable.getBinding) {
                         setTimeout(() => {
                             const oBinding = oFindResourcesTable.getBinding("items");
@@ -2783,6 +2827,15 @@ sap.ui.define([
                     // Show success message with employee names
                     const aEmployeeNames = aEmployees.map(o => o.fullName).join(", ");
                     sap.m.MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
+                    
+                    // ✅ CRITICAL: Clear selection from Res table BEFORE closing dialog
+                    if (oResTable) {
+                        if (oResTable.clearSelection) {
+                            oResTable.clearSelection();
+                        } else if (oResTable.removeSelections) {
+                            oResTable.removeSelections();
+                        }
+                    }
                     
                     // ✅ CRITICAL: Close dialog - try multiple ways to ensure it closes
                     const oDialog = this.byId("allocateDialog") || this._oAllocateDialog;
@@ -3828,8 +3881,8 @@ sap.ui.define([
                     "state": sState || "",
                     "status": sStatus || "",
                     "vertical": sVertical || "",
-                    "startDate": sStartDate || null,
-                    "endDate": sEndDate || null
+                    "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,  // ✅ FIXED: Use null instead of empty string for Date
+                    "endDate": (sEndDate && sEndDate.trim() !== "") ? sEndDate : null  // ✅ FIXED: Use null instead of empty string for Date
                 };
                 
                 // Validation - ensure required fields are filled
@@ -5030,8 +5083,8 @@ sap.ui.define([
                     "Stage": sStage || "",
                     "salesSPOC": sSalesSPOC || "",
                     "deliverySPOC": sDeliverySPOC || "",
-                    "expectedStart": sExpectedStart || "",
-                    "expectedEnd": sExpectedEnd || "",
+                    "expectedStart": (sExpectedStart && sExpectedStart.trim() !== "") ? sExpectedStart : null,  // ✅ FIXED: Use null instead of empty string for Date
+                    "expectedEnd": (sExpectedEnd && sExpectedEnd.trim() !== "") ? sExpectedEnd : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "tcv": sTCV ? parseFloat(sTCV) : 0,
                     "customerId": sCustomerId || ""
                 };
@@ -5099,8 +5152,8 @@ sap.ui.define([
                     "Stage": sStage || "",
                     "salesSPOC": sSalesSPOC || "",
                     "deliverySPOC": sDeliverySPOC || "",
-                    "expectedStart": sExpectedStart || "",
-                    "expectedEnd": sExpectedEnd || "",
+                    "expectedStart": (sExpectedStart && sExpectedStart.trim() !== "") ? sExpectedStart : null,  // ✅ FIXED: Use null instead of empty string for Date
+                    "expectedEnd": (sExpectedEnd && sExpectedEnd.trim() !== "") ? sExpectedEnd : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "tcv": sTCV ? parseFloat(sTCV) : 0,
                     "customerId": sCustomerId || ""
                 };
@@ -5381,8 +5434,8 @@ sap.ui.define([
                 const oUpdateEntry = {
                     "sfdcPId": sSfdcProjId || "",
                     "projectName": sProjectName,
-                    "startDate": sStartDate || "",
-                    "endDate": sEndDate || "",
+                    "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,  // ✅ FIXED: Use null instead of empty string for Date
+                    "endDate": (sEndDate && sEndDate.trim() !== "") ? sEndDate : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "gpm": sGPM || "",
                     "projectType": sProjectType || "",
                     "status": sStatus || "",
@@ -5452,8 +5505,8 @@ sap.ui.define([
                 const oCreateEntry = {
                     "sfdcPId": sSfdcProjId || "",
                     "projectName": sProjectName,
-                    "startDate": sStartDate || "",
-                    "endDate": sEndDate || "",
+                    "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,  // ✅ FIXED: Use null instead of empty string for Date
+                    "endDate": (sEndDate && sEndDate.trim() !== "") ? sEndDate : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "gpm": sGPM || "",
                     "projectType": sProjectType || "",
                     "status": sStatus || "",
@@ -5714,30 +5767,55 @@ sap.ui.define([
         onEditCustomerForm: function () {
             const oTable = this.byId("Customers");
             const aSelectedContexts = oTable.getSelectedContexts();
-            if (aSelectedContexts && aSelectedContexts.length > 0) {
-                const oContext = aSelectedContexts[0];
-                // ✅ CRITICAL: Fetch fresh data from backend using requestObject
-                if (oContext.requestObject && typeof oContext.requestObject === "function") {
-                    oContext.requestObject().then(() => {
-                        // After fetching fresh data, populate form
-                        this._onCustDialogData(aSelectedContexts);
-                    }).catch(() => {
-                        // Fallback if request fails - still try to populate
-                        this._onCustDialogData(aSelectedContexts);
-                    });
-                } else {
-                    // No requestObject method - populate directly
-                    this._onCustDialogData(aSelectedContexts);
-                }
-            } else {
+            
+            // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                this._onCustDialogData([]);
                 sap.m.MessageToast.show("Please select a row to edit.");
+                return;
             }
+            
+            // ✅ CRITICAL: Clear form FIRST and wait for it to complete before populating
+            this._onCustDialogData([]);
+            
+            // ✅ CRITICAL: Use setTimeout to ensure form is completely cleared before populating
+            setTimeout(() => {
+                if (aSelectedContexts && aSelectedContexts.length > 0) {
+                    const oContext = aSelectedContexts[0];
+                    // ✅ CRITICAL: Fetch fresh data from backend using requestObject
+                    if (oContext.requestObject && typeof oContext.requestObject === "function") {
+                        oContext.requestObject().then(() => {
+                            // After fetching fresh data, populate form
+                            this._onCustDialogData(aSelectedContexts);
+                        }).catch(() => {
+                            // Fallback if request fails - still try to populate
+                            this._onCustDialogData(aSelectedContexts);
+                        });
+                    } else {
+                        // No requestObject method - populate directly
+                        this._onCustDialogData(aSelectedContexts);
+                    }
+                }
+            }, 50); // Small delay to ensure clear completes
         },
 
         onEditEmployeeForm: function () {
             const oTable = this.byId("Employees");
             const aSelectedContexts = oTable.getSelectedContexts();
-            if (aSelectedContexts && aSelectedContexts.length > 0) {
+            
+            // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                this._onEmpDialogData([]);
+                sap.m.MessageToast.show("Please select a row to edit.");
+                return;
+            }
+            
+            // ✅ CRITICAL: Clear form FIRST and wait for it to complete before populating
+            this._onEmpDialogData([]);
+            
+            // ✅ CRITICAL: Use setTimeout to ensure form is completely cleared before populating
+            setTimeout(() => {
+                if (aSelectedContexts && aSelectedContexts.length > 0) {
                 const oContext = aSelectedContexts[0];
                 const oModel = oTable.getModel();
                 // ✅ CRITICAL: Fetch fresh data from backend - use requestObject with refresh
@@ -5790,76 +5868,63 @@ sap.ui.define([
                         this._onEmpDialogData(aSelectedContexts);
                     }
                 }
-            } else {
-                sap.m.MessageToast.show("Please select a row to edit.");
             }
+            }, 50); // Small delay to ensure clear completes
         },
 
         onEditOpportunityForm: function () {
             const oTable = this.byId("Opportunities");
             const aSelectedContexts = oTable.getSelectedContexts();
-            if (aSelectedContexts && aSelectedContexts.length > 0) {
-                const oContext = aSelectedContexts[0];
-                const oModel = oTable.getModel();
-                // ✅ CRITICAL: Fetch fresh data from backend - use requestObject with refresh
-                if (oModel && oContext.getPath) {
-                    const sPath = oContext.getPath();
-                    // First, refresh the context to get fresh data from backend
+            
+            // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                this._onOppDialogData([]);
+                sap.m.MessageToast.show("Please select a row to edit.");
+                return;
+            }
+            
+            // ✅ CRITICAL: Clear form FIRST and wait for it to complete before populating
+            this._onOppDialogData([]);
+            
+            // ✅ CRITICAL: Use setTimeout to ensure form is completely cleared before populating
+            setTimeout(() => {
+                if (aSelectedContexts && aSelectedContexts.length > 0) {
+                    const oContext = aSelectedContexts[0];
+                    // ✅ CRITICAL: Fetch fresh data from backend - use requestObject
                     if (oContext.requestObject && typeof oContext.requestObject === "function") {
                         // Request fresh data from backend
                         oContext.requestObject().then(() => {
-                            const oObj = oContext.getObject();
-                            
-                            // Now fetch Customer association if needed
-                            const sCustomerId = oObj && oObj.customerId;
-                            if (sCustomerId && oModel) {
-                                // Fetch Customer name from backend
-                                const oCustomerContext = oModel.bindContext(`/Customers('${sCustomerId}')`, null, { deferred: true });
-                                oCustomerContext.execute().then(() => {
-                                    const oCustomer = oCustomerContext.getObject();
-                                    if (oCustomer && oObj) {
-                                        // Add customer data to object
-                                        oObj.to_Customer = oCustomer;
-                                    }
-                                    // Now populate form with fresh backend data
-                                    this._onOppDialogData(aSelectedContexts);
-                                }).catch(() => {
-                                    // If customer fetch fails, still populate form
-                                    this._onOppDialogData(aSelectedContexts);
-                                });
-                            } else {
-                                // No customer, populate directly with fresh backend data
-                                this._onOppDialogData(aSelectedContexts);
-                            }
+                            // Populate form - _onOppDialogData will handle customer name loading
+                            this._onOppDialogData(aSelectedContexts);
                         }).catch(() => {
-                            // If requestObject fails, try direct populate
+                            // If requestObject fails, still populate (async load will handle customer)
                             this._onOppDialogData(aSelectedContexts);
                         });
                     } else {
-                        // No requestObject, populate directly
-                        this._onOppDialogData(aSelectedContexts);
-                    }
-                } else {
-                    // No path, use requestObject directly
-                    if (oContext.requestObject && typeof oContext.requestObject === "function") {
-                        oContext.requestObject().then(() => {
-                            this._onOppDialogData(aSelectedContexts);
-                        }).catch(() => {
-                            this._onOppDialogData(aSelectedContexts);
-                        });
-                    } else {
+                        // No requestObject, populate directly (async load will handle customer)
                         this._onOppDialogData(aSelectedContexts);
                     }
                 }
-            } else {
-                sap.m.MessageToast.show("Please select a row to edit.");
-            }
+            }, 50); // Small delay to ensure clear completes
         },
 
         onEditProjectForm: function () {
             const oTable = this.byId("Projects");
             const aSelectedContexts = oTable.getSelectedContexts();
-            if (aSelectedContexts && aSelectedContexts.length > 0) {
+            
+            // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                this._onProjDialogData([]);
+                sap.m.MessageToast.show("Please select a row to edit.");
+                return;
+            }
+            
+            // ✅ CRITICAL: Clear form FIRST and wait for it to complete before populating
+            this._onProjDialogData([]);
+            
+            // ✅ CRITICAL: Use setTimeout to ensure form is completely cleared before populating
+            setTimeout(() => {
+                if (aSelectedContexts && aSelectedContexts.length > 0) {
                 const oContext = aSelectedContexts[0];
                 const oModel = oTable.getModel();
                 // ✅ CRITICAL: Fetch fresh data from backend - use requestObject with refresh
@@ -5935,9 +6000,8 @@ sap.ui.define([
                         this._onProjDialogData(aSelectedContexts);
                     }
                 }
-            } else {
-                sap.m.MessageToast.show("Please select a row to edit.");
             }
+            }, 50); // Small delay to ensure clear completes
         },
 
         // ✅ NEW: Submit function for Demand (handles both Create and Update)
@@ -6389,7 +6453,20 @@ sap.ui.define([
         onEditDemandForm: function () {
             const oTable = this.byId("Demands");
             const aSelectedContexts = oTable.getSelectedContexts();
-            if (aSelectedContexts && aSelectedContexts.length > 0) {
+            
+            // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
+            if (!aSelectedContexts || aSelectedContexts.length === 0) {
+                this._onDemandDialogData([]);
+                sap.m.MessageToast.show("Please select a row to edit.");
+                return;
+            }
+            
+            // ✅ CRITICAL: Clear form FIRST and wait for it to complete before populating
+            this._onDemandDialogData([]);
+            
+            // ✅ CRITICAL: Use setTimeout to ensure form is completely cleared before populating
+            setTimeout(() => {
+                if (aSelectedContexts && aSelectedContexts.length > 0) {
                 const oContext = aSelectedContexts[0];
                 const oModel = oTable.getModel();
                 // Fetch fresh data from backend
@@ -6432,9 +6509,8 @@ sap.ui.define([
                         this._onDemandDialogData(aSelectedContexts);
                     }
                 }
-            } else {
-                sap.m.MessageBox.show("Please select a row to edit.");
             }
+            }, 50); // Small delay to ensure clear completes
         },
 
         // ✅ NEW: Cancel function for Employee form
@@ -7346,8 +7422,8 @@ sap.ui.define([
                 const oProject = oContext.getObject();
                 const sProjectId = oProject.sapPId || "";
                 
-                // Display project name, but store ID in data attribute
-                oDialog._oInputField.setValue(oProject.projectName || "");
+                // ✅ Display only ID (not name) for association fields
+                oDialog._oInputField.setValue(sProjectId || "");
                 oDialog._oInputField.data("selectedId", sProjectId);
                 
                 // ✅ CRITICAL: Store project ID for AllocateDialog demand filtering
@@ -7598,10 +7674,10 @@ sap.ui.define([
             const oContext = oSelectedItem.getBindingContext();
             if (oContext && oDialog._oInputField) {
                 const oDemand = oContext.getObject();
-                // Display demand info (skill + band), but store demand ID in data attribute
-                const sDisplayText = `${oDemand.skill || ""} - ${oDemand.band || ""} (Qty: ${oDemand.quantity || 0})`;
-                oDialog._oInputField.setValue(sDisplayText);
-                oDialog._oInputField.data("selectedId", oDemand.demandId || oDemand.id);
+                // ✅ Display only ID (not description) for association fields
+                const sDemandId = oDemand.demandId || oDemand.id || "";
+                oDialog._oInputField.setValue(sDemandId);
+                oDialog._oInputField.data("selectedId", sDemandId);
             }
             
             if (oTable && oTable.clearSelection) {
@@ -7677,8 +7753,8 @@ sap.ui.define([
                 return;
             }
             
-            // Display customer name, but store ID in data attribute
-            oDialog._oInputField.setValue(oCustomer.customerName || "");
+            // ✅ Display only ID (not name) for association fields
+            oDialog._oInputField.setValue(oCustomer.SAPcustId || "");
             oDialog._oInputField.data("selectedId", oCustomer.SAPcustId);
             
             // Also update/create the model with the ID (for backend submission)
@@ -7822,8 +7898,8 @@ sap.ui.define([
                 return;
             }
             
-            // Display opportunity name, but store ID in data attribute
-            oDialog._oInputField.setValue(oOpportunity.opportunityName || "");
+            // ✅ Display only ID (not name) for association fields
+            oDialog._oInputField.setValue(oOpportunity.sapOpportunityId || "");
             oDialog._oInputField.data("selectedId", oOpportunity.sapOpportunityId);
             
             // Also update/create the model with the ID (for backend submission)
@@ -7971,11 +8047,10 @@ sap.ui.define([
             const bIsGPMField = oDialog._isGPMField === true;
             const bIsSalesSPOC = oDialog._isSalesSPOC === true;
             const bIsDeliverySPOC = oDialog._isDeliverySPOC === true;
-            const sDisplayValue = oEmployee.fullName || oEmployee.ohrId || "";
             const sStoredId = oEmployee.ohrId || "";
             
-            // Display name in UI, store ID in data attribute
-            oDialog._oInputField.setValue(sDisplayValue);
+            // ✅ Display only ID (not name) for association fields
+            oDialog._oInputField.setValue(sStoredId);
             oDialog._oInputField.data("selectedId", sStoredId);
             
             // ✅ CRITICAL: Close dialog FIRST before doing table updates

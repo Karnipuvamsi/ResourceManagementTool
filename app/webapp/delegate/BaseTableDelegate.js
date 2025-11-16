@@ -93,9 +93,30 @@ sap.ui.define([
     // ============================================
 
     /**
+     * Property cache to avoid re-fetching properties multiple times
+     * Key: collectionPath, Value: Promise resolving to properties array
+     */
+    BaseTableDelegate._mPropertyCache = {};
+
+    /**
+     * Clear property cache for a specific collection or all collections
+     * @param {string} sCollectionPath - Optional collection path to clear, or undefined to clear all
+     */
+    BaseTableDelegate.clearPropertyCache = function(sCollectionPath) {
+        if (sCollectionPath) {
+            delete BaseTableDelegate._mPropertyCache[sCollectionPath];
+        } else {
+            // Clear all cached properties
+            BaseTableDelegate._mPropertyCache = {};
+        }
+    };
+
+    /**
      * Fetch properties from OData metadata
      * This is a common implementation that works for most entities
      * Override in specific delegates if custom logic is needed
+     * 
+     * ✅ FIXED: Added caching and retry logic to prevent race conditions
      * 
      * @param {object} oTable - MDC Table instance
      * @returns {Promise<Array>} Promise resolving to array of property definitions
@@ -107,17 +128,63 @@ sap.ui.define([
         }
 
         const oMetaModel = oModel.getMetaModel();
+        if (!oMetaModel) {
+            return Promise.resolve([]);
+        }
 
         // Get collection path from payload
         const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || this._getDefaultTableId();
 
-        // Wait for metadata to be loaded
-        return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
+        // ✅ CRITICAL: Check cache first - if properties are already fetched, return cached promise
+        if (BaseTableDelegate._mPropertyCache[sCollectionPath]) {
+            return BaseTableDelegate._mPropertyCache[sCollectionPath];
+        }
+
+        // ✅ CRITICAL: Create and cache the promise to prevent multiple simultaneous fetches
+        const oPropertiesPromise = this._fetchPropertiesInternal(oMetaModel, sCollectionPath);
+        BaseTableDelegate._mPropertyCache[sCollectionPath] = oPropertiesPromise;
+
+        // ✅ CRITICAL: If promise fails, remove from cache so it can be retried
+        oPropertiesPromise.catch(() => {
+            delete BaseTableDelegate._mPropertyCache[sCollectionPath];
+        });
+
+        return oPropertiesPromise;
+    };
+
+    /**
+     * Internal method to fetch properties with retry logic
+     * @param {object} oMetaModel - OData metadata model
+     * @param {string} sCollectionPath - Collection path
+     * @param {number} iRetryCount - Current retry count
+     * @returns {Promise<Array>} Promise resolving to properties array
+     */
+    BaseTableDelegate._fetchPropertiesInternal = function (oMetaModel, sCollectionPath, iRetryCount) {
+        iRetryCount = iRetryCount || 0;
+        const iMaxRetries = 5; // ✅ Increased retries for slower networks
+        const iRetryDelay = 300; // ✅ Increased delay to 300ms for better reliability
+
+        // ✅ CRITICAL: First ensure metadata is loaded - wait for metadata to be ready
+        // Check if metadata is already loaded by trying to access a known path
+        return Promise.resolve()
+            .then(() => {
+                // Try to check if metadata is ready
+                if (oMetaModel && typeof oMetaModel.requestObject === "function") {
+                    return oMetaModel.requestObject(`/${sCollectionPath}/$Type`);
+                }
+                throw new Error("MetaModel not ready");
+            })
             .then(function (sEntityTypePath) {
+                if (!sEntityTypePath) {
+                    throw new Error("Entity type path not found");
+                }
                 // Request the entity type definition
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
             })
             .then(function (oEntityType) {
+                if (!oEntityType) {
+                    throw new Error("Entity type not found");
+                }
 
                 const aProperties = [];
 
@@ -149,13 +216,40 @@ sap.ui.define([
                     }
                 });
 
+                // ✅ CRITICAL: Only return if we have properties, otherwise retry
+                if (aProperties.length === 0 && iRetryCount < iMaxRetries) {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            // Retry with incremented count
+                            BaseTableDelegate._fetchPropertiesInternal(oMetaModel, sCollectionPath, iRetryCount + 1)
+                                .then(resolve)
+                                .catch(() => resolve([])); // Return empty on final failure
+                        }, iRetryDelay);
+                    });
+                }
+
                 return aProperties;
             })
             .catch(function (oError) {
-
-                // Try to get fallback properties from specific delegate
-                const aFallbackProperties = this._getFallbackProperties ? this._getFallbackProperties(sCollectionPath) : [];
-                return aFallbackProperties;
+                // ✅ CRITICAL: Retry if metadata not ready yet
+                if (iRetryCount < iMaxRetries) {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            // Retry with incremented count
+                            BaseTableDelegate._fetchPropertiesInternal(oMetaModel, sCollectionPath, iRetryCount + 1)
+                                .then(resolve)
+                                .catch(() => {
+                                    // Try fallback properties on final failure
+                                    const aFallbackProperties = this._getFallbackProperties ? this._getFallbackProperties(sCollectionPath) : [];
+                                    resolve(aFallbackProperties);
+                                });
+                        }, iRetryDelay);
+                    });
+                } else {
+                    // Final retry failed - try fallback properties
+                    const aFallbackProperties = this._getFallbackProperties ? this._getFallbackProperties(sCollectionPath) : [];
+                    return aFallbackProperties;
+                }
             }.bind(this));
     };
 

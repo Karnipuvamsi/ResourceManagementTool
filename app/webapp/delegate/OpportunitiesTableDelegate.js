@@ -33,14 +33,14 @@ sap.ui.define([
     OpportunitiesTableDelegate._getFallbackProperties = function(sCollectionPath) {
         if (sCollectionPath === "Opportunities") {
             return [
-                { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
-                { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opportunity ID", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                { name: "probability", path: "probability", label: "Probability", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
-                { name: "expectedEnd", path: "expectedEnd", label: "Expected End", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
-                { name: "customerId", path: "customerId", label: "Customer ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true }
+                        { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
+                        { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opportunity ID", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                        { name: "probability", path: "probability", label: "Probability", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                        { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                        { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                        { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
+                        { name: "expectedEnd", path: "expectedEnd", label: "Expected End", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
+                        { name: "customerId", path: "customerId", label: "Customer ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true }
             ];
         }
         return [];
@@ -59,7 +59,7 @@ sap.ui.define([
             // Expand Customer association for Opportunity table
             oBindingInfo.parameters.$expand = "to_Customer";
         }
-
+        
     };
 
     // ✅ Opportunities-specific: addItem method with custom headers
@@ -224,37 +224,9 @@ sap.ui.define([
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
-                            // Create a formatter to resolve association name with fallback
-                            const fnAssocNameFormatter = function(sId) {
-                                if (!sId) return "";
-                                // Try to get from expanded association first
-                                const oContext = this.getBindingContext();
-                                if (oContext) {
-                                    try {
-                                        const oRowData = oContext.getObject();
-                                        const sAssocEntity = sAssocPath.split("/")[0]; // e.g., "to_Customer"
-                                        const sAssocField = sAssocPath.split("/")[1]; // e.g., "customerName"
-                                        
-                                        // Check if association is expanded
-                                        if (oRowData[sAssocEntity] && oRowData[sAssocEntity][sAssocField]) {
-                                            return oRowData[sAssocEntity][sAssocField];
-                                        }
-                                    } catch (e) {
-                                        // Association not expanded, will use fallback
-                                    }
-                                }
-                                // Fallback: return ID if name not available
-                                return sId;
-                            };
-                            
-                            // Display the name from association path with formatter fallback
+                            // ✅ Display only ID (not description) for association fields
                             oField = new Field({
-                                value: {
-                                    path: sPropertyName,
-                                    formatter: fnAssocNameFormatter
-                                },
-                                // Also try direct association path binding as primary source
-                                additionalValue: "{" + sAssocPath + "}", // Try association path
+                                value: "{" + sPropertyName + "}",
                                 contentEdit: oComboBox,
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],

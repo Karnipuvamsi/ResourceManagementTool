@@ -13,41 +13,84 @@ sap.ui.define([
     "use strict";
 
     /**
-     * Projects Table Delegate
-     * Extends BaseTableDelegate with Projects-specific logic
+     * Allocations Employees Table Delegate
+     * Extends BaseTableDelegate with Employees-specific logic for Allocations Overview
+     * This is a separate delegate from EmployeesTableDelegate to avoid conflicts
      */
-    const ProjectsTableDelegate = Object.assign({}, BaseTableDelegate);
+    const AllocationsEmployeesTableDelegate = Object.assign({}, BaseTableDelegate);
 
-    // ✅ Override default table ID for Projects
-    ProjectsTableDelegate._getDefaultTableId = function() {
-        return "Projects";
+    // ✅ Override default table ID for Allocations Employees
+    AllocationsEmployeesTableDelegate._getDefaultTableId = function() {
+        return "Employees";
     };
 
     // ✅ Override delegate name for logging
-    ProjectsTableDelegate._getDelegateName = function() {
-        return "ProjectsTableDelegate";
+    AllocationsEmployeesTableDelegate._getDelegateName = function() {
+        return "AllocationsEmployeesTableDelegate";
     };
 
     // ✅ fetchProperties is inherited from BaseTableDelegate
-    // Only override if Projects-specific logic is needed
+    // Only override if Allocations Employees-specific logic is needed
 
-    // ✅ Projects-specific: Override updateBindingInfo to expand Opportunity and GPM associations
-    ProjectsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // ✅ Allocations Employees-specific: Override updateBindingInfo to add Supervisor expansion and allocation filter
+    AllocationsEmployeesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         // Call parent implementation first (handles common logic)
         BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-        const sPath = oTable.getPayload()?.collectionPath || "Projects";
+        const sPath = oTable.getPayload()?.collectionPath || "Employees";
         const sCollectionPath = sPath.replace(/^\//, "");
         
-        // ✅ Projects-specific: Expand Opportunity and GPM associations
-        if (sCollectionPath === "Projects") {
-            // ✅ Expand Opportunity and GPM associations (like Supervisor in Employees)
-            oBindingInfo.parameters.$expand = "to_Opportunity,to_GPM";
+        // ✅ Allocations Employees-specific: Expand Supervisor association
+        if (sCollectionPath === "Employees") {
+            // Expand Supervisor association for Employee table
+            oBindingInfo.parameters.$expand = "to_Supervisor($select=fullName,ohrId)";
+            
+            // ✅ For Allocations Employees table, ALWAYS apply base allocation filter
+            // Filter: empallocpercentage <= 95 AND status != "Resigned"
+            const sTableId = oTable.getId ? oTable.getId() : "";
+            
+            // Allocations Employees table uses "Employees" collection and has "Res" in its ID
+            const bIsAllocationsEmployeesTable = sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res";
+            
+            if (bIsAllocationsEmployeesTable) {
+                const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
+                const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
+                const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+                
+                // Initialize filters array if it doesn't exist
+                if (!oBindingInfo.filters) {
+                    oBindingInfo.filters = [];
+                }
+                
+                // Convert to array if it's a single filter
+                let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
+                
+                // Check if allocation filter is already present (avoid duplicates)
+                const bHasAllocationFilter = aFilters.some(f => {
+                    if (!f || !f.getFilters) return false;
+                    const aSubFilters = f.getFilters();
+                    if (!aSubFilters || !Array.isArray(aSubFilters) || aSubFilters.length !== 2) return false;
+                    return aSubFilters.some(sf => 
+                        sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
+                    ) && aSubFilters.some(sf => 
+                        sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                    );
+                });
+                
+                // Add allocation filter if not already present
+                if (!bHasAllocationFilter) {
+                    aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
+                    aFilters.push(oAllocationFilter);
+                    oBindingInfo.filters = aFilters.length === 1 ? aFilters[0] : aFilters;
+                }
+            }
         }
+
     };
 
-    // ✅ Projects-specific: addItem method with custom headers
-    ProjectsTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
+    // ✅ Allocations Employees-specific: addItem method with custom headers
+    AllocationsEmployeesTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
+
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
@@ -57,23 +100,24 @@ sap.ui.define([
                 return Promise.reject("Property not found: " + sPropertyName);
             }
 
-            // Format label
-            // const sLabel = sPropertyName
-            //     // .replace(/([A-Z])/g, ' $1')
-            //     .replace(/([a-z])([A-Z])/g, '$1 $2')
-            //     .replace(/^./, function(str) { return str.toUpperCase(); })
-            //     .trim();
-            // Custom header mapping for Projects table
+            // Custom header mapping for Allocations Employees table
             const mCustomHeaders = {
-                "sapPId": "SAP PID",
-                "sfdcPId": "SFDC PID",
-                "projectName": "Project Name",
-                "startDate": "Start Date",
-                "endDate": "End Date",
-                "gpm": "GPM",
-                "projectType": "Project Type",
-                "oppId": "Opp Name",
-                "status": "Project Status"
+                "ohrId": "OHR ID",
+                "fullName": "Full Name",
+                "mailid": "Email",
+                "gender": "Gender",
+                "employeeType": "Employee Type",
+                "doj": "Date of Joining",
+                "band": "Band",
+                "role": "Role",
+                "location": "Location",
+                "supervisorOHR": "Supervisor",
+                "skills": "Skills",
+                "country": "Country",
+                "city": "City",
+                "lwd": "Last Working Date",
+                "status": "Status",
+                "empallocpercentage": "Allocation %"
             };
 
             // Smart header generation with better fallback
@@ -83,35 +127,38 @@ sap.ui.define([
             if (mCustomHeaders[sPropertyName]) {
                 // Use custom header if available
                 sLabel = mCustomHeaders[sPropertyName];
-                sTooltip = sLabel; // Same as label
+                sTooltip = sLabel; // Use same text for tooltip
             } else {
-                // Smart fallback for any new or unmapped fields
+                // Smart fallback for new fields
                 sLabel = sPropertyName
-                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')   // e.g., "SAPId" → "SAP Id"
-                    .replace(/([a-z])([A-Z])/g, '$1 $2')         // e.g., "projectName" → "Project Name"
-                    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')    // e.g., "OHRId" → "OHR Id"
-                    .replace(/^./, str => str.toUpperCase())     // Capitalize first letter
+                    // Handle common patterns
+                    .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')  // "SAPId" → "SAP Id"
+                    .replace(/([a-z])([A-Z])/g, '$1 $2')        // "customerName" → "customer Name"
+                    .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')   // "OHRId" → "OHR Id"
+                    .replace(/^./, function (str) { return str.toUpperCase(); })
                     .trim();
 
+                // Enhanced tooltip for new fields
                 sTooltip = `${sLabel} (Field: ${sPropertyName})`;
 
-                // console.log(`[ProjectTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
+                // Log new field for easy identification
+                // console.log(`[AllocationsEmployeesTableDelegate] New field detected: "${sPropertyName}" → "${sLabel}"`);
             }
-
-            // Assign to property metadata
-            oProperty.label = sLabel;
-            oProperty.tooltip = sTooltip;
-
 
             // Load the Column module and create column
             return new Promise(function (resolve) {
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
-                    const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
+                    // ✅ FIXED: Get table ID from collectionPath for table-specific edit state
+                    const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
                     
-                    const oEnumConfig = ProjectsTableDelegate._getEnumConfig(sTableId, sPropertyName);
+                    // ✅ STEP 1: Check if enum field (fixed values)
+                    const oEnumConfig = AllocationsEmployeesTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
-                    const oAssocPromise = ProjectsTableDelegate._detectAssociation(oTable, sPropertyName);
+
+                    // ✅ STEP 2: Check if association field (dynamic from OData)
+                    const oAssocPromise = AllocationsEmployeesTableDelegate._detectAssociation(oTable, sPropertyName);
                     
+                    // Helper function for edit mode formatter
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
                         if (sPath && sPath.includes(",")) {
@@ -121,6 +168,7 @@ sap.ui.define([
                         return sPath === rowPath ? "Editable" : "Display";
                     };
 
+                    // Helper function for editable binding
                     const oEditableBinding = {
                         parts: [{ path: `edit>/${sTableId}/editingPath` }],
                         mode: "TwoWay",
@@ -139,20 +187,33 @@ sap.ui.define([
                         let oField;
 
                         if (bIsEnum) {
+                            // ✅ METHOD 1: ENUM - ComboBox with static values
                             const aItems = oEnumConfig.values.map(function(sVal, iIndex) {
                                 return new Item({
                                     key: sVal,
                                     text: oEnumConfig.labels[iIndex] || sVal
                                 });
                             });
+
+                            // ✅ Create formatter to display label instead of key in display mode
+                            const fnEnumFormatter = function(sKey) {
+                                if (!sKey) return "";
+                                const iIndex = oEnumConfig.values.indexOf(sKey);
+                                return iIndex >= 0 ? oEnumConfig.labels[iIndex] : sKey;
+                            };
+
                             const oComboBox = new ComboBox({
                                 value: "{" + sPropertyName + "}",
                                 selectedKey: "{" + sPropertyName + "}",
                                 items: aItems,
                                 editable: oEditableBinding
                             });
+
                             oField = new Field({
-                                value: "{" + sPropertyName + "}",
+                                value: {
+                                    path: sPropertyName,
+                                    formatter: fnEnumFormatter
+                                },
                                 contentEdit: oComboBox,
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
@@ -160,30 +221,9 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
+
                         } else if (bIsAssoc) {
-                            // ✅ ASSOCIATION: Display name from association, but store ID for editing
-                            // Determine association path based on property
-                            let sAssocPath = "";
-                            if (sPropertyName === "customerId") {
-                                sAssocPath = "to_Customer/customerName"; // Display customer name
-                            } else if (sPropertyName === "supervisorOHR") {
-                                sAssocPath = "to_Supervisor/fullName"; // Display supervisor name
-                            } else if (sPropertyName === "oppId") {
-                                sAssocPath = "to_Opportunity/opportunityName"; // Display opportunity name
-                            } else {
-                                // Fallback: try to construct association path
-                                sAssocPath = sPropertyName.replace("Id", "").replace("OHR", "");
-                                if (sAssocPath === "customer") {
-                                    sAssocPath = "to_Customer/customerName";
-                                } else if (sAssocPath === "opp") {
-                                    sAssocPath = "to_Opportunity/opportunityName";
-                                } else if (sAssocPath === "supervisor") {
-                                    sAssocPath = "to_Supervisor/fullName";
-                                } else {
-                                    sAssocPath = sPropertyName; // Fallback to ID
-                                }
-                            }
-                            
+                            // ✅ METHOD 2: ASSOCIATION - ComboBox bound to OData (compatible with UI5 1.141.1)
                             const oModel = oTable.getModel();
                             const sCollectionPath = "/" + oAssocConfig.targetEntity;
                             
@@ -206,7 +246,6 @@ sap.ui.define([
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
-                            // ✅ Display only ID (not description) for association fields
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
                                 contentEdit: oComboBox,
@@ -216,7 +255,9 @@ sap.ui.define([
                                     formatter: fnEditModeFormatter
                                 }
                             });
+
                         } else {
+                            // ✅ Regular text field
                             oField = new Field({
                                 value: "{" + sPropertyName + "}",
                                 tooltip: "{" + sPropertyName + "}",
@@ -233,11 +274,12 @@ sap.ui.define([
                             dataProperty: sPropertyName,
                             propertyKey: sPropertyName,
                             header: sLabel,
-                            template: oField
+                            template: oField,
                         });
 
                         resolve(oColumn);
                     }).catch(function(oError) {
+                        // Fallback to regular field
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -252,7 +294,7 @@ sap.ui.define([
                             dataProperty: sPropertyName,
                             propertyKey: sPropertyName,
                             header: sLabel,
-                            template: oField
+                            template: oField,
                         });
                         resolve(oColumn);
                     });
@@ -261,7 +303,8 @@ sap.ui.define([
         });
     };
 
-    ProjectsTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+    AllocationsEmployeesTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
+
         if (oColumn) {
             oColumn.destroy();
         }
@@ -270,7 +313,7 @@ sap.ui.define([
     };
 
     // Provide FilterField creation for Adaptation Filter panel in table p13n
-    ProjectsTableDelegate.getFilterDelegate = function () {
+    AllocationsEmployeesTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
@@ -293,7 +336,7 @@ sap.ui.define([
                     const oModel = oTable.getModel();
                     const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
                     if (oMetaModel) {
-                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
                         const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
                         const sEdmType = oProp && oProp.$Type;
                         if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
@@ -306,7 +349,27 @@ sap.ui.define([
                     }
                 } catch (e) { /* ignore */ }
 
-                return Promise.resolve(new FilterField({
+                // ✅ Determine if property is a string type for case-insensitive filtering
+                let bIsString = false;
+                try {
+                    const oModel = oTable.getModel();
+                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
+                    if (oMetaModel) {
+                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
+                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
+                        const sEdmType = oProp && oProp.$Type;
+                        if (sEdmType === "Edm.String") {
+                            bIsString = true;
+                        }
+                    }
+                } catch (e) {
+                    // If metadata check fails, check dataType
+                    if (sDataType === "sap.ui.model.type.String") {
+                        bIsString = true;
+                    }
+                }
+                
+                const oFilterFieldConfig = {
                     label: String(sName)
                         .replace(/([A-Z])/g, ' $1')
                         .replace(/^./, function (str) { return str.toUpperCase(); })
@@ -314,10 +377,18 @@ sap.ui.define([
                     propertyKey: sName,
                     conditions: "{$filters>/conditions/" + sName + "}",
                     dataType: sDataType
-                }));
+                };
+                
+                // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
+                if (bIsString) {
+                    oFilterFieldConfig.caseSensitive = false;
+                }
+                
+                return Promise.resolve(new FilterField(oFilterFieldConfig));
             }
         };
     };
 
-    return ProjectsTableDelegate;
+    return AllocationsEmployeesTableDelegate;
 });
+

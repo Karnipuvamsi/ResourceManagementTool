@@ -88,9 +88,26 @@ sap.ui.define([
                 // Get the delegate
                 const oDelegate = oTable.getControlDelegate();
 
-                // Build initial state using delegate properties to align with MDC p13n
+                // ✅ CRITICAL: Ensure properties are fetched and cached before personalization can use them
+                // This prevents the "0/0 columns" issue in View Settings dialog
                 return oDelegate.fetchProperties(oTable)
                     .then((aProperties) => {
+                        // ✅ CRITICAL: Verify we have properties before proceeding
+                        if (!aProperties || aProperties.length === 0) {
+                            // If no properties, wait a bit and retry (metadata might still be loading)
+                            return new Promise((resolve) => {
+                                setTimeout(() => {
+                                    oDelegate.fetchProperties(oTable).then((aRetryProperties) => {
+                                        if (aRetryProperties && aRetryProperties.length > 0) {
+                                            resolve(aRetryProperties);
+                                        } else {
+                                            // Still no properties - proceed with empty array
+                                            resolve([]);
+                                        }
+                                    }).catch(() => resolve([]));
+                                }, 500);
+                            });
+                        }
 
                         // Prepare items for external state (visible true for all non-$ props)
                         const aItems = aProperties
@@ -670,33 +687,12 @@ sap.ui.define([
             this.byId("inputLocation_emp")?.setValue(oObj.location || "");
             this.byId("inputCity_emp")?.setValue(oObj.city || "");
 
-            // ✅ Supervisor field - display name from association, store ID
+            // ✅ Supervisor field - display only ID (not name)
             const sSupervisorId = oObj.supervisorOHR || "";
             const oSupervisorInput = this.byId("inputSupervisor_emp");
-            if (sSupervisorId && oSupervisorInput) {
-                // First check association (same pattern as Customer, Opportunity, GPM)
-                if (oObj.to_Supervisor && oObj.to_Supervisor.fullName) {
-                    oSupervisorInput.setValue(oObj.to_Supervisor.fullName);
-                    oSupervisorInput.data("selectedId", sSupervisorId);
-                } else {
-                    // Load async if association not available
-                    oSupervisorInput.setValue(sSupervisorId);
-                    oSupervisorInput.data("selectedId", sSupervisorId);
-                    const oModel = this.getView().getModel();
-                    if (oModel && /^\d{6,10}$/.test(sSupervisorId.trim())) {
-                        const oEmployeeContext = oModel.bindContext(`/Employees('${sSupervisorId}')`, null, { deferred: true });
-                        oEmployeeContext.execute().then(() => {
-                            const oSupervisor = oEmployeeContext.getObject();
-                            if (oSupervisor && oSupervisor.fullName) {
-                                oSupervisorInput.setValue(oSupervisor.fullName);
-                                oSupervisorInput.data("selectedId", sSupervisorId);
-                            }
-                        }).catch(() => { });
-                    }
-                }
-            } else if (oSupervisorInput) {
-                oSupervisorInput.setValue("");
-                oSupervisorInput.data("selectedId", "");
+            if (oSupervisorInput) {
+                oSupervisorInput.setValue(sSupervisorId);
+                oSupervisorInput.data("selectedId", sSupervisorId);
             }
 
             // ✅ Load skills from employee.skills field (comma-separated string)
@@ -779,127 +775,50 @@ sap.ui.define([
             this.byId("inputBusinessUnit_oppr")?.setValue(oObj.businessUnit || "");
             this.byId("inputProbability_oppr")?.setSelectedKey(oObj.probability || "");
             this.byId("inputStage_oppr")?.setSelectedKey(oObj.Stage || "");
-            // ✅ Sales SPOC field - load employee name from OHR ID
+            // ✅ Sales SPOC field - display only ID (not name)
             const sSalesSPOCId = oObj.salesSPOC || "";
             const oSalesSPOCInput = this.byId("inputSalesSPOC_oppr");
-            if (sSalesSPOCId && oSalesSPOCInput) {
+            if (oSalesSPOCInput) {
                 oSalesSPOCInput.setValue(sSalesSPOCId);
                 oSalesSPOCInput.data("selectedId", sSalesSPOCId);
-                const oModel = this.getView().getModel();
-                if (oModel && /^\d{6,10}$/.test(sSalesSPOCId.trim())) {
-                    const oEmployeeContext = oModel.bindContext(`/Employees('${sSalesSPOCId}')`, null, { deferred: true });
-                    oEmployeeContext.execute().then(() => {
-                        const oEmployee = oEmployeeContext.getObject();
-                        if (oEmployee && oEmployee.fullName) {
-                            oSalesSPOCInput.setValue(oEmployee.fullName);
-                            oSalesSPOCInput.data("selectedId", sSalesSPOCId);
-                        }
-                    }).catch(() => { });
-                }
-            } else if (oSalesSPOCInput) {
-                oSalesSPOCInput.setValue("");
-                oSalesSPOCInput.data("selectedId", "");
             }
 
-            // ✅ Delivery SPOC field - load employee name from OHR ID
+            // ✅ Delivery SPOC field - display only ID (not name)
             const sDeliverySPOCId = oObj.deliverySPOC || "";
             const oDeliverySPOCInput = this.byId("inputDeliverySPOC_oppr");
-            if (sDeliverySPOCId && oDeliverySPOCInput) {
+            if (oDeliverySPOCInput) {
                 oDeliverySPOCInput.setValue(sDeliverySPOCId);
                 oDeliverySPOCInput.data("selectedId", sDeliverySPOCId);
-                const oModel = this.getView().getModel();
-                if (oModel && /^\d{6,10}$/.test(sDeliverySPOCId.trim())) {
-                    const oEmployeeContext = oModel.bindContext(`/Employees('${sDeliverySPOCId}')`, null, { deferred: true });
-                    oEmployeeContext.execute().then(() => {
-                        const oEmployee = oEmployeeContext.getObject();
-                        if (oEmployee && oEmployee.fullName) {
-                            oDeliverySPOCInput.setValue(oEmployee.fullName);
-                            oDeliverySPOCInput.data("selectedId", sDeliverySPOCId);
-                        }
-                    }).catch(() => { });
-                }
-            } else if (oDeliverySPOCInput) {
-                oDeliverySPOCInput.setValue("");
-                oDeliverySPOCInput.data("selectedId", "");
             }
 
             this.byId("inputExpectedStart_oppr")?.setValue(oObj.expectedStart || "");
             this.byId("inputExpectedEnd_oppr")?.setValue(oObj.expectedEnd || "");
             this.byId("inputTCV_oppr")?.setValue(oObj.tcv != null ? String(oObj.tcv) : "");
 
-            // ✅ Customer field - same pattern as Employee Supervisor
+            // ✅ Customer field - always load customer name if customerId exists
+            // ✅ Customer field - display only ID (not name)
             const sCustomerId = oObj.customerId || "";
             const oCustomerInput = this.byId("inputCustomerId_oppr");
-            if (sCustomerId && oCustomerInput) {
-                // First check association (same as Supervisor)
-                if (oObj.to_Customer && oObj.to_Customer.customerName) {
-                    oCustomerInput.setValue(oObj.to_Customer.customerName);
-                    oCustomerInput.data("selectedId", sCustomerId);
-                } else {
-                    // Load async (same as Supervisor)
-                    oCustomerInput.setValue(sCustomerId);
-                    oCustomerInput.data("selectedId", sCustomerId);
-                    const oModel = this.getView().getModel();
-                    if (oModel) {
-                        const oCustomerContext = oModel.bindContext(`/Customers('${sCustomerId}')`, null, { deferred: true });
-                        oCustomerContext.execute().then(() => {
-                            const oCustomer = oCustomerContext.getObject();
-                            if (oCustomer && oCustomer.customerName) {
-                                oCustomerInput.setValue(oCustomer.customerName);
-                                oCustomerInput.data("selectedId", sCustomerId);
-                            }
-                        }).catch(() => { });
-                    }
-                }
-            } else if (oCustomerInput) {
-                oCustomerInput.setValue("");
-                oCustomerInput.data("selectedId", "");
+            if (oCustomerInput) {
+                oCustomerInput.setValue(sCustomerId);
+                oCustomerInput.data("selectedId", sCustomerId);
             }
         },
 
-        // Helper to load customer name for opportunity field
-        _loadCustomerNameForOpportunity: function (sCustomerId) {
-            const oModel = this.getView().getModel();
-            if (oModel) {
-                const oCustomerContext = oModel.bindContext(`/Customers('${sCustomerId}')`);
-                oCustomerContext.execute()
-                    .then(() => {
-                        const oCustomer = oCustomerContext.getObject();
-                        if (oCustomer && this.byId("inputCustomerId_oppr")) {
-                            this.byId("inputCustomerId_oppr").setValue(oCustomer.customerName || "");
-                            this.byId("inputCustomerId_oppr").data("selectedId", sCustomerId);
-                            // Also update/create model with the ID (for backend submission)
-                            let oOppModel = this.getView().getModel("opportunityModel");
-                            if (!oOppModel) {
-                                oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
-                                this.getView().setModel(oOppModel, "opportunityModel");
-                            } else {
-                                oOppModel.setProperty("/customerId", sCustomerId);
-                            }
-                        }
-                    })
-                    .catch((oError) => {
-                        // Fallback: try to read from Customers collection
-                        const oCustomersBinding = oModel.bindList("/Customers");
-                        oCustomersBinding.attachEventOnce("dataReceived", () => {
-                            const aCustomers = oCustomersBinding.getContexts().map(ctx => ctx.getObject());
-                            const oCustomer = aCustomers.find(c => c.SAPcustId === sCustomerId);
-                            if (oCustomer && this.byId("inputCustomerId_oppr")) {
-                                this.byId("inputCustomerId_oppr").setValue(oCustomer.customerName || "");
-                                this.byId("inputCustomerId_oppr").data("selectedId", sCustomerId);
-                                // Also update/create model with the ID (for backend submission)
-                                let oOppModel = this.getView().getModel("opportunityModel");
-                                if (!oOppModel) {
-                                    oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
-                                    this.getView().setModel(oOppModel, "opportunityModel");
-                                } else {
-                                    oOppModel.setProperty("/customerId", sCustomerId);
-                                }
-                            }
-                        });
-                        // Trigger data loading
-                        oCustomersBinding.refresh();
-                    });
+        // Helper to set customer ID for opportunity field
+        _loadCustomerIdForOpportunity: function (sCustomerId) {
+            // ✅ Display only ID (not name) for association fields
+            if (this.byId("inputCustomerId_oppr")) {
+                this.byId("inputCustomerId_oppr").setValue(sCustomerId || "");
+                this.byId("inputCustomerId_oppr").data("selectedId", sCustomerId || "");
+                // Also update/create model with the ID (for backend submission)
+                let oOppModel = this.getView().getModel("opportunityModel");
+                if (!oOppModel) {
+                    oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
+                    this.getView().setModel(oOppModel, "opportunityModel");
+                } else {
+                    oOppModel.setProperty("/customerId", sCustomerId);
+                }
             }
         },
 
@@ -924,25 +843,20 @@ sap.ui.define([
             this.byId("inputTCV_oppr")?.setValue(oObj.tcv || "");
 
             // Handle customer field
+            // ✅ Customer field - display only ID (not name)
             const sCustomerId = oObj.customerId || "";
-            if (sCustomerId) {
-                if (oObj.to_Customer && oObj.to_Customer.customerName) {
-                    this.byId("inputCustomerId_oppr")?.setValue(oObj.to_Customer.customerName);
-                    this.byId("inputCustomerId_oppr")?.data("selectedId", sCustomerId);
-                    let oOppModel = this.getView().getModel("opportunityModel");
-                    if (!oOppModel) {
-                        oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
-                        this.getView().setModel(oOppModel, "opportunityModel");
-                    } else {
-                        oOppModel.setProperty("/customerId", sCustomerId);
-                    }
+            const oCustomerInput = this.byId("inputCustomerId_oppr");
+            if (oCustomerInput) {
+                oCustomerInput.setValue(sCustomerId);
+                oCustomerInput.data("selectedId", sCustomerId);
+                // Also update/create model with the ID (for backend submission)
+                let oOppModel = this.getView().getModel("opportunityModel");
+                if (!oOppModel) {
+                    oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
+                    this.getView().setModel(oOppModel, "opportunityModel");
                 } else {
-                    this.byId("inputCustomerId_oppr")?.setValue(sCustomerId);
-                    this.byId("inputCustomerId_oppr")?.data("selectedId", sCustomerId);
+                    oOppModel.setProperty("/customerId", sCustomerId);
                 }
-            } else {
-                this.byId("inputCustomerId_oppr")?.setValue("");
-                this.byId("inputCustomerId_oppr")?.data("selectedId", "");
             }
         },
 
@@ -1037,110 +951,36 @@ sap.ui.define([
 
             // ✅ GPM field - same pattern as Employee Supervisor
             const sGPMId = oObj.gpm || "";
+            // ✅ GPM field - display only ID (not name)
             const oGPMInput = this.byId("inputGPM_proj");
-            if (sGPMId && oGPMInput) {
-                // First check association (same as Supervisor)
-                if (oObj.to_GPM && oObj.to_GPM.fullName) {
-                    oGPMInput.setValue(oObj.to_GPM.fullName);
-                    oGPMInput.data("selectedId", sGPMId);
-                } else {
-                    // Load async (same as Supervisor)
-                    oGPMInput.setValue(sGPMId);
-                    oGPMInput.data("selectedId", sGPMId);
-                    const oModel = this.getView().getModel();
-                    if (oModel && /^\d{6,10}$/.test(sGPMId.trim())) {
-                        const oEmployeeContext = oModel.bindContext(`/Employees('${sGPMId}')`, null, { deferred: true });
-                        oEmployeeContext.execute().then(() => {
-                            const oEmployee = oEmployeeContext.getObject();
-                            if (oEmployee && oEmployee.fullName) {
-                                oGPMInput.setValue(oEmployee.fullName);
-                                oGPMInput.data("selectedId", sGPMId);
-                            }
-                        }).catch(() => { });
-                    }
-                }
-            } else if (oGPMInput) {
-                oGPMInput.setValue("");
-                oGPMInput.data("selectedId", "");
+            if (oGPMInput) {
+                oGPMInput.setValue(sGPMId);
+                oGPMInput.data("selectedId", sGPMId);
             }
 
-            // ✅ Opportunity field - same pattern as Employee Supervisor
+            // ✅ Opportunity field - display only ID (not name)
             const sOppId = oObj.oppId || "";
             const oOppInput = this.byId("inputOppId_proj");
-            if (sOppId && oOppInput) {
-                // ✅ Set immediately with ID first (like GPM)
+            if (oOppInput) {
                 oOppInput.setValue(sOppId);
                 oOppInput.data("selectedId", sOppId);
-
-                // First check association (same as Supervisor)
-                if (oObj.to_Opportunity && oObj.to_Opportunity.opportunityName) {
-                    // Association expanded - update with name immediately
-                    oOppInput.setValue(oObj.to_Opportunity.opportunityName);
-                    oOppInput.data("selectedId", sOppId);
-                } else {
-                    // Load async (same as Supervisor)
-                    const oModel = this.getView().getModel();
-                    if (oModel) {
-                        const oOppContext = oModel.bindContext(`/Opportunities('${sOppId}')`, null, { deferred: true });
-                        oOppContext.execute().then(() => {
-                            const oOpportunity = oOppContext.getObject();
-                            if (oOpportunity && oOpportunity.opportunityName) {
-                                oOppInput.setValue(oOpportunity.opportunityName);
-                                oOppInput.data("selectedId", sOppId);
-                            }
-                        }).catch((oError) => {
-                        });
-                    }
-                }
-            } else if (oOppInput) {
-                oOppInput.setValue("");
-                oOppInput.data("selectedId", "");
             }
         },
 
-        // Helper to load opportunity name for project field
-        _loadOpportunityNameForProject: function (sOppId) {
-            const oModel = this.getView().getModel();
-            if (oModel) {
-                const oOppContext = oModel.bindContext(`/Opportunities('${sOppId}')`);
-                oOppContext.execute()
-                    .then(() => {
-                        const oOpportunity = oOppContext.getObject();
-                        if (oOpportunity && this.byId("inputOppId_proj")) {
-                            this.byId("inputOppId_proj").setValue(oOpportunity.opportunityName || "");
-                            this.byId("inputOppId_proj").data("selectedId", sOppId);
-                            // Also update/create model with the ID (for backend submission)
-                            let oProjModel = this.getView().getModel("projectModel");
-                            if (!oProjModel) {
-                                oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
-                                this.getView().setModel(oProjModel, "projectModel");
-                            } else {
-                                oProjModel.setProperty("/oppId", sOppId);
-                            }
-                        }
-                    })
-                    .catch((oError) => {
-                        // Fallback: try to read from Opportunities collection
-                        const oOppsBinding = oModel.bindList("/Opportunities");
-                        oOppsBinding.attachEventOnce("dataReceived", () => {
-                            const aOpportunities = oOppsBinding.getContexts().map(ctx => ctx.getObject());
-                            const oOpportunity = aOpportunities.find(o => o.sapOpportunityId === sOppId);
-                            if (oOpportunity && this.byId("inputOppId_proj")) {
-                                this.byId("inputOppId_proj").setValue(oOpportunity.opportunityName || "");
-                                this.byId("inputOppId_proj").data("selectedId", sOppId);
-                                // Also update/create model with the ID (for backend submission)
-                                let oProjModel = this.getView().getModel("projectModel");
-                                if (!oProjModel) {
-                                    oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
-                                    this.getView().setModel(oProjModel, "projectModel");
-                                } else {
-                                    oProjModel.setProperty("/oppId", sOppId);
-                                }
-                            }
-                        });
-                        // Trigger data loading
-                        oOppsBinding.refresh();
-                    });
+        // Helper to set opportunity ID for project field
+        _loadOpportunityIdForProject: function (sOppId) {
+            // ✅ Display only ID (not name) for association fields
+            if (this.byId("inputOppId_proj")) {
+                this.byId("inputOppId_proj").setValue(sOppId || "");
+                this.byId("inputOppId_proj").data("selectedId", sOppId || "");
+                // Also update/create model with the ID (for backend submission)
+                let oProjModel = this.getView().getModel("projectModel");
+                if (!oProjModel) {
+                    oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
+                    this.getView().setModel(oProjModel, "projectModel");
+                } else {
+                    oProjModel.setProperty("/oppId", sOppId);
+                }
             }
         },
 
@@ -1155,72 +995,31 @@ sap.ui.define([
             this.byId("inputStartDate_proj")?.setValue(oObj.startDate || "");
             this.byId("inputEndDate_proj")?.setValue(oObj.endDate || "");
 
-            // ✅ GPM field - display name from association, store ID
+            // ✅ GPM field - display only ID (not name)
             const sGPMId = oObj.gpm || "";
             const oGPMInput = this.byId("inputGPM_proj");
-            if (sGPMId && oGPMInput) {
-                // First check association (same pattern as Supervisor)
-                if (oObj.to_GPM && oObj.to_GPM.fullName) {
-                    oGPMInput.setValue(oObj.to_GPM.fullName);
-                    oGPMInput.data("selectedId", sGPMId);
-                } else {
-                    // Load async if association not available
-                    oGPMInput.setValue(sGPMId);
-                    oGPMInput.data("selectedId", sGPMId);
-                    const oModel = this.getView().getModel();
-                    if (oModel && /^\d{6,10}$/.test(sGPMId.trim())) {
-                        const oEmployeeContext = oModel.bindContext(`/Employees('${sGPMId}')`, null, { deferred: true });
-                        oEmployeeContext.execute().then(() => {
-                            const oGPM = oEmployeeContext.getObject();
-                            if (oGPM && oGPM.fullName) {
-                                oGPMInput.setValue(oGPM.fullName);
-                                oGPMInput.data("selectedId", sGPMId);
-                            }
-                        }).catch(() => { });
-                    }
-                }
-            } else if (oGPMInput) {
-                oGPMInput.setValue("");
-                oGPMInput.data("selectedId", "");
+            if (oGPMInput) {
+                oGPMInput.setValue(sGPMId);
+                oGPMInput.data("selectedId", sGPMId);
             }
 
             this.byId("inputProjectType_proj")?.setSelectedKey(oObj.projectType || "");
             this.byId("inputStatus_proj")?.setSelectedKey(oObj.status || "");
 
-            // ✅ Opportunity field - display name from association, store ID
+            // ✅ Opportunity field - display only ID (not name)
             const sOppId = oObj.oppId || "";
             const oOppInput = this.byId("inputOppId_proj");
-            if (sOppId && oOppInput) {
-                // First check association (same pattern as Customer)
-                if (oObj.to_Opportunity && oObj.to_Opportunity.opportunityName) {
-                    oOppInput.setValue(oObj.to_Opportunity.opportunityName);
-                    oOppInput.data("selectedId", sOppId);
-                    let oProjModel = this.getView().getModel("projectModel");
-                    if (!oProjModel) {
-                        oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
-                        this.getView().setModel(oProjModel, "projectModel");
-                    } else {
-                        oProjModel.setProperty("/oppId", sOppId);
-                    }
+            if (oOppInput) {
+                oOppInput.setValue(sOppId);
+                oOppInput.data("selectedId", sOppId);
+                // Also update/create model with the ID (for backend submission)
+                let oProjModel = this.getView().getModel("projectModel");
+                if (!oProjModel) {
+                    oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
+                    this.getView().setModel(oProjModel, "projectModel");
                 } else {
-                    // Load async if association not available
-                    oOppInput.setValue(sOppId);
-                    oOppInput.data("selectedId", sOppId);
-                    const oModel = this.getView().getModel();
-                    if (oModel) {
-                        const oOppContext = oModel.bindContext(`/Opportunities('${sOppId}')`, null, { deferred: true });
-                        oOppContext.execute().then(() => {
-                            const oOpportunity = oOppContext.getObject();
-                            if (oOpportunity && oOpportunity.opportunityName) {
-                                oOppInput.setValue(oOpportunity.opportunityName);
-                                oOppInput.data("selectedId", sOppId);
-                            }
-                        }).catch(() => { });
-                    }
+                    oProjModel.setProperty("/oppId", sOppId);
                 }
-            } else if (oOppInput) {
-                oOppInput.setValue("");
-                oOppInput.data("selectedId", "");
             }
 
             this.byId("inputRequiredResources_proj")?.setValue(oObj.requiredResources || "");
@@ -2362,8 +2161,26 @@ sap.ui.define([
                 // Keep Add enabled to allow multi-row creation
                 this.byId(config.add)?.setEnabled(true);
 
-                // Clear any existing selection
-                oTable.clearSelection();
+                // ✅ CRITICAL: Clear any existing selection BEFORE opening dialog
+                // This ensures dialog opens fresh without any pre-selected data
+                if (oTable.clearSelection) {
+                    oTable.clearSelection();
+                } else if (oTable.removeSelections) {
+                    oTable.removeSelections();
+                }
+                
+                // ✅ CRITICAL: Clear form data to ensure fresh dialog
+                // Call the appropriate form data handler with empty array to clear form
+                const sTableIdLower = sTableId.toLowerCase();
+                if (sTableIdLower === "customers") {
+                    this._onCustDialogData([]);
+                } else if (sTableIdLower === "employees") {
+                    this._onEmpDialogData([]);
+                } else if (sTableIdLower === "opportunities") {
+                    this._onOppDialogData([]);
+                } else if (sTableIdLower === "projects") {
+                    this._onProjDialogData([]);
+                }
 
                 // Refresh table to show new row in edit mode
                 oTable.getBinding("items")?.refresh();
@@ -2711,26 +2528,26 @@ sap.ui.define([
                     "customerUpload": [
                         "customerName",
                         "state", "country", "status", "vertical",
+                        "startDate", "endDate",
                     ],
                     "opportunityUpload": [
                         "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
                         "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
-                        "Stage",
+                        "Stage", "tcv", "customerId",
                     ],
                     "employeeUpload": [
-                        "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "city", "lwd", "status",
-
+                        "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                     ],
                     "projectUpload": [
                         "sfdcPId", "projectName", "startDate",
                         "endDate", "gpm", "projectType",
-                        "oppId", "status",
+                        "oppId", "status", "requiredResources",
+                        "allocatedResources", "toBeAllocated",
+                        "SOWReceived", "POReceived",
                     ],
                     "verticalUpload": [
                         "id", "verticalName"
-
                     ],
-
                 };
                 const mExpectedMessage = {
                     "customerUpload": "Customers",
@@ -2992,8 +2809,7 @@ sap.ui.define([
                 ],
                 "employeeUpload": [
                     "ohrId", "mailid", "fullName",
-                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status",
-
+                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                 ],
                 "projectUpload": [
                     "sfdcPId", "projectName", "startDate",

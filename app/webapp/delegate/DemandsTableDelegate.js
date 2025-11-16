@@ -473,37 +473,9 @@ sap.ui.define([
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
-                            // Create a formatter to resolve association name with fallback
-                            const fnAssocNameFormatter = function(sId) {
-                                if (!sId) return "";
-                                // Try to get from expanded association first
-                                const oContext = this.getBindingContext();
-                                if (oContext) {
-                                    try {
-                                        const oRowData = oContext.getObject();
-                                        const sAssocEntity = sAssocPath.split("/")[0]; // e.g., "to_Opportunity"
-                                        const sAssocField = sAssocPath.split("/")[1]; // e.g., "opportunityName"
-                                        
-                                        // Check if association is expanded
-                                        if (oRowData[sAssocEntity] && oRowData[sAssocEntity][sAssocField]) {
-                                            return oRowData[sAssocEntity][sAssocField];
-                                        }
-                                    } catch (e) {
-                                        // Association not expanded, will use fallback
-                                    }
-                                }
-                                // Fallback: return ID if name not available
-                                return sId;
-                            };
-                            
-                            // Display the name from association path with formatter fallback
+                            // ✅ Display only ID (not description) for association fields
                             oField = new Field({
-                                value: {
-                                    path: sPropertyName,
-                                    formatter: fnAssocNameFormatter
-                                },
-                                // Also try direct association path binding as primary source
-                                additionalValue: "{" + sAssocPath + "}", // Try association path
+                                value: "{" + sPropertyName + "}",
                                 contentEdit: oComboBox,
                                 editMode: {
                                     parts: [{ path: `edit>/${sTableId}/editingPath` }],
