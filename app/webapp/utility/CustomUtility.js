@@ -315,7 +315,8 @@ sap.ui.define([
                                         new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
                                         new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
                                         new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
                                     ]
                                 });
 
@@ -326,6 +327,7 @@ sap.ui.define([
                                     const startDate = formatDate(allocation.startDate);
                                     const endDate = formatDate(allocation.endDate);
                                     const percent = allocation.allocationPercentage;
+                                    const status = allocation.status || "N/A";
 
                                     oTable.addItem(new sap.m.ColumnListItem({
                                         cells: [
@@ -333,7 +335,8 @@ sap.ui.define([
                                             new sap.m.Text({ text: projectName }),
                                             new sap.m.Text({ text: startDate }),
                                             new sap.m.Text({ text: endDate }),
-                                            new sap.m.Text({ text: percent })
+                                            new sap.m.Text({ text: percent }),
+                                            new sap.m.Text({ text: status })
                                         ]
                                     }));
                                 });
@@ -397,9 +400,9 @@ sap.ui.define([
                     oListBinding.requestContexts().then(allocationContexts => {
                         const allAllocations = allocationContexts.map(ctx => ctx.getObject());
 
-                        // Filter allocations for this project and active status (same pattern as Res table)
+                        // Filter allocations for this project - show ALL allocations (history)
                         const projectAllocations = allAllocations.filter(a => 
-                            a.projectId === sProjectId && a.status === "Active"
+                            a.projectId === sProjectId
                         );
 
                         if (projectAllocations.length === 0) {
@@ -416,7 +419,8 @@ sap.ui.define([
                                     new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
                                     new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
                                     new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
                                 ]
                             });
 
@@ -428,6 +432,7 @@ sap.ui.define([
                                 const startDate = formatDate(allocation.startDate);
                                 const endDate = formatDate(allocation.endDate);
                                 const percent = allocation.allocationPercentage || 0;
+                                const status = allocation.status || "N/A";
 
                                 oTable.addItem(new sap.m.ColumnListItem({
                                     cells: [
@@ -436,7 +441,8 @@ sap.ui.define([
                                         new sap.m.Text({ text: sDemand }),
                                         new sap.m.Text({ text: startDate }),
                                         new sap.m.Text({ text: endDate }),
-                                        new sap.m.Text({ text: percent + "%" })
+                                        new sap.m.Text({ text: percent + "%" }),
+                                        new sap.m.Text({ text: status })
                                     ]
                                 }));
                             });
