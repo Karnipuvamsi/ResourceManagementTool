@@ -81,36 +81,229 @@ sap.ui.define([
             }
 
             if (sTableId === "Res") {
-                const vbox = this.byId("selectedEmployeeVBox");
+                const aSelectedContexts = oTable.getSelectedContexts();
+                const bHasSelection = aSelectedContexts.length > 0;
 
+                const vbox = this.byId("selectedEmployeeVBox");
+                if (!vbox) {
+                    return;
+                }
+
+                // Clear previous entries except the header
                 const items = vbox.getItems();
                 items.slice(1).forEach(item => vbox.removeItem(item));
 
                 if (bHasSelection) {
                     const oModel = this.getView().getModel();
+                    if (!oModel) {
+                        vbox.addItem(new sap.m.Text({ text: "Model not found" }));
+                        return;
+                    }
 
                     const oListBinding = oModel.bindList("/Allocations", null, null, null, {
                         $expand: "to_Project"
                     });
 
-                    aSelectedContexts.forEach((oContext) => {
-                        const oObj = oContext.getObject();
-                        const sEmployeeId = oObj.employeeId;
-                        const sProjectId = oObj.projectId;
+                    const formatDate = dateStr => {
+                        if (!dateStr) return "N/A";
+                        const date = new Date(dateStr);
+                        return new Intl.DateTimeFormat("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric"
+                        }).format(date);
+                    };
 
-                        oModel.read(`/Projects('${sProjectId}')`).then((oProject) => {
-                            const sProjectName = oProject.projectName || sProjectId;
+                    oListBinding.requestContexts().then(allocationContexts => {
+                        const allAllocations = allocationContexts.map(ctx => ctx.getObject());
 
-                            vbox.addItem(new sap.m.Text({
-                                text: `Employee: ${sEmployeeId} | Project: ${sProjectName}`
-                            }));
-                        }).catch(() => {
-                            vbox.addItem(new sap.m.Text({
-                                text: "Error loading allocation details"
-                            }));
+                        aSelectedContexts.forEach((ctx, index) => {
+                            const employee = ctx.getObject();
+                            const ohrId = employee.ohrId;
+                            const name = employee.fullName;
+
+                            // Add separator only between employees (not before the first one)
+                            if (index > 0) {
+                                vbox.addItem(new sap.ui.core.HTML({
+                                    content: "<div style='border-top:2px solid #007cc0; margin:15px 0;'></div>"
+                                }));
+                            }
+                            vbox.addItem(new sap.m.Title({
+                                text: `OHR ID: ${ohrId}, Name: ${name}`,
+                                level: "H4",
+                                titleStyle: "H4"
+                            }).addStyleClass("customTitleStyle"));
+
+                            const employeeAllocations = allAllocations.filter(a => a.employeeId === ohrId);
+
+                            if (employeeAllocations.length === 0) {
+                                vbox.addItem(new sap.m.Text({
+                                    text: "No allocation record.",
+                                    design: "Italic"
+                                }));
+                            } else {
+                                // Create one table for all allocations of this employee
+                                const oTable = new sap.m.Table({
+                                    inset: false,
+                                    columns: [
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
+                                        new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
+                                    ]
+                                });
+
+                                // Add rows for each allocation
+                                employeeAllocations.forEach(allocation => {
+                                    const projectId = allocation.projectId;
+                                    const projectName = allocation.to_Project?.projectName || "N/A";
+                                    const startDate = formatDate(allocation.startDate);
+                                    const endDate = formatDate(allocation.endDate);
+                                    const percent = allocation.allocationPercentage;
+                                    const status = allocation.status || "N/A";
+
+                                    oTable.addItem(new sap.m.ColumnListItem({
+                                        cells: [
+                                            new sap.m.Text({ text: projectId }),
+                                            new sap.m.Text({ text: projectName }),
+                                            new sap.m.Text({ text: startDate }),
+                                            new sap.m.Text({ text: endDate }),
+                                            new sap.m.Text({ text: percent }),
+                                            new sap.m.Text({ text: status })
+                                        ]
+                                    }));
+                                });
+
+                                // Add the table inside one panel
+                                const allocationPanel = new sap.m.Panel({
+                                    content: [oTable]
+                                }).addStyleClass("sapUiSmallMarginBottom");
+
+                                vbox.addItem(allocationPanel);
+                            }
                         });
+                    }).catch(err => {
+                        vbox.addItem(new sap.m.Text({
+                            text: "Error loading allocation details: " + (err.message || "Unknown error")
+                        }));
                     });
                 } else {
+                    vbox.addItem(new sap.m.Text({ text: "Select an employee to see allocation details" }));
+                }
+            }
+
+            // ✅ Populate Project Allocation Details when project is selected in Allocations table (same pattern as Res table)
+            if (sTableId === "Allocations") {
+                const aSelectedContexts = oTable.getSelectedContexts();
+                const bHasSelection = aSelectedContexts.length > 0;
+
+                const vbox = this.byId("projectAllocationDetailsVBox");
+                if (!vbox) {
+                    return;
+                }
+
+                // Clear previous entries
+                vbox.removeAllItems();
+
+                if (bHasSelection) {
+                    const oProject = aSelectedContexts[0].getObject();
+                    const sProjectId = oProject.sapPId;
+                    
+                    if (!sProjectId) {
+                        vbox.addItem(new sap.m.Text({ text: "Project ID not found" }));
+                        return;
+                    }
+                    
+                    const oModel = this.getView().getModel();
+                    if (!oModel) {
+                        vbox.addItem(new sap.m.Text({ text: "Model not found" }));
+                        return;
+                    }
+
+                    // Fetch all allocations and filter in JavaScript (same pattern as Res table)
+                    const oListBinding = oModel.bindList("/Allocations", null, null, null, {
+                        $expand: "to_Employee($select=ohrId,fullName),to_Demand($select=demandId,skill,band)"
+                    });
+
+                    const formatDate = dateStr => {
+                        if (!dateStr) return "N/A";
+                        const date = new Date(dateStr);
+                        return new Intl.DateTimeFormat("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric"
+                        }).format(date);
+                    };
+
+                    oListBinding.requestContexts().then(allocationContexts => {
+                        const allAllocations = allocationContexts.map(ctx => ctx.getObject());
+
+                        // Filter allocations for this project - show ALL allocations (history)
+                        const projectAllocations = allAllocations.filter(a => 
+                            a.projectId === sProjectId
+                        );
+
+                        if (projectAllocations.length === 0) {
+                            vbox.addItem(new sap.m.Text({
+                                text: "No employees allocated to this project."
+                            }));
+                        } else {
+                            // Create one table for all allocations of this project
+                            const oTable = new sap.m.Table({
+                                inset: false,
+                                columns: [
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "OHR ID" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
+                                    new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
+                                ]
+                            });
+
+                            // Add rows for each allocation
+                            projectAllocations.forEach(allocation => {
+                                const sOhrId = allocation.to_Employee?.ohrId || allocation.employeeId || "N/A";
+                                const sEmployeeName = allocation.to_Employee?.fullName || "N/A";
+                                const sDemand = allocation.to_Demand ? `${allocation.to_Demand.skill || ""} - ${allocation.to_Demand.band || ""}` : "N/A";
+                                const startDate = formatDate(allocation.startDate);
+                                const endDate = formatDate(allocation.endDate);
+                                const percent = allocation.allocationPercentage || 0;
+                                const status = allocation.status || "N/A";
+
+                                oTable.addItem(new sap.m.ColumnListItem({
+                                    cells: [
+                                        new sap.m.Text({ text: sOhrId }),
+                                        new sap.m.Text({ text: sEmployeeName }),
+                                        new sap.m.Text({ text: sDemand }),
+                                        new sap.m.Text({ text: startDate }),
+                                        new sap.m.Text({ text: endDate }),
+                                        new sap.m.Text({ text: percent + "%" }),
+                                        new sap.m.Text({ text: status })
+                                    ]
+                                }));
+                            });
+
+                            // Add the table inside one panel
+                            const allocationPanel = new sap.m.Panel({
+                                content: [oTable]
+                            }).addStyleClass("sapUiSmallMarginBottom");
+
+                            vbox.addItem(new sap.m.Text({ 
+                                text: `Project: ${oProject.projectName || sProjectId} - ${projectAllocations.length} employee(s) allocated:`
+                            }));
+                            vbox.addItem(allocationPanel);
+                        }
+                    }).catch(err => {
+                        vbox.addItem(new sap.m.Text({
+                            text: "Error loading allocation details: " + (err.message || "Unknown error")
+                        }));
+                    });
+                } else {
+                    // No selection - show placeholder
                     vbox.addItem(new sap.m.Text({ text: "Select a project to see allocation details" }));
                 }
             }

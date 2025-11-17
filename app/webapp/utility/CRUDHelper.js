@@ -113,10 +113,14 @@ sap.ui.define([
 
                                 if (oRowBinding) {
                                     oRowBinding.refresh().then(() => {
-                                    }).catch(() => { });
+                                    }).catch(() => {
+                                        // Error refreshing row binding - silently fail
+                                    });
                                 } else if (oBinding) {
                                     oBinding.refresh().then(() => {
-                                    }).catch(() => { });
+                                    }).catch(() => {
+                                        // Error refreshing binding - silently fail
+                                    });
                                 }
                             }, 200);
                         } else {
