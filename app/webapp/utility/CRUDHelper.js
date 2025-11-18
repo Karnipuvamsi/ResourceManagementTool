@@ -414,6 +414,8 @@ sap.ui.define([
                 oEmptyData.deliverySPOC = "";
                 oEmptyData.expectedStart = "";
                 oEmptyData.expectedEnd = "";
+                oEmptyData.tcv = "";
+                oEmptyData.currency = "";
                 oEmptyData.Stage = "";
                 oEmptyData.customerId = "";
             } else if (sTableId === "Projects") {

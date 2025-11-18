@@ -32,8 +32,8 @@ sap.ui.define([
     AllocationsTableDelegate._formatPropertyLabel = function(sTableId, sPropertyName) {
         // Custom header mapping
         const mCustomHeaders = {
-            "sapPId": "SAP PID",
-            "sfdcPId": "SFDC PID",
+            "sapPId": "Internal PID",
+            "sfdcPId": "Actual PID",
             "projectName": "Project Name",
             "startDate": "Start Date",
             "endDate": "End Date",
@@ -265,8 +265,8 @@ sap.ui.define([
 
             // Custom header mapping for Projects table
             const mCustomHeaders = {
-                "sapPId": "SAP PID",
-                "sfdcPId": "SFDC PID",
+                "sapPId": "Internal PID",
+                "sfdcPId": "Actual PID",
                 "projectName": "Project Name",
                 "startDate": "Start Date",
                 "endDate": "End Date",

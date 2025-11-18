@@ -328,8 +328,8 @@ sap.ui.define([
             //     .trim();
             // Custom header mapping for Projects table
             const mCustomHeaders = {
-                "sapPId": "SAP PID",
-                "sfdcPId": "SFDC PID",
+                "sapPId": "Internal PID",
+                "sfdcPId": "Actual PID",
                 "projectName": "Project Name",
                 "startDate": "Start Date",
                 "endDate": "End Date",
