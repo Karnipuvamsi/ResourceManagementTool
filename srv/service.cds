@@ -66,9 +66,16 @@ service MyService {
     band: String;
     designations: array of String;
   }
+
+
+
+  function getUserRoles() returns {
+    roles : array of String;
+  }
   
   // Metadata service actions
   function getEnumMetadata() returns array of EnumMetadata;
   function getCountryCityMappings() returns array of CountryCityMapping;
   function getBandDesignationMappings() returns array of BandDesignationMapping;
+
 }
