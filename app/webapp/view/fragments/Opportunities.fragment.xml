@@ -189,12 +189,26 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
+                                    <Label text="Customer" required="true" />
+                                    <Input 
+                                        id="inputCustomerId_oppr" 
+                                        width="100%"
+                                        placeholder="Select Customer"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onCustomerValueHelpRequest"
+                                        required="true">
+                                        <layoutData>
+                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+                                        </layoutData>
+                                    </Input>
                                     <Label text="SAP Opportunity ID" />
                                     <Input id="inputSapOppId_oppr" value="{opportunityModel>/sapOpportunityId}" width="100%" enabled="false" placeholder="Auto-generated" />
                                     <Label text="SFDC Opportunity ID" />
                                     <Input id="inputSfdcOppId_oppr" value="{opportunityModel>/sfdcOpportunityId}" width="100%" />
                                     <Label text="Opportunity Name" required="true" />
                                     <Input id="inputOppName_oppr" value="{opportunityModel>/opportunityName}" width="100%" required="true" />
+
+
                                     <Label text="Business Unit" required="true" />
                                     <Input id="inputBusinessUnit_oppr" value="{opportunityModel>/businessUnit}" width="100%" required="true" />
                                     <Label text="Probability" required="true" />
@@ -219,18 +233,7 @@
                                             <core:Item key="Confirmed" text="Confirmed" />
                                         </items>
                                     </Select>
-                                    <Label text="Customer" required="true" />
-                                    <Input 
-                                        id="inputCustomerId_oppr" 
-                                        width="100%"
-                                        placeholder="Select Customer"
-                                        showValueHelp="true"
-                                        valueHelpRequest="onCustomerValueHelpRequest"
-                                        required="true">
-                                        <layoutData>
-                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
-                                        </layoutData>
-                                    </Input>
+                                    
                                 </f:SimpleForm>
                             </VBox>
                             
