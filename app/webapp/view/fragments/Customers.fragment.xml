@@ -161,10 +161,10 @@
                             <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" />
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
-                            <Label text="State" />
-                            <Input id="inputState" value="{customerModel>/state}" width="100%" placeholder="Enter State" />
                             <Label text="Country" required="true" />
                             <Input id="inputCountry" value="{customerModel>/country}" width="100%" required="true" placeholder="Enter Country" />
+                            <Label text="State" />
+                            <Input id="inputState" value="{customerModel>/state}" width="100%" placeholder="Enter State" />
                         </f:SimpleForm>
                     </VBox>
                     
@@ -181,15 +181,7 @@
                             columnsL="1"
                             columnsM="1"
                             class="sapUiNoContentPadding">
-                            <Label text="Status" required="true" />
-                            <Select id="inputStatus" selectedKey="{customerModel>/status}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Status..." />
-                                    <core:Item key="Active" text="Active" />
-                                    <core:Item key="Inactive" text="Inactive" />
-                                    <core:Item key="Prospect" text="Prospect" />
-                                </items>
-                            </Select>
+                        
                             <Label text="Vertical" required="true" />
                             <Select id="inputVertical" selectedKey="{customerModel>/vertical}" width="100%" required="true">
                                 <items>
@@ -210,6 +202,15 @@
                             <DatePicker id="inputStartDate_cus" value="{customerModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                             <Label text="End Date" />
                             <DatePicker id="inputEndDate_cus" value="{customerModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
+                                <Label text="Status" required="true" />
+                            <Select id="inputStatus" selectedKey="{customerModel>/status}" width="100%" required="true">
+                                <items>
+                                    <core:Item key="" text="Select Status..." />
+                                    <core:Item key="Active" text="Active" />
+                                    <core:Item key="Inactive" text="Inactive" />
+                                    <core:Item key="Prospect" text="Prospect" />
+                                </items>
+                            </Select>
                         </f:SimpleForm>
                     </VBox>
                 </HBox>

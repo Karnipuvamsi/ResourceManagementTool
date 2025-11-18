@@ -1,5 +1,5 @@
 // RESOURCE MANAGEMENT TOOL - DATA SCHEMA
-// 
+//
 // Key Design Decisions:
 // 1. Employee Skills: Use EmployeeSkill junction table (many-to-many) - NO string field
 // 2. Skills are managed via Skills master data entity
@@ -19,7 +19,7 @@ type CustomerStatusEnum   : String enum {
 }
 
 // ✅ CONVERTED: Vertical entity to enum (fixed values)
-type VerticalEnum : String enum {
+type VerticalEnum         : String enum {
     BFS = 'BFS';
     CapitalMarkets = 'Capital Markets';
     CPG = 'CPG';
@@ -38,10 +38,10 @@ entity Customer {
         state            : String;
         country          : String;
         status           : CustomerStatusEnum;
-        vertical         : VerticalEnum;  // ✅ CHANGED: Now using enum instead of entity
-        startDate        : Date;          // ✅ NEW: Customer start date
-        endDate          : Date;          // ✅ NEW: Customer end date
-        
+        vertical         : VerticalEnum; // ✅ CHANGED: Now using enum instead of entity
+        startDate        : Date; // ✅ NEW: Customer start date
+        endDate          : Date; // ✅ NEW: Customer end date
+
         to_Opportunities : Association to many Opportunity
                                on to_Opportunities.customerId = $self.SAPcustId;
 }
@@ -65,7 +65,7 @@ type OpportunityStageEnum : String enum {
 }
 
 // Currency Enum for Opportunities
-type CurrencyEnum : String enum {
+type CurrencyEnum         : String enum {
     USD = 'USD';
     EUR = 'EUR';
     GBP = 'GBP';
@@ -88,11 +88,11 @@ entity Opportunity {
         deliverySPOC      : String;
         expectedStart     : Date;
         expectedEnd       : Date;
-        tcv  : Decimal(15, 2);
-        currency          : CurrencyEnum;  // ✅ NEW: Currency for TCV
+        tcv               : Decimal(15, 2);
+        currency          : CurrencyEnum; // ✅ NEW: Currency for TCV
         Stage             : OpportunityStageEnum;
         customerId        : String;
-        
+
         to_Customer       : Association to one Customer
                                 on to_Customer.SAPcustId = $self.customerId;
         to_Project        : Association to many Project
@@ -116,33 +116,33 @@ type ProjectStatusEnum    : String enum {
     ToBeCreated = 'TO BE CREATED';
 }
 
-type SowEnum : String enum {
+type SowEnum              : String enum {
     Yes = 'Yes';
     No = 'No';
 }
 
-type PoEnum : String enum {
+type PoEnum               : String enum {
     Yes = 'Yes';
     No = 'No';
 }
 
-type Segment : String enum {
+type Segment              : String enum {
     Data = 'Data';
     TechAndAI = 'Tech And AI';
 }
 
-type Vertical : String enum {
+type Vertical             : String enum {
     HMS = 'HMS';
     CNH = 'CNH';
     FS = 'FS';
 }
 
-type SubVertical : String enum {
+type SubVertical          : String enum {
     SAP = 'SAP';
     Digital = 'Digital';
 }
 
-type Unit : String enum {
+type Unit                 : String enum {
     GEV = 'GEV';
     HMS = 'HMS';
     CNH = 'CNH';
@@ -150,52 +150,50 @@ type Unit : String enum {
 }
 
 
-
-
 entity Project {
-    key sapPId            : String;
-        sfdcPId           : String;
-        projectName       : String(256);
-        startDate         : Date;
-        endDate           : Date;
-        gpm               : String;
-        projectType       : ProjectTypeEnum;
-        oppId             : String;
-        segment           : Segment;
-        vertical          : Vertical;
-        subVertical       : SubVertical;
-        unit              : Unit;
-        
-        status            : ProjectStatusEnum;
-        requiredResources : Integer;
-        allocatedResources: Integer;
-        toBeAllocated     : Integer;
-        SOWReceived       : SowEnum;
-        POReceived        : PoEnum;
-    
-        to_Opportunity    : Association to one Opportunity
-                             on to_Opportunity.sapOpportunityId = $self.oppId;
-        to_GPM            : Association to one Employee
-                             on to_GPM.ohrId = $self.gpm;
-        to_Demand         : Association to many Demand
-                             on to_Demand.sapPId = $self.sapPId;
-        to_Allocations    : Association to many EmployeeProjectAllocation  // ✅ NEW
-                             on to_Allocations.projectId = $self.sapPId;
+    key sapPId             : String;
+        sfdcPId            : String;
+        projectName        : String(256);
+        startDate          : Date;
+        endDate            : Date;
+        gpm                : String;
+        projectType        : ProjectTypeEnum;
+        oppId              : String;
+        segment            : Segment;
+        vertical           : Vertical;
+        subVertical        : SubVertical;
+        unit               : Unit;
+
+        status             : ProjectStatusEnum;
+        requiredResources  : Integer;
+        allocatedResources : Integer;
+        toBeAllocated      : Integer;
+        SOWReceived        : SowEnum;
+        POReceived         : PoEnum;
+
+        to_Opportunity     : Association to one Opportunity
+                                 on to_Opportunity.sapOpportunityId = $self.oppId;
+        to_GPM             : Association to one Employee
+                                 on to_GPM.ohrId = $self.gpm;
+        to_Demand          : Association to many Demand
+                                 on to_Demand.sapPId = $self.sapPId;
+        to_Allocations     : Association to many EmployeeProjectAllocation // ✅ NEW
+                                 on to_Allocations.projectId = $self.sapPId;
 }
 
 // ----------------------- Demand -------------------------------------
 
 entity Demand {
-    key demandId          : Integer;       // ✅ Changed from UUID to Integer for simplicity
-        skill             : String;        // Skill name (simple string field)
-        band              : String;
-        sapPId            : String;
-        quantity          : Integer;
-        allocatedCount    : Integer;      // ✅ NEW: Calculated - count of allocations matching this demand's skill
-        remaining         : Integer;      // ✅ NEW: Calculated - quantity - allocatedCount
-    
-        to_Project        : Association to one Project
-                           on to_Project.sapPId = $self.sapPId;
+    key demandId       : Integer; // ✅ Changed from UUID to Integer for simplicity
+        skill          : String; // Skill name (simple string field)
+        band           : String;
+        sapPId         : String;
+        quantity       : Integer;
+        allocatedCount : Integer; // ✅ NEW: Calculated - count of allocations matching this demand's skill
+        remaining      : Integer; // ✅ NEW: Calculated - quantity - allocatedCount
+
+        to_Project     : Association to one Project
+                             on to_Project.sapPId = $self.sapPId;
 }
 
 // -------------------- Employee --------------------
@@ -238,13 +236,13 @@ type EmployeeBandEnum     : String enum {
 // ✅ Employee-Skills Junction Table (Many-to-Many)
 // This is the PRIMARY way to track employee skills - links Employee to Skills master data
 entity EmployeeSkill {
-    key employeeId        : String;
-    key skillId           : Integer;  // Foreign key to Skills (Integer)
-    
-    to_Employee           : Association to one Employee
-                              on to_Employee.ohrId = $self.employeeId;
-    to_Skill              : Association to one Skills
-                              on to_Skill.id = $self.skillId;
+    key employeeId  : String;
+    key skillId     : Integer; // Foreign key to Skills (Integer)
+
+        to_Employee : Association to one Employee
+                          on to_Employee.ohrId = $self.employeeId;
+        to_Skill    : Association to one Skills
+                          on to_Skill.id = $self.skillId;
 }
 
 // ✅ NEW: Allocation Status Enum
@@ -256,63 +254,137 @@ type AllocationStatusEnum : String enum {
 
 // ✅ NEW: Allocation entity for Employee-Project relationship
 entity EmployeeProjectAllocation {
-    key allocationId      : UUID;
-    employeeId            : String;
-    projectId             : String;
-    demandId              : Integer;    // ✅ NEW: Link to Demand (employee can only be allocated to one demand per project)
-                                          // Note: For existing allocations without demandId, will be set to first demand of project
-    startDate             : Date;        // ✅ Allocation start date (defaults to project start, but can be modified for employees joining mid-project)
-    endDate               : Date;        // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
-    allocationDate        : Date;       // ✅ Date when allocation was created
-    allocationPercentage  : Integer;    // ✅ NEW: Percentage of employee time allocated (0-100), default 100
-    status                : AllocationStatusEnum;
-    
-    to_Employee           : Association to one Employee
-                              on to_Employee.ohrId = $self.employeeId;
-    to_Project            : Association to one Project
-                              on to_Project.sapPId = $self.projectId;
-    to_Demand             : Association to one Demand
-                              on to_Demand.demandId = $self.demandId;
+    key allocationId         : UUID;
+        employeeId           : String;
+        projectId            : String;
+        demandId             : Integer; // ✅ NEW: Link to Demand (employee can only be allocated to one demand per project)
+        // Note: For existing allocations without demandId, will be set to first demand of project
+        startDate            : Date; // ✅ Allocation start date (defaults to project start, but can be modified for employees joining mid-project)
+        endDate              : Date; // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
+        allocationDate       : Date; // ✅ Date when allocation was created
+        allocationPercentage : Integer; // ✅ NEW: Percentage of employee time allocated (0-100), default 100
+        status               : AllocationStatusEnum;
+
+        to_Employee          : Association to one Employee
+                                   on to_Employee.ohrId = $self.employeeId;
+        to_Project           : Association to one Project
+                                   on to_Project.sapPId = $self.projectId;
+        to_Demand            : Association to one Demand
+                                   on to_Demand.demandId = $self.demandId;
 }
 
 entity Employee {
-    key ohrId             : String;
-        fullName          : String;
-        mailid            : String;
-        gender            : GenderEnum;
-        employeeType      : EmployeeTypeEnum;
-        doj               : Date;
-        band              : EmployeeBandEnum;
-        role              : String;
-        location          : String;
-        supervisorOHR     : String;
-        skills            : String;  // Simple string field - stores comma-separated skill names
-        country           : String;  // ✅ NEW: Employee country with value help
-        city              : String;
-        lwd               : Date;
-        status            : EmployeeStatusEnum;
-        empallocpercentage:Integer64;
-    
-    // Self-referential associations (Supervisor-Subordinate hierarchy)
-    to_Supervisor         : Association to one Employee
-                          on to_Supervisor.ohrId = $self.supervisorOHR;
-    to_Subordinates       : Association to many Employee
-                          on to_Subordinates.supervisorOHR = $self.ohrId;
-    
-    // Project allocations
-    to_Allocations        : Association to many EmployeeProjectAllocation
-                          on to_Allocations.employeeId = $self.ohrId;
+    key ohrId              : String;
+        fullName           : String;
+        mailid             : String;
+        gender             : GenderEnum;
+        employeeType       : EmployeeTypeEnum;
+        doj                : Date;
+        band               : EmployeeBandEnum;
+        role               : String;
+        location           : String;
+        supervisorOHR      : String;
+        skills             : String; // Simple string field - stores comma-separated skill names
+        country            : String; // ✅ NEW: Employee country with value help
+        city               : String;
+        lwd                : Date;
+        status             : EmployeeStatusEnum;
+        empallocpercentage : Integer64;
+
+        // Self-referential associations (Supervisor-Subordinate hierarchy)
+        to_Supervisor      : Association to one Employee
+                                 on to_Supervisor.ohrId = $self.supervisorOHR;
+        to_Subordinates    : Association to many Employee
+                                 on to_Subordinates.supervisorOHR = $self.ohrId;
+
+        // Project allocations
+        to_Allocations     : Association to many EmployeeProjectAllocation
+                                 on to_Allocations.employeeId = $self.ohrId;
 }
 
 //-------------Skills--------------------
 
 entity Skills {
-    key id                : Integer;  // Changed from UUID to Integer for simplicity
+    key id                : Integer; // Changed from UUID to Integer for simplicity
         name              : String;
         category          : String;
-    
-    // Note: Demand now uses simple skill string field (no association)
-    // EmployeeSkill junction table still uses skillId for many-to-many relationship
-    to_EmployeeSkills     : Association to many EmployeeSkill
-                          on to_EmployeeSkills.skillId = $self.id;
+
+        // Note: Demand now uses simple skill string field (no association)
+        // EmployeeSkill junction table still uses skillId for many-to-many relationship
+        to_EmployeeSkills : Association to many EmployeeSkill
+                                on to_EmployeeSkills.skillId = $self.id;
 }
+
+
+
+// entity CustomerCountries {
+//     key id              : Integer;
+//         name            : String(200);
+//         iso3            : String(3);
+//         iso2            : String(2);
+//         numeric_code    : String(10);
+//         phonecode       : String(10);
+//         capital         : String(100);
+//         currency        : String(10);
+//         currency_name   : String(100);
+//         currency_symbol : String(10);
+//         tld             : String(10);
+//         native          : String(200);
+//         population      : Integer64;
+//         gdp             : Decimal(15,2);
+//         region          : String(100);
+//         region_id       : String(20);
+//         subregion       : String(100);
+//         subregion_id    : String(20);
+//         nationality     : String(100);
+//         timezones       : String(1000);
+//         latitude        : Decimal(11,8);
+//         longitude       : Decimal(11,8);
+//         emoji           : String(10);
+//         emojiU          : String(20);
+//         wikiDataId      : String(100);
+// }
+
+// entity CustomerStates {
+//     key id            : Integer;
+//         name          : String(200);
+//         country_id    : Integer;
+//         country_code  : String(5);
+//         country_name  : String(200);
+//         iso2          : String(10);
+//         iso3166_2     : String(20);
+//         fips_code     : String(10);
+//         type          : String(50);
+//         level         : Integer;
+//         parent_id     : Integer;
+//         native        : String(200);
+//         latitude      : Decimal(11,8);
+//         longitude     : Decimal(11,8);
+//         timezone      : String(50);
+//         wikiDataId    : String(100);
+ 
+//         to_Country : Association to one CustomerCountries
+// on to_Country.id = $self.country_id;
+// }
+
+// entity CustomerCities {
+//     key id           : Integer;
+//         name         : String(200);
+//         state_id     : Integer;
+//         state_code   : String(10);
+//         state_name   : String(200);
+//         country_id   : Integer;
+//         country_code : String(5);
+//         country_name : String(200);
+//         latitude     : Decimal(11, 8);
+//         longitude    : Decimal(11, 8);
+//         native       : String(200);
+//         timezone     : String(50);
+//         wikiDataId   : String(100);
+
+//         to_State     : Association to one CustomerStates
+//                            on to_State.id = $self.state_id;
+
+//         to_Country   : Association to one CustomerCountries
+//                            on to_Country.id = $self.country_id;
+// }

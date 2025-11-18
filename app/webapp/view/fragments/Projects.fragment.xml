@@ -191,16 +191,23 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
+                                    <Label text="Opportunity" />
+                                    <Input 
+                                        id="inputOppId_proj" 
+                                        width="100%"
+                                        placeholder="Select Opportunity"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onOpportunityValueHelpRequest">
+                                        <layoutData>
+                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+                                        </layoutData>
+                                    </Input>
                                     <Label text="Internal Project ID" />
                                     <Input id="inputSapProjId_proj" value="{projectModel>/sapPId}" width="100%" enabled="false" placeholder="Auto-generated" />
                                     <Label text="Actual Project ID" />
                                     <Input id="inputSfdcProjId_proj" value="{projectModel>/sfdcPId}" width="100%" />
                                     <Label text="Project Name" />
                                     <Input id="inputProjectName_proj" value="{projectModel>/projectName}" width="100%" />
-                                    <Label text="Start Date" />
-                                    <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
-                                    <Label text="End Date" />
-                                    <DatePicker id="inputEndDate_proj" value="{projectModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="GPM" />
                                     <Input 
                                         id="inputGPM_proj" 
@@ -225,6 +232,31 @@
                                             <core:Item key="TimeAndMaterial" text="Time &amp; Material" />
                                         </items>
                                     </Select>
+                                    <Label text="SOW Received" />
+                                    <Select id="inputSOWReceived_proj" selectedKey="{projectModel>/SOWReceived}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select SOW Received..." />
+                                            <core:Item key="Yes" text="Yes" />
+                                            <core:Item key="No" text="No" />
+                                        </items>
+                                    </Select>
+                                    <Label text="PO Received" />
+                                    <Select id="inputPOReceived_proj" selectedKey="{projectModel>/POReceived}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select PO Received..." />
+                                            <core:Item key="Yes" text="Yes" />
+                                            <core:Item key="No" text="No" />
+                                        </items>
+                                    </Select>
+                                    <Label text="Status" />
+                                    <Select id="inputStatus_proj" selectedKey="{projectModel>/status}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Status..." />
+                                            <core:Item key="Active" text="Active" />
+                                            <core:Item key="Closed" text="Closed" />
+                                            <core:Item key="ToBeCreated" text="TO BE CREATED" />
+                                        </items>
+                                    </Select>
                                 </f:SimpleForm>
                             </VBox>
                             
@@ -241,26 +273,6 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
-                                    <Label text="Status" />
-                                    <Select id="inputStatus_proj" selectedKey="{projectModel>/status}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Status..." />
-                                            <core:Item key="Active" text="Active" />
-                                            <core:Item key="Closed" text="Closed" />
-                                            <core:Item key="ToBeCreated" text="TO BE CREATED" />
-                                        </items>
-                                    </Select>
-                                    <Label text="Opportunity" />
-                                    <Input 
-                                        id="inputOppId_proj" 
-                                        width="100%"
-                                        placeholder="Select Opportunity"
-                                        showValueHelp="true"
-                                        valueHelpRequest="onOpportunityValueHelpRequest">
-                                        <layoutData>
-                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
-                                        </layoutData>
-                                    </Input>
                                     <Label text="Segment" />
                                     <Select id="inputSegment_proj" selectedKey="{projectModel>/segment}" width="100%">
                                         <items>
@@ -308,22 +320,10 @@
                                     <Input id="inputAllocatedResources_proj" value="{projectModel>/allocatedResources}" width="100%" type="Number" />
                                     <Label text="To Be Allocated" />
                                     <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" />
-                                    <Label text="SOW Received" />
-                                    <Select id="inputSOWReceived_proj" selectedKey="{projectModel>/SOWReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select SOW Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
-                                    <Label text="PO Received" />
-                                    <Select id="inputPOReceived_proj" selectedKey="{projectModel>/POReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select PO Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
+                                    <Label text="Start Date" />
+                                    <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
+                                    <Label text="End Date" />
+                                    <DatePicker id="inputEndDate_proj" value="{projectModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>
