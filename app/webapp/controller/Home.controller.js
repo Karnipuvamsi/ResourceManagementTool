@@ -121,8 +121,8 @@ sap.ui.define([
 
             this.validScopes = oData.roles;
 
-            const masterdatalistItems = ["customers_admin_master", "opportunities_admin_master", "projects_admin_master", "project_status_admin_report", "employee_probable_release_report", "revenue_forecast_report"];
-            const reportListItems = ["employee_skill_admin_report", "employee_bench_admin_report", "employee_allocation_admin_report", "employees_admin_master"];
+            const masterdatalistItems = ["customers_admin_master", "opportunities_admin_master", "projects_admin_master","employees_admin_master"];
+            const reportListItems = ["employee_skill_admin_report", "employee_bench_admin_report", "employee_allocation_admin_report", "project_status_admin_report", "employee_probable_release_report", "revenue_forecast_report"];
             const allocationListItems = ["projects_admin_allocation"];
 
             const hasMasterdataItem = masterdatalistItems.some(item => this.validScopes.includes(item));
