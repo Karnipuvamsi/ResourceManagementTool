@@ -10,6 +10,9 @@ module.exports = cds.service.impl(async function () {
     this.on("getUserRoles", async (req) => {
         const roles = [];
 
+        // For local testing, set all scopes
+        // const roles = ["opportunities_admin_master", "customers_admin_master", "projects_admin_master", "employees_admin_master", "projects_admin_allocation", "employee_skill_admin_report", "employee_bench_admin_report", "employee_allocation_admin_report", "project_status_admin_report", "employee_probable_release_report", "revenue_forecast_report"];
+
         const scopes = [
 
             "opportunities_admin_master",
