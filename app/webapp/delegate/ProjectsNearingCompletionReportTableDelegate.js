@@ -22,7 +22,7 @@ sap.ui.define([
     ProjectsNearingCompletionReportTableDelegate._formatPropertyLabel = function(sPropertyName) {
         // Custom header mapping for Projects Nearing Completion Report
         const mCustomHeaders = {
-            "sapPId": "SAP PID",
+            "sapPId": "Internal PID",
             "projectReference": "Project Reference",
             "projectName": "Project Name",
             "projectType": "Project Type",

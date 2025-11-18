@@ -10,11 +10,13 @@ sap.ui.define([
         _onUploadPress: function (oEvent) {
             const sButtonId = oEvent.getSource().getId().split("--").pop();
             const oView = this.getView();
+            const oController = this;
 
             if (!this._pDialog) {
                 this._pDialog = sap.ui.core.Fragment.load({
                     id: oView.getId(),
-                    name: "glassboard.view.fragments.UploadDialog"
+                    name: "glassboard.view.fragments.UploadDialog",
+                    controller: oController
                 }).then((oDialog) => {
                     oView.addDependent(oDialog);
                     oDialog.data("uploadButtonId", sButtonId);
@@ -32,10 +34,21 @@ sap.ui.define([
          * Handle file upload change
          */
         _onFileUploadChange: function (oEvent) {
-            const oFile = oEvent.getParameter("files")[0];
-            if (!oFile) return;
+            const oFileUploader = oEvent.getSource();
+            const oFiles = oEvent.getParameter("files");
+            const oFile = oFiles && oFiles.length > 0 ? oFiles[0] : (oFileUploader.oFileUpload ? oFileUploader.oFileUpload.files[0] : null);
+            
+            if (!oFile) {
+                sap.m.MessageToast.show("Please select a CSV file.");
+                return;
+            }
 
             const oDialog = this.getView().byId("uploadDialog");
+            if (!oDialog) {
+                sap.m.MessageToast.show("Upload dialog not found.");
+                return;
+            }
+            
             const sButtonId = oDialog.data("uploadButtonId");
             const that = this;
 
@@ -55,11 +68,11 @@ sap.ui.define([
                         "state", "country", "status", "vertical",
                         "startDate", "endDate",
                     ],
-                    "opportunityUpload": [
-                        "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
-                        "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
-                        "Stage", "tcv", "customerId",
-                    ],
+                "opportunityUpload": [
+                    "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
+                    "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
+                    "Stage", "tcv", "currency", "customerId",
+                ],
                     "employeeUpload": [
                         "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                     ],
@@ -256,62 +269,148 @@ sap.ui.define([
          * Export upload template
          */
         _exportUploadTemplate: function (oEvent) {
-            const sButtonId = oEvent.getSource().getId().split("--").pop();
+            try {
+                if (!oEvent || !oEvent.getSource) {
+                    sap.m.MessageBox.error("Invalid event object for template download.");
+                    return;
+                }
+                
+                const oSource = oEvent.getSource();
+                const sFullId = oSource.getId();
+                
+                // Extract button ID - handle both full ID and base ID
+                let sButtonId = sFullId.split("--").pop();
+                
+                // If the ID doesn't end with "Upload", it might be a different format
+                // Try to find the upload button ID from common patterns
+                if (!sButtonId.endsWith("Upload")) {
+                    // Check if it contains upload-related keywords
+                    const aParts = sFullId.split("--");
+                    for (let i = aParts.length - 1; i >= 0; i--) {
+                        if (aParts[i].includes("Upload") || aParts[i] === "customerUpload" || 
+                            aParts[i] === "opportunityUpload" || aParts[i] === "employeeUpload" || 
+                            aParts[i] === "projectUpload" || aParts[i] === "verticalUpload") {
+                            sButtonId = aParts[i];
+                            break;
+                        }
+                    }
+                }
 
-            const mExpectedHeaders = {
-                "customerUpload": [
-                    "customerName",
-                    "state", "country", "status", "vertical",
-                    "startDate", "endDate",
-                ],
+                // Template headers based on schema (excluding auto-generated keys)
+                // Customer: SAPcustId is auto-generated, so exclude it
+                // Opportunity: sapOpportunityId is auto-generated, so exclude it
+                // Project: sapPId is auto-generated, so exclude it
+                // Employee: ohrId is the key but required for upload
+                const mExpectedHeaders = {
+                    "customerUpload": [
+                        "customerName",
+                        "state", "country", "status", "vertical",
+                        "startDate", "endDate",
+                    ],
                 "opportunityUpload": [
                     "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
                     "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
-                    "Stage", "tcv", "customerId",
+                    "Stage", "tcv", "currency", "customerId",
                 ],
-                "employeeUpload": [
-                    "ohrId", "mailid", "fullName",
-                    "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
-                ],
-                "projectUpload": [
-                    "sfdcPId", "projectName", "startDate",
-                    "endDate", "gpm", "projectType",
-                    "oppId", "status", "requiredResources",
-                    "allocatedResources", "toBeAllocated",
-                    "SOWReceived", "POReceived",
-                ],
-                "verticalUpload": [
-                    "id", "verticalName"
-                ],
-            };
+                    "employeeUpload": [
+                        "ohrId", "mailid", "fullName",
+                        "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
+                    ],
+                    "projectUpload": [
+                        "sfdcPId", "projectName", "startDate",
+                        "endDate", "gpm", "projectType",
+                        "oppId", "status", "requiredResources",
+                        "allocatedResources", "toBeAllocated",
+                        "SOWReceived", "POReceived",
+                    ],
+                    "verticalUpload": [
+                        "id", "verticalName"
+                    ],
+                };
 
-            const aHeaders = mExpectedHeaders[sButtonId];
-            if (!aHeaders) {
-                sap.m.MessageBox.error("Unknown upload type: " + sButtonId);
-                return;
+                const aHeaders = mExpectedHeaders[sButtonId];
+                if (!aHeaders) {
+                    sap.m.MessageBox.error(`Unknown upload type: ${sButtonId}. Full ID: ${sFullId}`);
+                    console.error("Download Template Error:", { sButtonId, sFullId, availableKeys: Object.keys(mExpectedHeaders) });
+                    return;
+                }
+
+                // Add BOM for Excel compatibility
+                const sCsvContent = "\uFEFF" + aHeaders.join(",") + "\n";
+                const mExpectedMessage = {
+                    "customerUpload": "Customers",
+                    "opportunityUpload": "Opportunities",
+                    "employeeUpload": "Employees",
+                    "projectUpload": "Projects",
+                    "verticalUpload": "Verticals"
+                };
+                const sFileBase = mExpectedMessage[sButtonId] || sButtonId.replace("Upload", "");
+                const sFileName = `${sFileBase}_Template.csv`;
+
+                // Call downloadCSV with proper context - try both public and private methods
+                if (typeof this.downloadCSV === "function") {
+                    // Public method from controller
+                    this.downloadCSV(sCsvContent, sFileName);
+                } else if (typeof this._downloadCSV === "function") {
+                    // Private method from CustomUtility
+                    this._downloadCSV(sCsvContent, sFileName);
+                } else if (typeof FileUploadHelper.prototype._downloadCSV === "function") {
+                    // Direct prototype call
+                    FileUploadHelper.prototype._downloadCSV.call(this, sCsvContent, sFileName);
+                } else {
+                    // Fallback: direct download implementation
+                    try {
+                        const oBlob = new Blob([sCsvContent], { type: "text/csv;charset=utf-8;" });
+                        const sUrl = URL.createObjectURL(oBlob);
+                        const oLink = document.createElement("a");
+
+                        oLink.href = sUrl;
+                        oLink.download = sFileName;
+                        oLink.style.display = "none";
+                        document.body.appendChild(oLink);
+                        oLink.click();
+                        
+                        setTimeout(() => {
+                            document.body.removeChild(oLink);
+                            URL.revokeObjectURL(sUrl);
+                        }, 100);
+                        
+                        sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
+                    } catch (oDownloadError) {
+                        console.error("Error downloading CSV:", oDownloadError);
+                        sap.m.MessageBox.error("Failed to download template: " + oDownloadError.message);
+                    }
+                }
+            } catch (oError) {
+                console.error("Error in _exportUploadTemplate:", oError);
+                sap.m.MessageBox.error("Failed to export template: " + oError.message);
             }
-
-            const sCsvContent = aHeaders.join(",") + "\n";
-            const sFileName = sButtonId.replace("Upload", "") + "_template.csv";
-
-            this._downloadCSV(sCsvContent, sFileName);
         },
 
         /**
          * Download CSV file
          */
         _downloadCSV: function (sContent, sFileName) {
-            const oBlob = new Blob([sContent], { type: "text/csv;charset=utf-8;" });
-            const sUrl = URL.createObjectURL(oBlob);
-            const oLink = document.createElement("a");
+            try {
+                const oBlob = new Blob([sContent], { type: "text/csv;charset=utf-8;" });
+                const sUrl = URL.createObjectURL(oBlob);
+                const oLink = document.createElement("a");
 
-            if (oLink.download !== undefined) {
                 oLink.href = sUrl;
                 oLink.download = sFileName;
-                oLink.style.visibility = "hidden";
+                oLink.style.display = "none";
                 document.body.appendChild(oLink);
                 oLink.click();
-                document.body.removeChild(oLink);
+                
+                // Clean up after a short delay
+                setTimeout(() => {
+                    document.body.removeChild(oLink);
+                    URL.revokeObjectURL(sUrl);
+                }, 100);
+                
+                sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
+            } catch (oError) {
+                sap.m.MessageBox.error("Failed to download template: " + oError.message);
             }
         },
 
@@ -319,9 +418,14 @@ sap.ui.define([
          * Close upload dialog
          */
         _onCloseUpload: function () {
-            if (this._pDialog) {
+            const oDialog = this.getView().byId("uploadDialog");
+            if (oDialog) {
+                oDialog.close();
+            } else if (this._pDialog) {
                 this._pDialog.then((oDialog) => {
-                    oDialog.close();
+                    if (oDialog) {
+                        oDialog.close();
+                    }
                 });
             }
         }
