@@ -93,6 +93,23 @@ sap.ui.define([
                     displayField: "demandId",
                     keyField: "demandId"
                 }
+            },
+            "Customers": {
+                "custCountryId": {
+                    targetEntity: "CustomerCountries",
+                    displayField: "name",
+                    keyField: "id"
+                },
+                "custStateId": {
+                    targetEntity: "CustomerStates",
+                    displayField: "name",
+                    keyField: "id"
+                },
+                "custCityId": {
+                    targetEntity: "CustomerCities",
+                    displayField: "name",
+                    keyField: "id"
+                }
             }
         },
 
