@@ -35,15 +35,23 @@ type VerticalEnum         : String enum {
 entity Customer {
     key SAPcustId        : String;
         customerName     : String(100);
-        state            : String;
-        country          : String;
+        custCountryId    : Integer; // ✅ CHANGED: Now using Integer ID instead of String (optional/nullable by default)
+        custStateId      : Integer; // ✅ CHANGED: Now using Integer ID instead of String (optional/nullable by default)
+        custCityId       : Integer; // ✅ NEW: City ID (optional/nullable by default)
         status           : CustomerStatusEnum;
         vertical         : VerticalEnum; // ✅ CHANGED: Now using enum instead of entity
-        startDate        : Date; // ✅ NEW: Customer start date
-        endDate          : Date; // ✅ NEW: Customer end date
+        startDate        : Date; // ✅ NEW: Customer start date (optional/nullable by default)
+        endDate          : Date; // ✅ NEW: Customer end date (optional/nullable by default)
 
         to_Opportunities : Association to many Opportunity
                                on to_Opportunities.customerId = $self.SAPcustId;
+        
+        to_CustCountry   : Association to one CustomerCountries
+                               on to_CustCountry.id = $self.custCountryId;
+        to_CustState     : Association to one CustomerStates
+                               on to_CustState.id = $self.custStateId;
+        to_CustCity      : Association to one CustomerCities
+                               on to_CustCity.id = $self.custCityId;
 }
 
 // -------------------- Opportunity --------------------
@@ -317,74 +325,74 @@ entity Skills {
 
 
 
-// entity CustomerCountries {
-//     key id              : Integer;
-//         name            : String(200);
-//         iso3            : String(3);
-//         iso2            : String(2);
-//         numeric_code    : String(10);
-//         phonecode       : String(10);
-//         capital         : String(100);
-//         currency        : String(10);
-//         currency_name   : String(100);
-//         currency_symbol : String(10);
-//         tld             : String(10);
-//         native          : String(200);
-//         population      : Integer64;
-//         gdp             : Decimal(15,2);
-//         region          : String(100);
-//         region_id       : String(20);
-//         subregion       : String(100);
-//         subregion_id    : String(20);
-//         nationality     : String(100);
-//         timezones       : String(1000);
-//         latitude        : Decimal(11,8);
-//         longitude       : Decimal(11,8);
-//         emoji           : String(10);
-//         emojiU          : String(20);
-//         wikiDataId      : String(100);
-// }
+entity CustomerCountries {
+    key id              : Integer;
+        name            : String(200);
+        iso3            : String(3);
+        iso2            : String(2);
+        numeric_code    : String(10);
+        phonecode       : String(10);
+        capital         : String(100);
+        currency        : String(10);
+        currency_name   : String(100);
+        currency_symbol : String(10);
+        tld             : String(10);
+        native          : String(200);
+        population      : Integer64;
+        gdp             : Decimal(15,2);
+        region          : String(100);
+        region_id       : String(20);
+        subregion       : String(100);
+        subregion_id    : String(20);
+        nationality     : String(100);
+        timezones       : String(1000);
+        latitude        : Decimal(11,8);
+        longitude       : Decimal(11,8);
+        emoji           : String(10);
+        emojiU          : String(20);
+        wikiDataId      : String(100);
+}
 
-// entity CustomerStates {
-//     key id            : Integer;
-//         name          : String(200);
-//         country_id    : Integer;
-//         country_code  : String(5);
-//         country_name  : String(200);
-//         iso2          : String(10);
-//         iso3166_2     : String(20);
-//         fips_code     : String(10);
-//         type          : String(50);
-//         level         : Integer;
-//         parent_id     : Integer;
-//         native        : String(200);
-//         latitude      : Decimal(11,8);
-//         longitude     : Decimal(11,8);
-//         timezone      : String(50);
-//         wikiDataId    : String(100);
+entity CustomerStates {
+    key id            : Integer;
+        name          : String(200);
+        country_id    : Integer;
+        country_code  : String(5);
+        country_name  : String(200);
+        iso2          : String(10);
+        iso3166_2     : String(20);
+        fips_code     : String(10);
+        type          : String(50);
+        level         : Integer;
+        parent_id     : Integer;
+        native        : String(200);
+        latitude      : Decimal(11,8);
+        longitude     : Decimal(11,8);
+        timezone      : String(50);
+        wikiDataId    : String(100);
  
-//         to_Country : Association to one CustomerCountries
-// on to_Country.id = $self.country_id;
-// }
+        to_Country    : Association to one CustomerCountries
+                            on to_Country.id = $self.country_id;
+}
 
-// entity CustomerCities {
-//     key id           : Integer;
-//         name         : String(200);
-//         state_id     : Integer;
-//         state_code   : String(10);
-//         state_name   : String(200);
-//         country_id   : Integer;
-//         country_code : String(5);
-//         country_name : String(200);
-//         latitude     : Decimal(11, 8);
-//         longitude    : Decimal(11, 8);
-//         native       : String(200);
-//         timezone     : String(50);
-//         wikiDataId   : String(100);
+entity CustomerCities {
+    key id            : Integer;
+        name          : String(200);
+        state_id      : Integer;
+        state_code    : String(10);
+        state_name    : String(200);
+        country_id    : Integer;
+        country_code  : String(5);
+        country_name  : String(200);
+        latitude      : Decimal(11,8);
+        longitude     : Decimal(11,8);
+        native        : String(200);
+        timezone      : String(50);
+        wikiDataId    : String(100);
 
-//         to_State     : Association to one CustomerStates
-//                            on to_State.id = $self.state_id;
+        to_State      : Association to one CustomerStates
+                            on to_State.id = $self.state_id;
 
-//         to_Country   : Association to one CustomerCountries
-//                            on to_Country.id = $self.country_id;
-// }
+        to_Country    : Association to one CustomerCountries
+                            on to_Country.id = $self.country_id;
+}

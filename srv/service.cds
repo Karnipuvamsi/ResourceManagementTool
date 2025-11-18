@@ -69,9 +69,9 @@ service MyService {
 
   
   // Customer Country → State → City Master Data
-  // entity CustomerCountries               as projection on db.CustomerCountries;
-  // entity CustomerStates                  as projection on db.CustomerStates;
-  // entity CustomerCities                  as projection on db.CustomerCities;
+  entity CustomerCountries               as projection on db.CustomerCountries;
+  entity CustomerStates                  as projection on db.CustomerStates;
+  entity CustomerCities                  as projection on db.CustomerCities;
 
 
   // Metadata service actions

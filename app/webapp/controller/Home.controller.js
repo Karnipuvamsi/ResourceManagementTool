@@ -3891,32 +3891,74 @@ sap.ui.define([
 
         // ✅ NEW: Submit function that handles both Create and Update
         onSubmitCustomer: function () {
+            // -------------------------------
+            // ⭐ NEW: Read cascading fields
+            // -------------------------------
+            const oCountryCombo = this.byId("countryComboBox");
+            const oStateCombo = this.byId("stateComboBox");
+            const oCityCombo = this.byId("cityComboBox");
+            
+            // Get selected keys - read directly from ComboBox and also verify from selected item
+            let sCustCountryId = "";
+            let sCustStateId = "";
+            let sCustCityId = "";
+            
+            if (oCountryCombo) {
+                const sKey = oCountryCombo.getSelectedKey();
+                // Also verify by getting the selected item's key directly
+                const oSelectedItem = oCountryCombo.getSelectedItem();
+                sCustCountryId = (oSelectedItem ? oSelectedItem.getKey() : sKey) || "";
+            }
+            
+            if (oStateCombo) {
+                const sKey = oStateCombo.getSelectedKey();
+                // Also verify by getting the selected item's key directly
+                const oSelectedItem = oStateCombo.getSelectedItem();
+                sCustStateId = (oSelectedItem ? oSelectedItem.getKey() : sKey) || "";
+            }
+            
+            if (oCityCombo) {
+                const sKey = oCityCombo.getSelectedKey();
+                // Also verify by getting the selected item's key directly
+                const oSelectedItem = oCityCombo.getSelectedItem();
+                sCustCityId = (oSelectedItem ? oSelectedItem.getKey() : sKey) || "";
+            }
+            
+            // Clean the IDs - remove any commas, spaces, or formatting (shouldn't be needed but safety)
+            sCustCountryId = sCustCountryId ? String(sCustCountryId).replace(/[,\s]/g, "") : "";
+            sCustStateId = sCustStateId ? String(sCustStateId).replace(/[,\s]/g, "") : "";
+            sCustCityId = sCustCityId ? String(sCustCityId).replace(/[,\s]/g, "") : "";
+            
+            // Debug logging
+            console.log("Selected IDs (raw) - Country:", sCustCountryId, "State:", sCustStateId, "City:", sCustCityId);
+
+            // -------------------------------
             const sCustId = this.byId("inputCustomerId").getValue(),
                 sCustName = this.byId("inputCustomerName").getValue(),
-                sState = this.byId("inputState")?.getValue() || "",
-                sCountry = this.byId("inputCountry").getValue(),
                 sStartDate = this.byId("inputStartDate_cus")?.getValue() || "",
                 sEndDate = this.byId("inputEndDate_cus")?.getValue() || "",
                 sStatus = this.byId("inputStatus").getSelectedKey(),
                 sVertical = this.byId("inputVertical").getSelectedKey();
 
-            // ✅ Validation - Check all required fields
+            // -------------------------------
+            // ⭐ VALIDATION updated for countryId instead of country text
+            // -------------------------------
             if (!sCustName || sCustName.trim() === "") {
                 sap.m.MessageBox.error("Customer Name is required!");
                 return;
             }
-            
-            if (!sCountry || sCountry.trim() === "") {
+
+            if (!sCustCountryId) {
                 sap.m.MessageBox.error("Country is required!");
                 return;
             }
-            
-            if (!sStatus || sStatus.trim() === "") {
+
+            if (!sStatus) {
                 sap.m.MessageBox.error("Status is required!");
                 return;
             }
-            
-            if (!sVertical || sVertical.trim() === "") {
+
+            if (!sVertical) {
                 sap.m.MessageBox.error("Vertical is required!");
                 return;
             }
@@ -3933,12 +3975,22 @@ sap.ui.define([
                 const oExistingData = oContext.getObject();
                 
                 // For update, build entry with existing Customer ID (for verification) and new values
+                // Convert to numbers safely - ensure we parse the full string
+                const nCountryId = (sCustCountryId && sCustCountryId !== "") ? parseInt(sCustCountryId, 10) : null;
+                const nStateId = (sCustStateId && sCustStateId !== "") ? parseInt(sCustStateId, 10) : null;
+                const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
+                
+                // Debug logging
+                console.log("Converted IDs - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                
                 const oUpdateEntry = {
-                    "country": sCountry || "",
-                "customerName": sCustName,
-                    "state": sState || "",
-                    "status": sStatus || "",
-                    "vertical": sVertical || "",
+                    // ⭐ REPLACED your old fields with custCountryId, custStateId, custCityId
+                    "custCountryId": (isNaN(nCountryId) ? null : nCountryId),
+                    "custStateId": (isNaN(nStateId) ? null : nStateId),
+                    "custCityId": (isNaN(nCityId) ? null : nCityId),
+                    "customerName": sCustName,
+                    "status": sStatus,
+                    "vertical": sVertical,
                     "startDate": sStartDate || null,
                     "endDate": sEndDate || null
                 };
@@ -3995,33 +4047,25 @@ sap.ui.define([
             } else {
                 // CREATE MODE: No row selected, create new customer
                 // Don't send SAPcustId - backend will auto-generate it (C-0001, C-0002, etc.)
-                const oCreateEntry = {
-                    "country": sCountry || "",
-                    "customerName": sCustName,
-                    "state": sState || "",
-                    "status": sStatus || "",
-                    "vertical": sVertical || "",
-                    "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,  // ✅ FIXED: Use null instead of empty string for Date
-                    "endDate": (sEndDate && sEndDate.trim() !== "") ? sEndDate : null  // ✅ FIXED: Use null instead of empty string for Date
-                };
+                // Convert to numbers safely - ensure we parse the full string
+                const nCountryId = (sCustCountryId && sCustCountryId !== "") ? parseInt(sCustCountryId, 10) : null;
+                const nStateId = (sCustStateId && sCustStateId !== "") ? parseInt(sCustStateId, 10) : null;
+                const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
                 
-                // Validation - ensure required fields are filled
-                if (!sCustName || sCustName.trim() === "") {
-                    sap.m.MessageBox.error("Customer Name is required!");
-                    return;
-                }
-                if (!sCountry || sCountry.trim() === "") {
-                    sap.m.MessageBox.error("Country is required!");
-                    return;
-                }
-                if (!sStatus || sStatus.trim() === "") {
-                    sap.m.MessageBox.error("Status is required!");
-                    return;
-                }
-                if (!sVertical || sVertical.trim() === "") {
-                    sap.m.MessageBox.error("Vertical is required!");
-                    return;
-                }
+                // Debug logging
+                console.log("Converted IDs (CREATE) - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                
+                const oCreateEntry = {
+                    // ⭐ NEW: cascading IDs
+                    "custCountryId": (isNaN(nCountryId) ? null : nCountryId),
+                    "custStateId": (isNaN(nStateId) ? null : nStateId),
+                    "custCityId": (isNaN(nCityId) ? null : nCityId),
+                    "customerName": sCustName,
+                    "status": sStatus,
+                    "vertical": sVertical,
+                    "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,
+                    "endDate": (sEndDate && sEndDate.trim() !== "") ? sEndDate : null
+                };
                 
                 
                 // Try to get binding using multiple methods (MDC table pattern)
@@ -5034,19 +5078,8 @@ sap.ui.define([
             // Get table reference
             const oTable = this.byId("Customers");
             
-            // Clear all form fields
-            const oCustomerIdInput = this.byId("inputCustomerId");
-            if (oCustomerIdInput) {
-                // Reuse the improved initialization method
-                this._initializeCustomerIdField();
-            }
-            this.byId("inputCustomerName")?.setValue("");
-            this.byId("inputState")?.setValue("");
-            this.byId("inputCountry")?.setValue("");
-            this.byId("inputStartDate_cus")?.setValue("");
-            this.byId("inputEndDate_cus")?.setValue("");
-            this.byId("inputStatus")?.setSelectedKey("");
-            this.byId("inputVertical")?.setSelectedKey("");
+            // Use the form data handler to clear form (handles cascading dropdowns properly)
+            this._onCustDialogData([]);
             
             // Deselect any selected row in the table (MDC Table uses clearSelection)
             if (oTable && oTable.clearSelection) {
@@ -8870,6 +8903,134 @@ sap.ui.define([
             if (oEmployeeModel) {
                 oEmployeeModel.setProperty("/country", sSelectedCountry);
                 oEmployeeModel.setProperty("/city", ""); // Reset city when country changes
+            }
+        },
+
+        // ✅ Handler: Customer Country change - populate Customer State dropdown
+        onCountryChange: function (oEvent) {
+            const countryId = oEvent.getSource().getSelectedKey();
+
+            const oStateCombo = this.byId("stateComboBox");
+            const oCityCombo = this.byId("cityComboBox");
+
+            // Update customerModel - use null instead of empty string for proper handling
+            const oCustomerModel = this.getView().getModel("customerModel");
+            if (oCustomerModel) {
+                oCustomerModel.setProperty("/custCountryId", countryId && countryId !== "" ? countryId : null);
+                oCustomerModel.setProperty("/custStateId", null); // Reset state when country changes
+                oCustomerModel.setProperty("/custCityId", null); // Reset city when country changes
+            }
+
+            // Clear selected values
+            if (oStateCombo) {
+                oStateCombo.setSelectedKey("");
+            }
+            if (oCityCombo) {
+                oCityCombo.setSelectedKey("");
+            }
+
+            // Clear city list
+            if (oCityCombo) {
+                oCityCombo.unbindItems();
+            }
+
+            // Disable city until state is selected
+            if (oCityCombo) {
+                oCityCombo.setEnabled(false);
+            }
+
+            if (!countryId) {
+                // Disable state if no country selected
+                if (oStateCombo) {
+                    oStateCombo.unbindItems();
+                    oStateCombo.setEnabled(false);
+                }
+                return;
+            }
+
+            // Enable State dropdown
+            if (oStateCombo) {
+                oStateCombo.setEnabled(true);
+
+                // Bind States filtered by country_id
+                oStateCombo.bindItems({
+                    path: "default>/CustomerStates",
+                    filters: [
+                        new sap.ui.model.Filter("country_id", "EQ", Number(countryId))
+                    ],
+                    template: new sap.ui.core.ListItem({
+                        key: "{default>id}",
+                        text: "{default>name}"
+                    })
+                });
+            }
+        },
+
+        // ✅ Handler: Customer State change - populate Customer City dropdown
+        onStateChange: function (oEvent) {
+            const stateIdStr = oEvent.getSource().getSelectedKey();
+            const countryIdStr = this.byId("countryComboBox").getSelectedKey();
+
+            const oCityCombo = this.byId("cityComboBox");
+
+            // Update customerModel - use null instead of empty string for proper handling
+            const oCustomerModel = this.getView().getModel("customerModel");
+            if (oCustomerModel) {
+                oCustomerModel.setProperty("/custStateId", stateIdStr && stateIdStr !== "" ? stateIdStr : null);
+                oCustomerModel.setProperty("/custCityId", null); // Reset city when state changes
+            }
+
+            // Reset city selection
+            if (oCityCombo) {
+                oCityCombo.setSelectedKey("");
+            }
+
+            // Clean IDs - remove commas, spaces, and ensure they're strings
+            const cleanState = stateIdStr ? String(stateIdStr).replace(/[,\s]/g, "") : "";
+            const cleanCountry = countryIdStr ? String(countryIdStr).replace(/[,\s]/g, "") : "";
+
+            const stateId = cleanState ? parseInt(cleanState, 10) : null;
+            const countryId = cleanCountry ? parseInt(cleanCountry, 10) : null;
+
+            console.log("stateIdStr:", stateId, "countryIdStr:", countryId);
+
+            // If invalid → disable and stop
+            if (isNaN(stateId) || isNaN(countryId)) {
+                console.warn("Invalid filters → disable city list");
+                if (oCityCombo) {
+                    oCityCombo.unbindItems();
+                    oCityCombo.setEnabled(false);
+                }
+                return;
+            }
+
+            // Enable city dropdown
+            if (oCityCombo) {
+                oCityCombo.setEnabled(true);
+
+                // Bind filtered cities
+                oCityCombo.bindItems({
+                    path: "default>/CustomerCities",
+                    filters: [
+                        new sap.ui.model.Filter("state_id", "EQ", stateId),
+                        new sap.ui.model.Filter("country_id", "EQ", countryId)
+                    ],
+                    template: new sap.ui.core.ListItem({
+                        key: "{default>id}",
+                        text: "{default>name}"
+                    })
+                });
+            }
+        },
+
+        // ✅ Handler: Customer City change - update customerModel
+        onCityChange: function (oEvent) {
+            const cityId = oEvent.getSource().getSelectedKey();
+            
+            // Update customerModel - use null instead of empty string for proper handling
+            const oCustomerModel = this.getView().getModel("customerModel");
+            if (oCustomerModel) {
+                oCustomerModel.setProperty("/custCityId", cityId && cityId !== "" ? cityId : null);
             }
         },
 
