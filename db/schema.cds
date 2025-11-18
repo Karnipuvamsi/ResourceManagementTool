@@ -91,12 +91,13 @@ type ProjectTypeEnum      : String enum {
     FixedMonthly = 'Fixed Monthly';
     PassThru = 'Pass Thru';
     Divine = 'Divine';
+    TimeAndMaterial = 'Time & Material';
 }
 
 type ProjectStatusEnum    : String enum {
     Active = 'Active';
     Closed = 'Closed';
-    Planned = 'Planned';
+    ToBeCreated = 'To Be Created';
 }
 
 type SowEnum : String enum {
@@ -109,6 +110,32 @@ type PoEnum : String enum {
     No = 'No';
 }
 
+type Segment : String enum {
+    Data = 'Data';
+    TechAndAI = 'Tech And AI';
+}
+
+type Vertical : String enum {
+    HMS = 'HMS';
+    CNH = 'CNH';
+    FS = 'FS';
+}
+
+type SubVertical : String enum {
+    SAP = 'SAP';
+    Digital = 'Digital';
+}
+
+type Unit : String enum {
+    GEV = 'GEV';
+    HMS = 'HMS';
+    CNH = 'CNH';
+    FS = 'FS';
+}
+
+
+
+
 entity Project {
     key sapPId            : String;
         sfdcPId           : String;
@@ -118,6 +145,11 @@ entity Project {
         gpm               : String;
         projectType       : ProjectTypeEnum;
         oppId             : String;
+        segment           : Segment;
+        vertical          : Vertical;
+        subVertical       : SubVertical;
+        unit              : Unit;
+        
         status            : ProjectStatusEnum;
         requiredResources : Integer;
         allocatedResources: Integer;

@@ -111,6 +111,9 @@ sap.ui.define([
         _onEmpDialogData: function (aSelectedContexts) {
             FormHandler.prototype.onEmpDialogData.call(this, aSelectedContexts);
         },
+         _onMasterDemandsDialogData: function (aSelectedContexts) {
+            FormHandler.prototype.onMasterDemandsDialogData.call(this, aSelectedContexts);
+        },
 
         _onOppDialogData: function (aSelectedContexts) {
             FormHandler.prototype.onOppDialogData.call(this, aSelectedContexts);
@@ -229,6 +232,12 @@ sap.ui.define([
                     oProjModel.setProperty("/oppId", sOppId);
                 }
             }
+
+            this.byId("inputSegment_proj")?.setSelectedKey(oObj.segment || "");
+            this.byId("inputVertical_proj")?.setSelectedKey(oObj.vertical || "");
+            this.byId("inputSubVertical_proj")?.setSelectedKey(oObj.subVertical || "");
+            this.byId("inputUnit_proj")?.setSelectedKey(oObj.unit || "");
+
 
             this.byId("inputRequiredResources_proj")?.setValue(oObj.requiredResources || "");
             this.byId("inputAllocatedResources_proj")?.setValue(oObj.allocatedResources || "");
@@ -554,6 +563,7 @@ sap.ui.define([
                 "customerFilterBar": "Customers",
                 "employeeFilterBar": "Employees",
                 "opportunityFilterBar": "Opportunities",
+                "masterDemandsFilterBar" : "MasterDemands",
                 "projectFilterBar": "Projects",
                 "projectsFilterBar": "Projects", // ✅ Support both naming conventions
                 "resFilterBar": "Res", // ✅ NEW: Employee FilterBar in Res fragment (Allocations - Employees view)

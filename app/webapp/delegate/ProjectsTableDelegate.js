@@ -65,15 +65,16 @@ sap.ui.define([
             //     .trim();
             // Custom header mapping for Projects table
             const mCustomHeaders = {
-                "sapPId": "SAP PID",
-                "sfdcPId": "SFDC PID",
+                "sapPId": "Internal PID",
+                "sfdcPId": "Actual PID",
                 "projectName": "Project Name",
                 "startDate": "Start Date",
                 "endDate": "End Date",
                 "gpm": "GPM",
                 "projectType": "Project Type",
                 "oppId": "Opp Name",
-                "status": "Project Status"
+                "status": "Project Status",
+                "subVertical": "Sub-Vertical"
             };
 
             // Smart header generation with better fallback

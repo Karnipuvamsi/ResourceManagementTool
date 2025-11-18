@@ -13,7 +13,8 @@ sap.ui.define([
                 "Employees": { edit: "Edit_emp", delete: "Delete_emp" },
                 "Opportunities": { edit: "btnEdit_oppr", delete: "btnDelete_oppr" },
                 "Projects": { edit: "btnEdit_proj", delete: "btnDelete_proj" },
-                "SAPIdStatuses": { edit: "btnEdit_sap", delete: "btnDelete_sap" }
+                "SAPIdStatuses": { edit: "btnEdit_sap", delete: "btnDelete_sap" },
+                "MasterDemands": {delete: "Delete_demand"}
             };
 
             const sButtonId = oEvent.getSource().getId().split("--").pop();

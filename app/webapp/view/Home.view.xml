@@ -87,6 +87,11 @@
                             text="Projects"
                             icon="sap-icon://business-objects-experience"
                         />
+                        <tnt:NavigationListItem
+                            key="demands"
+                            text="Demands"
+                            icon="sap-icon://business-objects-experience"
+                        />
                         <!-- <tnt:NavigationListItem key="sapid" text="SAP ID" icon="sap-icon://key" /> -->
                         <tnt:NavigationListItem
                             key="employees"
@@ -203,6 +208,10 @@
                     />
                     <Page
                         id="projectsPage"
+                        showHeader="false"
+                    />
+                    <Page
+                        id="demandsPage"
                         showHeader="false"
                     />
                     <Page
