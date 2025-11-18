@@ -35,8 +35,6 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
                         variantBackreference="projectFilterBar"
                         filterConditions="{filterModel>/Projects/conditions}"
                         p13nMode="Item,Value">
@@ -193,9 +191,9 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
-                                    <Label text="Internal PID" />
+                                    <Label text="Internal Project ID" />
                                     <Input id="inputSapProjId_proj" value="{projectModel>/sapPId}" width="100%" enabled="false" placeholder="Auto-generated" />
-                                    <Label text="Actual PID" />
+                                    <Label text="Actual Project ID" />
                                     <Input id="inputSfdcProjId_proj" value="{projectModel>/sfdcPId}" width="100%" />
                                     <Label text="Project Name" />
                                     <Input id="inputProjectName_proj" value="{projectModel>/projectName}" width="100%" />
@@ -224,7 +222,7 @@
                                             <core:Item key="FixedMonthly" text="Fixed Monthly" />
                                             <core:Item key="PassThru" text="Pass Thru" />
                                             <core:Item key="Divine" text="Divine" />
-                                            <core:Item key="TimeAndMaterial" text="Time And Material" />
+                                            <core:Item key="TimeAndMaterial" text="Time &amp; Material" />
                                         </items>
                                     </Select>
                                 </f:SimpleForm>
@@ -249,7 +247,7 @@
                                             <core:Item key="" text="Select Status..." />
                                             <core:Item key="Active" text="Active" />
                                             <core:Item key="Closed" text="Closed" />
-                                            <core:Item key="TBC" text="To Be Created" />
+                                            <core:Item key="ToBeCreated" text="TO BE CREATED" />
                                         </items>
                                     </Select>
                                     <Label text="Opportunity" />

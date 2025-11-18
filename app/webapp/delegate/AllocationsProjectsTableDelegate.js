@@ -60,8 +60,8 @@ sap.ui.define([
 
             // Custom header mapping for Allocations Projects table
             const mCustomHeaders = {
-                "sapPId": "SAP PID",
-                "sfdcPId": "SFDC PID",
+                "sapPId": "Internal PID",
+                "sfdcPId": "Actual PID",
                 "projectName": "Project Name",
                 "startDate": "Start Date",
                 "endDate": "End Date",

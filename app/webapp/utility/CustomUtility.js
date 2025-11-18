@@ -155,6 +155,7 @@ sap.ui.define([
             this.byId("inputExpectedStart_oppr")?.setValue(oObj.expectedStart || "");
             this.byId("inputExpectedEnd_oppr")?.setValue(oObj.expectedEnd || "");
             this.byId("inputTCV_oppr")?.setValue(oObj.tcv || "");
+            this.byId("inputCurrency_oppr")?.setSelectedKey(oObj.currency || "");
 
             // Handle customer field
             // ✅ Customer field - display only ID (not name)
@@ -623,9 +624,25 @@ sap.ui.define([
             return FileUploadHelper.prototype._onCloseUpload.call(this);
         },
         _onSplitButtonArrowPress: function (oEvent) {
-
             this.oEventStore = oEvent;
             const oSource = this.oEventStore.getSource();
+            const sFullId = oSource.getId();
+            // Extract and store the button ID for use in menu items
+            let sButtonId = sFullId.split("--").pop();
+            // If it doesn't end with "Upload", search for it in the ID parts
+            if (!sButtonId.endsWith("Upload")) {
+                const aParts = sFullId.split("--");
+                for (let i = aParts.length - 1; i >= 0; i--) {
+                    if (aParts[i].includes("Upload") || 
+                        ["customerUpload", "opportunityUpload", "employeeUpload", 
+                         "projectUpload", "verticalUpload"].includes(aParts[i])) {
+                        sButtonId = aParts[i];
+                        break;
+                    }
+                }
+            }
+            // Store the button ID for use in menu items
+            this._sUploadButtonId = sButtonId;
 
             if (!this._oMenu) {
                 this._oMenu = new sap.m.Menu({
@@ -638,13 +655,43 @@ sap.ui.define([
                         new sap.m.MenuItem({
                             text: "Download Template",
                             tooltip: "Download Template",
-                            press: () => this.exportUploadTemplate(this.oEventStore)
+                            press: () => {
+                                // Use stored button ID directly
+                                const sStoredButtonId = this._sUploadButtonId;
+                                if (sStoredButtonId) {
+                                    // Create a mock button object with the correct ID format
+                                    // The ID format should match: container-glassboard---Home--customerUpload
+                                    const oView = this.getView();
+                                    const sViewId = oView ? oView.getId() : "container-glassboard---Home";
+                                    const sMockButtonId = sViewId + "--" + sStoredButtonId;
+                                    
+                                    const oMockButton = {
+                                        getId: function() {
+                                            return sMockButtonId;
+                                        }
+                                    };
+                                    const oSyntheticEvent = {
+                                        getSource: function() {
+                                            return oMockButton;
+                                        }
+                                    };
+                                    this.exportUploadTemplate(oSyntheticEvent);
+                                } else {
+                                    // Fallback: use the original event
+                                    const oSplitButton = this.oEventStore.getSource();
+                                    const oSyntheticEvent = {
+                                        getSource: function() {
+                                            return oSplitButton;
+                                        }
+                                    };
+                                    this.exportUploadTemplate(oSyntheticEvent);
+                                }
+                            }
                         })
                     ]
                 });
             }
             this._oMenu.openBy(oSource);
-
         },
         // ✅ Delegated to FileUploadHelper
         _onFileUploadChange: function (oEvent) {

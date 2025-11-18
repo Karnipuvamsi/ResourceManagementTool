@@ -61,6 +61,21 @@ type OpportunityStageEnum : String enum {
     OnBid = 'On Bid';
     DownSelect = 'Down Select';
     SignedDeal = 'Signed Deal';
+    Confirmed = 'Confirmed';
+}
+
+// Currency Enum for Opportunities
+type CurrencyEnum : String enum {
+    USD = 'USD';
+    EUR = 'EUR';
+    GBP = 'GBP';
+    INR = 'INR';
+    JPY = 'JPY';
+    AUD = 'AUD';
+    CAD = 'CAD';
+    CHF = 'CHF';
+    CNY = 'CNY';
+    SGD = 'SGD';
 }
 
 entity Opportunity {
@@ -74,6 +89,7 @@ entity Opportunity {
         expectedStart     : Date;
         expectedEnd       : Date;
         tcv  : Decimal(15, 2);
+        currency          : CurrencyEnum;  // ✅ NEW: Currency for TCV
         Stage             : OpportunityStageEnum;
         customerId        : String;
         
@@ -97,7 +113,7 @@ type ProjectTypeEnum      : String enum {
 type ProjectStatusEnum    : String enum {
     Active = 'Active';
     Closed = 'Closed';
-    ToBeCreated = 'To Be Created';
+    ToBeCreated = 'TO BE CREATED';
 }
 
 type SowEnum : String enum {
