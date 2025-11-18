@@ -198,6 +198,7 @@ sap.ui.define([
             oOppModel.setProperty("/expectedStart", oObj.expectedStart || "");
             oOppModel.setProperty("/expectedEnd", oObj.expectedEnd || "");
             oOppModel.setProperty("/tcv", oObj.tcv != null ? oObj.tcv : null);
+            oOppModel.setProperty("/currency", oObj.currency || "");
             oOppModel.setProperty("/customerId", oObj.customerId || "");
 
             this.byId("inputSapOppId_oppr")?.setValue(oObj.sapOpportunityId || "");
@@ -208,6 +209,7 @@ sap.ui.define([
             this.byId("inputBusinessUnit_oppr")?.setValue(oObj.businessUnit || "");
             this.byId("inputProbability_oppr")?.setSelectedKey(oObj.probability || "");
             this.byId("inputStage_oppr")?.setSelectedKey(oObj.Stage || "");
+            this.byId("inputCurrency_oppr")?.setSelectedKey(oObj.currency || "");
 
             const sSalesSPOCId = oObj.salesSPOC || "";
             const oSalesSPOCInput = this.byId("inputSalesSPOC_oppr");

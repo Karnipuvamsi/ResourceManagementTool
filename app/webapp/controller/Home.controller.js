@@ -5090,8 +5090,9 @@ sap.ui.define([
                 sDeliverySPOC = (this.byId("inputDeliverySPOC_oppr")?.data("selectedId")) || this.byId("inputDeliverySPOC_oppr")?.getValue() || "",
                 sExpectedStart = this.byId("inputExpectedStart_oppr").getValue(),
                 sExpectedEnd = this.byId("inputExpectedEnd_oppr").getValue(),
-                sTCV = this.byId("inputTCV_oppr").getValue();
-
+                sTCV = this.byId("inputTCV_oppr").getValue(),
+                sCurrency = this.byId("inputCurrency_oppr").getSelectedKey();
+            
             // Get the stored ID from data attribute, or fallback to model
             const oCustomerInput = this.byId("inputCustomerId_oppr");
             let sCustomerId = oCustomerInput ? oCustomerInput.data("selectedId") : "";
@@ -5128,6 +5129,7 @@ sap.ui.define([
                     "expectedStart": (sExpectedStart && sExpectedStart.trim() !== "") ? sExpectedStart : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "expectedEnd": (sExpectedEnd && sExpectedEnd.trim() !== "") ? sExpectedEnd : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "tcv": sTCV ? parseFloat(sTCV) : 0,
+                    "currency": sCurrency || "",
                     "customerId": sCustomerId || ""
                 };
 
@@ -5197,6 +5199,7 @@ sap.ui.define([
                     "expectedStart": (sExpectedStart && sExpectedStart.trim() !== "") ? sExpectedStart : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "expectedEnd": (sExpectedEnd && sExpectedEnd.trim() !== "") ? sExpectedEnd : null,  // ✅ FIXED: Use null instead of empty string for Date
                     "tcv": sTCV ? parseFloat(sTCV) : 0,
+                    "currency": sCurrency || "",
                     "customerId": sCustomerId || ""
                 };
 
@@ -5342,6 +5345,7 @@ sap.ui.define([
             this.byId("inputExpectedStart_oppr")?.setValue("");
             this.byId("inputExpectedEnd_oppr")?.setValue("");
             this.byId("inputTCV_oppr")?.setValue("");
+            this.byId("inputCurrency_oppr")?.setSelectedKey("");
             this.byId("inputCustomerId_oppr")?.setValue("");
             this.byId("inputCustomerId_oppr")?.data("selectedId", "");
 
@@ -7304,7 +7308,22 @@ sap.ui.define([
             const bIsGPMField = sInputId && sInputId.includes("inputGPM_proj");
             const bIsSalesSPOC = sInputId && sInputId.includes("inputSalesSPOC_oppr");
             const bIsDeliverySPOC = sInputId && sInputId.includes("inputDeliverySPOC_oppr");
-
+            
+            // Set dialog title based on which field is calling
+            let sDialogTitle = "Select Supervisor"; // Default for supervisor field
+            if (bIsGPMField) {
+                sDialogTitle = "Select GPM";
+            } else if (bIsSalesSPOC) {
+                sDialogTitle = "Select Sales SPOC";
+            } else if (bIsDeliverySPOC) {
+                sDialogTitle = "Select Delivery SPOC";
+            }
+            
+            // Update dialog title
+            if (this._oEmployeeValueHelpDialog) {
+                this._oEmployeeValueHelpDialog.setTitle(sDialogTitle);
+            }
+            
             this._oEmployeeValueHelpDialog._oInputField = oInput;
             this._oEmployeeValueHelpDialog._isGPMField = bIsGPMField;
             this._oEmployeeValueHelpDialog._isSalesSPOC = bIsSalesSPOC;

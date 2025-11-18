@@ -216,8 +216,21 @@
                                             <core:Item key="OnBid" text="On Bid" />
                                             <core:Item key="DownSelect" text="Down Select" />
                                             <core:Item key="SignedDeal" text="Signed Deal" />
+                                            <core:Item key="Confirmed" text="Confirmed" />
                                         </items>
                                     </Select>
+                                    <Label text="Customer" required="true" />
+                                    <Input 
+                                        id="inputCustomerId_oppr" 
+                                        width="100%"
+                                        placeholder="Select Customer"
+                                        showValueHelp="true"
+                                        valueHelpRequest="onCustomerValueHelpRequest"
+                                        required="true">
+                                        <layoutData>
+                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+                                        </layoutData>
+                                    </Input>
                                 </f:SimpleForm>
                             </VBox>
                             
@@ -258,18 +271,22 @@
                                     <DatePicker id="inputExpectedEnd_oppr" value="{opportunityModel>/expectedEnd}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" required="true" />
                                     <Label text="TCV" required="true" />
                                     <Input id="inputTCV_oppr" value="{opportunityModel>/tcv}" width="100%" type="Number" required="true" />
-                                    <Label text="Customer" required="true" />
-                                    <Input 
-                                        id="inputCustomerId_oppr" 
-                                        width="100%"
-                                        placeholder="Select Customer"
-                                        showValueHelp="true"
-                                        valueHelpRequest="onCustomerValueHelpRequest"
-                                        required="true">
-                                        <layoutData>
-                                            <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
-                                        </layoutData>
-                                    </Input>
+                                    <Label text="Currency" required="true" />
+                                    <Select id="inputCurrency_oppr" selectedKey="{opportunityModel>/currency}" width="100%" required="true">
+                                        <items>
+                                            <core:Item key="" text="Select Currency..." />
+                                            <core:Item key="USD" text="USD - US Dollar" />
+                                            <core:Item key="EUR" text="EUR - Euro" />
+                                            <core:Item key="GBP" text="GBP - British Pound" />
+                                            <core:Item key="INR" text="INR - Indian Rupee" />
+                                            <core:Item key="JPY" text="JPY - Japanese Yen" />
+                                            <core:Item key="AUD" text="AUD - Australian Dollar" />
+                                            <core:Item key="CAD" text="CAD - Canadian Dollar" />
+                                            <core:Item key="CHF" text="CHF - Swiss Franc" />
+                                            <core:Item key="CNY" text="CNY - Chinese Yuan" />
+                                            <core:Item key="SGD" text="SGD - Singapore Dollar" />
+                                        </items>
+                                    </Select>
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>

@@ -51,18 +51,22 @@ sap.ui.define([
                     labels: ["0%-ProposalStage", "33%-SoWSent", "85%-SoWSigned", "100%-PurchaseOrderReceived"]
                 },
                 "Stage": {
-                    values: ["Discover", "Define", "OnBid", "DownSelect", "SignedDeal"],
-                    labels: ["Discover", "Define", "On Bid", "Down Select", "Signed Deal"]
+                    values: ["Discover", "Define", "OnBid", "DownSelect", "SignedDeal", "Confirmed"],
+                    labels: ["Discover", "Define", "On Bid", "Down Select", "Signed Deal", "Confirmed"]
+                },
+                "currency": {
+                    values: ["USD", "EUR", "GBP", "INR", "JPY", "AUD", "CAD", "CHF", "CNY", "SGD"],
+                    labels: ["USD - US Dollar", "EUR - Euro", "GBP - British Pound", "INR - Indian Rupee", "JPY - Japanese Yen", "AUD - Australian Dollar", "CAD - Canadian Dollar", "CHF - Swiss Franc", "CNY - Chinese Yuan", "SGD - Singapore Dollar"]
                 }
             },
             "Projects": {
                 "projectType": {
-                    values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine"],
-                    labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine"]
+                    values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine", "TimeAndMaterial"],
+                    labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine", "Time & Material"]
                 },
                 "status": {
-                    values: ["Active", "Closed", "Planned"],
-                    labels: ["Active", "Closed", "Planned"]
+                    values: ["Active", "Closed", "ToBeCreated"],
+                    labels: ["Active", "Closed", "TO BE CREATED"]
                 },
                 "SOWReceived": {
                     values: ["Yes", "No"],

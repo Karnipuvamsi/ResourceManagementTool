@@ -22,7 +22,7 @@ sap.ui.define([
     RevenueForecastReportTableDelegate._formatPropertyLabel = function(sPropertyName) {
         // Custom header mapping for Revenue Forecast Report
         const mCustomHeaders = {
-            "sapPId": "SAP PID",
+            "sapPId": "Internal PID",
             "projectName": "Project Name",
             "projectType": "Project Type",
             "startDate": "Start Date",

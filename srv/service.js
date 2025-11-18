@@ -1537,9 +1537,9 @@ module.exports = cds.service.impl(async function () {
             oToday.setHours(0, 0, 0, 0);
 
 
-            // Find all active or planned projects where endDate has passed
+            // Find all active or to be created projects where endDate has passed
             const aExpiredProjects = await SELECT.from(Projects)
-                .where({ status: { in: ['Active', 'Planned'] } });
+                .where({ status: { in: ['Active', 'ToBeCreated'] } });
 
             if (!aExpiredProjects || aExpiredProjects.length === 0) {
                 return { updated: 0, allocations: 0, employees: [] };
@@ -1720,8 +1720,8 @@ module.exports = cds.service.impl(async function () {
                 { entity: "Opportunities", property: "Stage", values: ["Discover", "Define", "OnBid", "DownSelect", "SignedDeal"], labels: ["Discover", "Define", "On Bid", "Down Select", "Signed Deal"] },
 
                 // Projects
-                { entity: "Projects", property: "projectType", values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine"], labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine"] },
-                { entity: "Projects", property: "status", values: ["Active", "Closed", "Planned"], labels: ["Active", "Closed", "Planned"] },
+                { entity: "Projects", property: "projectType", values: ["FixedPrice", "TransactionBased", "FixedMonthly", "PassThru", "Divine", "TimeAndMaterial"], labels: ["Fixed Price", "Transaction Based", "Fixed Monthly", "Pass Thru", "Divine", "Time & Material"] },
+                { entity: "Projects", property: "status", values: ["Active", "Closed", "ToBeCreated"], labels: ["Active", "Closed", "TO BE CREATED"] },
                 { entity: "Projects", property: "SOWReceived", values: ["Yes", "No"], labels: ["Yes", "No"] },
                 { entity: "Projects", property: "POReceived", values: ["Yes", "No"], labels: ["Yes", "No"] },
 
