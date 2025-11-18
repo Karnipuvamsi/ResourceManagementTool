@@ -73,7 +73,8 @@ sap.ui.define([
                 "gpm": "GPM",
                 "projectType": "Project Type",
                 "oppId": "Opp Name",
-                "status": "Project Status"
+                "status": "Project Status",
+                "subVertical": "Sub-Vertical"
             };
 
             // Smart header generation with better fallback

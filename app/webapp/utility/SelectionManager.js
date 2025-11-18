@@ -27,7 +27,8 @@ sap.ui.define([
                 "SAPIdStatuses": { edit: "btnEdit_sap", delete: "btnDelete_sap" },
                 "Allocations": { demand: "demand_alloc", delete: "btnDelete_alloc" },
                 "Demands": { resources: "Resources_demand", delete: "btnDelete_demand" },
-                "Res": { allocate: "btnResAllocate", delete: "Delete_res1" }
+                "Res": { allocate: "btnResAllocate", delete: "Delete_res1" },
+                "MasterDemands": {delete: "Delete_demand"}
             };
 
             const config = buttonMap[sTableId];
@@ -49,6 +50,8 @@ sap.ui.define([
                     this._onProjDialogData([]);
                 } else if (sTableId === "Demands") {
                     this._onDemandDialogData([]);
+                } else if (sTableId === "MasterDemands") {
+                    this._onMasterDemandsDialogData([]);
                 }
             }
 
@@ -62,6 +65,8 @@ sap.ui.define([
                 this.byId("editButton_proj")?.setEnabled(bHasSelection);
             } else if (sTableId === "Demands") {
                 this.byId("editButton_demand")?.setEnabled(bHasSelection);
+            }else if (sTableId === "MasterDemands") {
+                this.byId("editButton_masterDemands")?.setEnabled(bHasSelection);
             }
 
             if (config.edit) {

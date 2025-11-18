@@ -174,6 +174,7 @@ sap.ui.define([
                 customers: "customersPage",
                 opportunities: "opportunitiesPage",
                 projects: "projectsPage",
+                demands: "demandsPage",
                 sapid: "sapidPage",
                 employees: "employeesPage",
                 // ✅ REMOVED: verticals: "verticalsPage", (Vertical is now an enum, not an entity)
@@ -804,6 +805,94 @@ sap.ui.define([
                     if (oSelect) {
                         oSelect.setSelectedKey("employees");
                     }
+                }.bind(this));
+            } else if (sKey === "demands") {
+                // Check if already loaded to prevent duplicate IDs
+                if (this._bMasterDemandsLoaded) {
+                    console.log("[MasterDemands] Fragment already loaded, skipping");
+                    return;
+                }
+
+                this._bMasterDemandsLoaded = true;
+                const oMasterDemandsPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oMasterDemandsPage && oMasterDemandsPage.getContent) {
+                    const aExistingContent = oMasterDemandsPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oMasterDemandsPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.MasterDemands",
+                    controller: this
+                }).then(function (oFragment) {
+                    oMasterDemandsPage.addContent(oFragment);
+
+                    const oTable = this.byId("MasterDemands");
+                    // Ensure table starts with show-less state
+                    oTable.removeStyleClass("show-more");
+                    oTable.addStyleClass("show-less");
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+                    // Ensure the table has the correct model
+                    const oModel = this.getOwnerComponent().getModel();
+                    if (oModel) {
+                        oTable.setModel(oModel);
+                    }
+
+                    // ✅ Set default filters for Opportunities FilterBar
+                    const oMasterDemandsFilterBar = this.byId("masterDemandsFilterBar");
+                    if (oMasterDemandsFilterBar) {
+                        oMasterDemandsFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oMasterDemandsFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oMasterDemandsFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+                        }, 2000);
+                    }
+
+                    // Initialize table-specific functionality
+                    this.initializeTable("MasterDemands");
+                    // Reset segmented button to "less" state for this fragment
+                    this._resetSegmentedButtonForFragment("MasterDemands");
+
+                    // ✅ Initialize Opportunity ID field and form
+                    setTimeout(() => {
+                        oTable.initialized().then(() => {
+                            setTimeout(() => {
+                                this._initializeOpportunityIdField();
+                                const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+                                if (aSelectedContexts.length === 0) {
+                                    this._onOppDialogData([]);
+                                }
+                            }, 500);
+                        }).catch(() => {
+                            setTimeout(() => {
+                                this._initializeOpportunityIdField();
+                            }, 1000);
+                        });
+                    }, 300);
                 }.bind(this));
             }
             // ✅ REMOVED: Verticals fragment loading (Vertical is now an enum, not an entity)
@@ -3609,6 +3698,37 @@ sap.ui.define([
                 oBinding.filter(aFilters);
             }
         },
+        onMasterDemandSearch: function (oEvent) {
+            const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            const oTable = this.byId("MasterDemands");
+
+            if (!oTable) {
+                return;
+            }
+
+            // Apply search filter to table (but preserve project filter)
+            const oBinding = oTable.getRowBinding && oTable.getRowBinding();
+            if (oBinding) {
+                const aFilters = [];
+
+                // Always include project filter if available
+                if (this._sDemandProjectFilter) {
+                    // ✅ Convert project ID format (P-0006 -> 6) to match CSV data format
+                    let sFilterValue = this._sDemandProjectFilter;
+                    if (sFilterValue && sFilterValue.startsWith("P-")) {
+                        sFilterValue = sFilterValue.replace(/^P-0*/, ""); // Remove "P-" and leading zeros
+                    }
+                    aFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sFilterValue));
+                }
+
+                // Add search filter if query exists
+                if (sQuery) {
+                    aFilters.push(new sap.ui.model.Filter("skill", sap.ui.model.FilterOperator.Contains, sQuery));
+                }
+
+                oBinding.filter(aFilters);
+            }
+        },
         
         // ✅ NEW: Res fragment - Customer change handler (enables Opportunity)
         onResCustomerChange: function (oEvent) {
@@ -4342,6 +4462,126 @@ sap.ui.define([
                 }, 200);
             }
         },
+        onMasterDemandsSearch: function (oEvent) {
+            const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            const oTable = this.byId("MasterDemands");
+
+            if (!oTable) {
+                console.warn("Master demands table not available");
+                return;
+            }
+
+            let iRetryCount = 0;
+            const MAX_RETRIES = 5;
+
+            const fnApplySearch = () => {
+                if (iRetryCount >= MAX_RETRIES) {
+                    console.warn("Max retries reached for employee search");
+                    return;
+                }
+
+                iRetryCount++;
+
+                try {
+                    let oBinding = this._getRowBinding(oTable);
+                    if (!oBinding) {
+                        oBinding = oTable.getBinding("items") || oTable.getBinding("rows");
+                    }
+                    if (!oBinding) {
+                        const oModel = oTable.getModel();
+                        if (oModel && oModel.bindList) {
+                            oBinding = oModel.bindList("/Demands");
+                        }
+                    }
+
+                    if (!oBinding) {
+                        setTimeout(() => {
+                            fnApplySearch();
+                        }, 300);
+                        return;
+                    }
+
+                    iRetryCount = 0;
+
+                    if (sQuery && sQuery.trim() !== "") {
+                        const sQueryTrimmed = sQuery.trim();
+                        const aFilters = [];
+
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "demandId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "skill",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "band",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "sapPId",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "quantity",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "allocatedCount",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+                        aFilters.push(new sap.ui.model.Filter({
+                            path: "remaining",
+                            operator: sap.ui.model.FilterOperator.Contains,
+                            value1: sQueryTrimmed,
+                            caseSensitive: false
+                        }));
+
+                        const oCombinedFilter = new sap.ui.model.Filter({
+                            filters: aFilters,
+                            and: false
+                        });
+
+                        oBinding.filter([oCombinedFilter]);
+                        console.log("✅ Master demand search filter applied (case-insensitive):", sQueryTrimmed);
+                    } else {
+                        oBinding.filter([]);
+                        console.log("✅ Master demand search filter cleared");
+                    }
+                } catch (e) {
+                    console.error("Error applying master demand search filter:", e);
+                }
+            };
+
+            if (oTable.initialized && typeof oTable.initialized === "function") {
+                oTable.initialized().then(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 100);
+                }).catch(() => {
+                    setTimeout(() => {
+                        fnApplySearch();
+                    }, 300);
+                });
+            } else {
+                setTimeout(() => {
+                    fnApplySearch();
+                }, 200);
+            }
+        },
         //newly added ressearch
         // ✅ NEW: Search function for Employee table
         onResSearchField: function (oEvent) {
@@ -5030,6 +5270,187 @@ sap.ui.define([
             });
         },
 
+        onSubmitMasterDemands: function () {
+            const sDemandId = this.byId("inputDemandId").getValue(),
+                aSelectedSkills = this.byId("inputSkills")?.getSelectedKeys() || [],
+                sSkills = aSelectedSkills.join(", "),                
+                sBand = this.byId("inputBand").getSelectedKey(),
+                  // ✅ CHANGED: Now uses getSelectedKey
+                // Get Supervisor OHR ID from data attribute (not displayed name)
+                sSapPId = (this.byId("inputProject")?.data("selectedId")) || this.byId("inputProject")?.getValue() || "",
+                // Get selected skill names from MultiComboBox and join as comma-separated string
+                sQuantity=this.byId("inputQuantity").getValue(),
+                sAllocatedCount=this.byId("inputAllocatedCount").getValue(),
+                sRemainingCount=this.byId("inputRemainingCount").getValue();
+
+           
+
+           
+
+            const oTable = this.byId("MasterDemands");
+            const oModel = oTable.getModel();
+
+            // Check if a row is selected (Update mode)
+            const aSelectedContexts = oTable.getSelectedContexts();
+
+            if (aSelectedContexts && aSelectedContexts.length > 0) {
+                // UPDATE MODE: Row is selected, update existing employee
+                const oContext = aSelectedContexts[0];
+
+                const oUpdateEntry = {
+                   "demandId": sDemandId,
+                   "skill": sSkills || "",
+                    "band": sBand || "",                    
+                    "sapPId": sSapPId || "",
+                    "quantity" : sQuantity,
+                    "allocatedCount" :sAllocatedCount,     // ✅ NEW: Calculated - count of allocations matching this demand's skill
+                    "remaining" :sRemainingCount      
+                };
+                console.log(oUpdateEntry,"updated entry");
+
+                try {
+                    // Update the context
+                    Object.keys(oUpdateEntry).forEach(sKey => {
+                        const vNewValue = oUpdateEntry[sKey];
+                        const vCurrentValue = oContext.getProperty(sKey);
+                        // Handle null values for date fields - compare properly
+                        if (vNewValue !== vCurrentValue) {
+                            // For date fields, handle null explicitly
+                            if ((sKey === "doj" || sKey === "lwd") && vNewValue === null) {
+                                oContext.setProperty(sKey, null);
+                            } else {
+                                oContext.setProperty(sKey, vNewValue);
+                            }
+                        }
+                    });
+
+                    // Submit employee changes (skills are included in the update)
+                    oModel.submitBatch("changesGroup")
+                        .then(() => {
+                            MessageToast.show("Demand updated successfully!");
+
+                            // ✅ CRITICAL: Hard refresh table to get fresh data from DB
+                            this._hardRefreshTable("Employees");
+
+                            this.onCancelMasterDataForm();
+                        })
+                        .catch((oError) => {
+                            setTimeout(() => {
+                                try {
+                                    const oCurrentData = oContext.getObject();
+                                    if (oCurrentData && oCurrentData.fullName === oUpdateEntry.fullName) {
+                                        MessageToast.show("Demand updated successfully!");
+                                        const oBinding = oTable.getBinding("rows") || oTable.getBinding("items");
+                                        if (oBinding) {
+                                            oBinding.refresh();
+                                        }
+                                        this.onCancelMasterDataForm();
+                                    } else {
+                                        console.warn("Update may have failed:", oError.message || "Unknown error");
+                                    }
+                                } catch (e) {
+                                    console.log("Update completed");
+                                }
+                            }, 150);
+                        });
+                } catch (oSetError) {
+                    console.error("Error setting properties:", oSetError);
+                    sap.m.MessageBox.error("Failed to update employee. Please try again.");
+                }
+            } else {
+                // CREATE MODE: No row selected, create new demand
+               
+
+                const oCreateEntry = {
+                   "demandId": sDemandId,
+                   "skill": sSkills || "",
+                    "band": sBand || "",                    
+                    "sapPId": sSapPId || "",
+                    "quantity" : sQuantity,
+                    "allocatedCount" :sAllocatedCount,     // ✅ NEW: Calculated - count of allocations matching this demand's skill
+                    "remaining" :sRemainingCount                 };
+
+                console.log("Creating demand with data:", oCreateEntry);
+
+                // Try to get binding using multiple methods
+                let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
+                    || oTable.getBinding("items")
+                    || oTable.getBinding("rows");
+
+                if (oBinding) {
+                    try {
+                        const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
+                        if (!oNewContext) {
+                            sap.m.MessageBox.error("Failed to create demand entry.");
+                            return;
+                        }
+                        console.log("demand context created:", oNewContext.getPath());
+
+                        oModel.submitBatch("changesGroup")
+                            .then(() => {
+                                console.log("Demand created successfully!");
+                                MessageToast.show("Demand created successfully!");
+
+                                // ✅ CRITICAL: Hard refresh table to get fresh data from DB
+                                this._hardRefreshTable("MasterDemands");
+
+                                this.onCancelMasterDataForm();
+                            })
+                            .catch((oError) => {
+                                console.error("Create batch error:", oError);
+                                setTimeout(() => {
+                                    try {
+                                        const oCreatedData = oNewContext.getObject();
+                                        if (oCreatedData && oCreatedData.fullName === oCreateEntry.fullName) {
+                                            console.log("✅ Create verified successful");
+                                            MessageToast.show("Demand created successfully!");
+                                            oBinding.refresh();
+                                            this.onCancelMasterDataForm();
+                                        } else {
+                                            this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
+                                        }
+                                    } catch (e) {
+                                        this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
+                                    }
+                                }, 150);
+                            });
+                    } catch (oCreateError) {
+                        console.error("Error creating via binding:", oCreateError);
+                        this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
+                    }
+                } else {
+                    console.log("Table binding not available, using direct model create");
+                    this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
+                }
+            }
+        },
+        _createMasterDemandsDirect: function (oModel, oCreateEntry, oTable) {
+            oModel.create("/Demands", oCreateEntry, {
+                success: (oData) => {
+                    console.log("Demand created successfully (direct):", oData);
+                    MessageToast.show("Demand created successfully!");
+
+                    // ✅ CRITICAL: Hard refresh table to get fresh data from DB
+                    this._hardRefreshTable("MasterDemands");
+
+                    this.onCancelMasterDataForm();
+                },
+                error: (oError) => {
+                    console.error("Create error:", oError);
+                    let sErrorMessage = "Failed to create demand. Please check the input or try again.";
+                    try {
+                        if (oError.responseText) {
+                            const oParsed = JSON.parse(oError.responseText);
+                            sErrorMessage = oParsed.error?.message || oParsed.message || sErrorMessage;
+                        }
+                    } catch (e) {
+                        // Use default message
+                    }
+                    sap.m.MessageBox.error(sErrorMessage);
+                }
+            });
+        },
+
         // ✅ NEW: Submit function for Opportunity (handles both Create and Update)
         onSubmitOpportunity: function () {
             const sSapOppId = this.byId("inputSapOppId_oppr").getValue(),
@@ -5398,6 +5819,7 @@ sap.ui.define([
                 sGPM = (this.byId("inputGPM_proj")?.data("selectedId")) || this.byId("inputGPM_proj")?.getValue() || "",
                 sProjectType = this.byId("inputProjectType_proj").getSelectedKey(),
                 sStatus = this.byId("inputStatus_proj").getSelectedKey();
+                
             
             // Get the stored ID from data attribute, or fallback to model
             const oOppInput = this.byId("inputOppId_proj");
@@ -5407,6 +5829,11 @@ sap.ui.define([
                 const oModel = this.getView().getModel("projectModel");
                 sOppId = oModel ? oModel.getProperty("/oppId") : "";
             }
+
+            const sSegment = this.byId("inputSegment_proj").getSelectedKey();
+            const sVertical = this.byId("inputVertical_proj").getSelectedKey();
+            const sSubVertical = this.byId("inputSubVertical_proj").getSelectedKey();
+            const sUnit = this.byId("inputUnit_proj").getSelectedKey();
             
             const sRequiredResources = this.byId("inputRequiredResources_proj").getValue(),
                 sAllocatedResources = this.byId("inputAllocatedResources_proj").getValue(),
@@ -5438,7 +5865,12 @@ sap.ui.define([
                     "gpm": sGPM || "",
                     "projectType": sProjectType || "",
                     "status": sStatus || "",
+                    
                     "oppId": sOppId || "",
+                    "segment": sSegment || "",
+                    "vertical":sVertical || "",
+                    "subVertical":sSubVertical || "",
+                    "unit": sUnit || "",
                     "requiredResources": sRequiredResources ? parseInt(sRequiredResources) : 0,
                     "allocatedResources": sAllocatedResources ? parseInt(sAllocatedResources) : 0,
                     "toBeAllocated": sToBeAllocated ? parseInt(sToBeAllocated) : 0,
@@ -5510,6 +5942,10 @@ sap.ui.define([
                     "projectType": sProjectType || "",
                     "status": sStatus || "",
                     "oppId": sOppId || "",
+                    "segment": sSegment || "",                     
+                    "vertical":sVertical || "",
+                    "subVertical":sSubVertical || "",
+                    "unit": sUnit || "",
                     "requiredResources": sRequiredResources ? parseInt(sRequiredResources) : 0,
                     "allocatedResources": sAllocatedResources ? parseInt(sAllocatedResources) : 0,
                     "toBeAllocated": sToBeAllocated ? parseInt(sToBeAllocated) : 0,
@@ -5660,6 +6096,10 @@ sap.ui.define([
                 projectType: "",
                 status: "",
                 oppId: "",
+                segment: "",
+                vertical:"",
+                subVertical:"",
+                unit:"",
                 requiredResources: "",
                 allocatedResources: "",
                 toBeAllocated: "",
@@ -5870,6 +6310,70 @@ sap.ui.define([
             }
             }, 50); // Small delay to ensure clear completes
         },
+
+        onEditMasterDemandsForm: function () {
+            const oTable = this.byId("MasterDemands");
+            const aSelectedContexts = oTable.getSelectedContexts();
+            if (aSelectedContexts && aSelectedContexts.length > 0) {
+                const oContext = aSelectedContexts[0];
+                const oModel = oTable.getModel();
+                // ✅ CRITICAL: Fetch fresh data from backend - use requestObject with refresh
+                if (oModel && oContext.getPath) {
+                    const sPath = oContext.getPath();
+                    // First, refresh the context to get fresh data from backend
+                    if (oContext.requestObject && typeof oContext.requestObject === "function") {
+                        // Request fresh data from backend
+                        oContext.requestObject().then(() => {
+                            const oObj = oContext.getObject();
+                            console.log(oObj);
+                            console.log("✅ Employee fresh data from backend:", oObj);
+
+                            // Now fetch Supervisor association if needed
+                            const sSapPId = oObj && oObj.sapPId;
+                            if (sSapPId && oModel) {
+                                // Fetch Supervisor name from backend
+                                const oSapPIdContext = oModel.bindContext(`/Demands('${sSapPId}')`, null, { deferred: true });
+                                oSapPIdContext.execute().then(() => {
+                                    const oSapPId = oSapPIdContext.getObject();
+                                    if (oSapPId && oObj) {
+                                        // Add supervisor data to object
+                                        oObj.to_Project = oSapPId;
+                                    }
+                                    // Now populate form with fresh backend data
+                                    this._onMasterDemandsDialogData(aSelectedContexts);
+                                }).catch(() => {
+                                    // If supervisor fetch fails, still populate form
+                                    this._onMasterDemandsDialogData(aSelectedContexts);
+                                });
+                            } else {
+                                // No supervisor, populate directly with fresh backend data
+                                this._onMasterDemandsDialogData(aSelectedContexts);
+                            }
+                        }).catch(() => {
+                            // If requestObject fails, try direct populate
+                            this._onMasterDemandsDialogData(aSelectedContexts);
+                        });
+                    } else {
+                        // No requestObject, populate directly
+                        this._onMasterDemandsDialogData(aSelectedContexts);
+                    }
+                } else {
+                    // No path, use requestObject directly
+                    if (oContext.requestObject && typeof oContext.requestObject === "function") {
+                        oContext.requestObject().then(() => {
+                            this._onMasterDemandsDialogData(aSelectedContexts);
+                        }).catch(() => {
+                            this._onMasterDemandsDialogData(aSelectedContexts);
+                        });
+                    } else {
+                        this._onMasterDemandsDialogData(aSelectedContexts);
+                    }
+                }
+            } else {
+                sap.m.MessageToast.show("Please select a row to edit.");
+            }
+        },
+        
 
         onEditOpportunityForm: function () {
             const oTable = this.byId("Opportunities");
@@ -6555,6 +7059,33 @@ sap.ui.define([
             // ✅ CRITICAL: Disable Edit button when form is cleared (no row selected)
             this.byId("editButton_emp")?.setEnabled(false);
         },
+        onCancelMasterDataForm: function () {
+            // Clear all form fields
+            this.byId("inputDemandId")?.setValue("");
+            this.byId("inputProject")?.setValue("");
+            this.byId("inputProject")?.setEnabled(true); // Enable for new entry
+            this.byId("inputQuantity")?.setValue("");
+            this.byId("inputAllocatedCount")?.setValue("");
+            this.byId("inputRemainingCount")?.setValue("");
+            this.byId("inputBand")?.setSelectedKey("");
+
+            // Clear MultiComboBox for skills
+            this.byId("inputSkills")?.removeAllSelectedItems();
+
+            // Deselect any selected row in the table
+            const oTable = this.byId("MasterDemands");
+            if (oTable && oTable.clearSelection) {
+                try {
+                    oTable.clearSelection();
+                } catch (e) {
+                    console.log("Selection cleared or method not available");
+                }
+            }
+
+            // ✅ Disable Edit button when form is cleared
+            this.byId("editButton_demand")?.setEnabled(false);
+        },
+
 
         // Include all methods from CustomUtility
         initializeTable: CustomUtility.prototype.initializeTable,
@@ -6568,6 +7099,7 @@ sap.ui.define([
         _onOppDialogData: CustomUtility.prototype._onOppDialogData,
         _onProjDialogData: CustomUtility.prototype._onProjDialogData,
         _onDemandDialogData: CustomUtility.prototype._onDemandDialogData,
+        _onMasterDemandsDialogData: CustomUtility.prototype._onMasterDemandsDialogData,
         // onAddPress: CustomUtility.prototype.onAddPress,
         // onDeletePress: CustomUtility.prototype.onDeletePress,
         // onSaveChanges: CustomUtility.prototype.onSaveChanges,

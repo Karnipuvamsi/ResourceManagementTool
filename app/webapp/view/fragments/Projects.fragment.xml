@@ -261,6 +261,47 @@
                                             <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
                                         </layoutData>
                                     </Input>
+                                    <Label text="Segment" />
+                                    <Select id="inputSegment_proj" selectedKey="{projectModel>/segment}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Segment..." />
+                                            <core:Item key="Data" text="Data" />
+                                            <core:Item key="TechAndAI" text="Tech And AI" />                                            
+                                        </items>
+                                    </Select>
+                                    <Label text="Vertical" />
+                                    <Select id="inputVertical_proj" selectedKey="{projectModel>/vertical}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Vertical..." />
+                                            <core:Item key="HMS" text="HMS" />
+                                            <core:Item key="CNH" text="CNH" />
+                                            <core:Item key="FS" text="FS" />                                               
+
+                                        </items>
+                                    </Select>
+                                     <Label text="Sub-Vertical" />
+                                    <Select id="inputSubVertical_proj" selectedKey="{projectModel>/subVertical}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Sub-Vertical..." />
+                                            <core:Item key="SAP" text="SAP" />
+                                            <core:Item key="Digital" text="Digital" />
+                                                                                     
+
+                                        </items>
+                                    </Select>
+                                    <Label text="Unit/Service Line" />
+                                    <Select id="inputUnit_proj" selectedKey="{projectModel>/unit}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Unit..." />
+                                            <core:Item key="GEV" text="GEV" />
+                                            <core:Item key="HMS" text="HMS" />
+                                            <core:Item key="CNH" text="CNH" />
+                                            <core:Item key="FS" text="FS" />
+                                                                                     
+
+                                        </items>
+                                    </Select>
+                                    
                                     <Label text="Required Resources" />
                                     <Input id="inputRequiredResources_proj" value="{projectModel>/requiredResources}" width="100%" type="Number" />
                                     <Label text="Allocated Resources" />
