@@ -198,27 +198,31 @@
                                     <Label text="Business Unit" required="true" />
                                     <Input id="inputBusinessUnit_oppr" value="{opportunityModel>/businessUnit}" width="100%" required="true" />
                                     <Label text="Probability" required="true" />
-                                    <Select id="inputProbability_oppr" selectedKey="{opportunityModel>/probability}" width="100%" required="true">
-                                        <items>
-                                            <core:Item key="" text="Select Probability..." />
-                                            <core:Item key="ProposalStage" text="0%-ProposalStage" />
-                                            <core:Item key="SoWSent" text="33%-SoWSent" />
-                                            <core:Item key="SoWSigned" text="85%-SoWSigned" />
-                                            <core:Item key="PurchaseOrderReceived" text="100%-PurchaseOrderReceived" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputProbability_oppr"
+                                        selectedKey="{opportunityModel>/probability}"
+                                        width="100%"
+                                        required="true"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/Probabilities',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Stage" required="true" />
-                                    <Select id="inputStage_oppr" selectedKey="{opportunityModel>/Stage}" width="100%" required="true">
-                                        <items>
-                                            <core:Item key="" text="Select Stage..." />
-                                            <core:Item key="Discover" text="Discover" />
-                                            <core:Item key="Define" text="Define" />
-                                            <core:Item key="OnBid" text="On Bid" />
-                                            <core:Item key="DownSelect" text="Down Select" />
-                                            <core:Item key="SignedDeal" text="Signed Deal" />
-                                            <core:Item key="Confirmed" text="Confirmed" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputStage_oppr"
+                                        selectedKey="{opportunityModel>/Stage}"
+                                        width="100%"
+                                        required="true"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/OpportunityStages',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Customer" required="true" />
                                     <Input 
                                         id="inputCustomerId_oppr" 
@@ -272,21 +276,18 @@
                                     <Label text="TCV" required="true" />
                                     <Input id="inputTCV_oppr" value="{opportunityModel>/tcv}" width="100%" type="Number" required="true" />
                                     <Label text="Currency" required="true" />
-                                    <Select id="inputCurrency_oppr" selectedKey="{opportunityModel>/currency}" width="100%" required="true">
-                                        <items>
-                                            <core:Item key="" text="Select Currency..." />
-                                            <core:Item key="USD" text="USD - US Dollar" />
-                                            <core:Item key="EUR" text="EUR - Euro" />
-                                            <core:Item key="GBP" text="GBP - British Pound" />
-                                            <core:Item key="INR" text="INR - Indian Rupee" />
-                                            <core:Item key="JPY" text="JPY - Japanese Yen" />
-                                            <core:Item key="AUD" text="AUD - Australian Dollar" />
-                                            <core:Item key="CAD" text="CAD - Canadian Dollar" />
-                                            <core:Item key="CHF" text="CHF - Swiss Franc" />
-                                            <core:Item key="CNY" text="CNY - Chinese Yuan" />
-                                            <core:Item key="SGD" text="SGD - Singapore Dollar" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputCurrency_oppr"
+                                        selectedKey="{opportunityModel>/currency}"
+                                        width="100%"
+                                        required="true"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/Currencies',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>

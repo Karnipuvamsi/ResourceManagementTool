@@ -161,10 +161,41 @@
                             <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" />
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
-                            <Label text="State" />
-                            <Input id="inputState" value="{customerModel>/state}" width="100%" placeholder="Enter State" />
+                            <!-- COUNTRY -->
                             <Label text="Country" required="true" />
-                            <Input id="inputCountry" value="{customerModel>/country}" width="100%" required="true" placeholder="Enter Country" />
+                            <ComboBox
+                                id="countryComboBox"
+                                selectedKey="{customerModel>/custCountryId}"
+                                selectionChange="onCountryChange"
+                                width="100%"
+                                showClearIcon="true"
+                                items="{
+                                    path: 'default>/CustomerCountries',
+                                    sorter: { path: 'name' }
+                                }">
+                                <core:ListItem key="{default>id}" text="{default>name}" />
+                            </ComboBox>
+                            <!-- STATE -->
+                            <Label text="State" />
+                            <ComboBox
+                                id="stateComboBox"
+                                selectedKey="{customerModel>/custStateId}"
+                                selectionChange="onStateChange"
+                                width="100%"
+                                showClearIcon="true"
+                                enabled="false">
+                                <core:ListItem key="" text="Select State..." />
+                            </ComboBox>
+                            <!-- CITY -->
+                            <Label text="City" />
+                            <ComboBox
+                                id="cityComboBox"
+                                selectedKey="{customerModel>/custCityId}"
+                                width="100%"
+                                showClearIcon="true"
+                                enabled="false">
+                                <core:ListItem key="" text="Select City..." />
+                            </ComboBox>
                         </f:SimpleForm>
                     </VBox>
                     
@@ -182,30 +213,31 @@
                             columnsM="1"
                             class="sapUiNoContentPadding">
                             <Label text="Status" required="true" />
-                            <Select id="inputStatus" selectedKey="{customerModel>/status}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Status..." />
-                                    <core:Item key="Active" text="Active" />
-                                    <core:Item key="Inactive" text="Inactive" />
-                                    <core:Item key="Prospect" text="Prospect" />
-                                </items>
-                            </Select>
+                            <ComboBox
+                                id="inputStatus"
+                                selectedKey="{customerModel>/status}"
+                                width="100%"
+                                required="true"
+                                showClearIcon="true"
+                                items="{
+                                    path: 'default>/CustomerStatuses',
+                                    sorter: { path: 'name' }
+                                }">
+                                <core:Item key="{default>code}" text="{default>name}" />
+                            </ComboBox>
                             <Label text="Vertical" required="true" />
-                            <Select id="inputVertical" selectedKey="{customerModel>/vertical}" width="100%" required="true">
-                                <items>
-                                    <core:Item key="" text="Select Vertical..." />
-                                    <core:Item key="BFS" text="BFS" />
-                                    <core:Item key="CapitalMarkets" text="Capital Markets" />
-                                    <core:Item key="CPG" text="CPG" />
-                                    <core:Item key="Healthcare" text="Healthcare" />
-                                    <core:Item key="HighTech" text="High Tech" />
-                                    <core:Item key="Insurance" text="Insurance" />
-                                    <core:Item key="LifeSciences" text="Life Sciences" />
-                                    <core:Item key="Manufacturing" text="Manufacturing" />
-                                    <core:Item key="Retail" text="Retail" />
-                                    <core:Item key="Services" text="Services" />
-                                </items>
-                            </Select>
+                            <ComboBox
+                                id="inputVertical"
+                                selectedKey="{customerModel>/vertical}"
+                                width="100%"
+                                required="true"
+                                showClearIcon="true"
+                                items="{
+                                    path: 'default>/Verticals',
+                                    sorter: { path: 'name' }
+                                }">
+                                <core:Item key="{default>code}" text="{default>name}" />
+                            </ComboBox>
                             <Label text="Start Date" />
                             <DatePicker id="inputStartDate_cus" value="{customerModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                             <Label text="End Date" />

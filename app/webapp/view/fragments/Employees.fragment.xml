@@ -185,49 +185,53 @@
                                     <Label text="Email ID" />
                                     <Input id="inputMailId_emp" value="{employeeModel>/mailid}" width="100%" />
                                     <Label text="Gender" />
-                                    <Select id="inputGender_emp" selectedKey="{employeeModel>/gender}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Gender..." />
-                                            <core:Item key="Male" text="Male" />
-                                            <core:Item key="Female" text="Female" />
-                                            <core:Item key="Others" text="Others" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputGender_emp"
+                                        selectedKey="{employeeModel>/gender}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/Genders',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Employee Type" />
-                                    <Select id="inputEmployeeType_emp" selectedKey="{employeeModel>/employeeType}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Employee Type..." />
-                                            <core:Item key="FullTime" text="Full Time" />
-                                            <core:Item key="SubCon" text="Subcon" />
-                                            <core:Item key="Intern" text="Intern" />
-                                            <core:Item key="YTJ" text="Yet To Join" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputEmployeeType_emp"
+                                        selectedKey="{employeeModel>/employeeType}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/EmployeeTypes',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Date of Joining" />
                                     <DatePicker id="inputDoJ_emp" value="{employeeModel>/doj}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="Band" />
-                                    <Select id="inputBand_emp" selectedKey="{employeeModel>/band}" width="100%" change="onBandChange">
-                                        <items>
-                                            <core:Item key="" text="Select Band..." />
-                                            <core:Item key="1" text="1" />
-                                            <core:Item key="2" text="2" />
-                                            <core:Item key="3" text="3" />
-                                            <core:Item key="4A" text="4A" />
-                                            <core:Item key="4B-C" text="4B-C" />
-                                            <core:Item key="4B-LC" text="4B-LC" />
-                                            <core:Item key="4C" text="4C" />
-                                            <core:Item key="4D" text="4D" />
-                                            <core:Item key="5A" text="5A" />
-                                            <core:Item key="5B" text="5B" />
-                                            <core:Item key="Subcon" text="Subcon" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputBand_emp"
+                                        selectedKey="{employeeModel>/band}"
+                                        width="100%"
+                                        change="onBandChange"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/EmployeeBands',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Designation" />
-                                    <Select id="inputRole_emp" selectedKey="{employeeModel>/role}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Designation..." />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputRole_emp"
+                                        selectedKey="{employeeModel>/role}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        enabled="true">
+                                        <core:Item key="" text="Select Designation..." />
+                                    </ComboBox>
                                 </f:SimpleForm>
                             </VBox>
                             
@@ -247,17 +251,14 @@
                                     <Label text="Location" />
                                     <Input id="inputLocation_emp" value="{employeeModel>/location}" width="100%" />
                                     <Label text="Country" />
-                                    <Select id="inputCountry_emp" selectedKey="{employeeModel>/country}" width="100%" change="onEmployeeCountryChange">
-                                        <items>
-                                            <core:Item key="" text="Select Country..." />
-                                        </items>
-                                    </Select>
+                                    <ComboBox id="inputCountry_emp" selectedKey="{employeeModel>/country}" width="100%" change="onEmployeeCountryChange" showClearIcon="true"
+                                        items="{ path: 'default>/CustomerCountries', sorter: { path: 'name' } }">
+                                        <core:Item key="{default>name}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="City" />
-                                    <Select id="inputCity_emp" selectedKey="{employeeModel>/city}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select City..." />
-                                        </items>
-                                    </Select>
+                                    <ComboBox id="inputCity_emp" selectedKey="{employeeModel>/city}" width="100%" showClearIcon="true">
+                                        <core:Item key="" text="Select City..." />
+                                    </ComboBox>
                                     <Label text="Supervisor" />
                                     <Input 
                                         id="inputSupervisor_emp" 
@@ -283,16 +284,17 @@
                                         <core:Item key="{name}" text="{name}" />
                                     </MultiComboBox>
                                     <Label text="Status" />
-                                    <Select id="inputStatus_emp" selectedKey="{employeeModel>/status}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Status..." />
-                                            <core:Item key="PreAllocated" text="Pre Allocated" />
-                                            <core:Item key="Allocated" text="Allocated" />
-                                            <core:Item key="Resigned" text="Resigned" />
-                                            <core:Item key="Unproductive Bench" text="Unproductive Bench" />
-                                            <core:Item key="Inactive Bench" text="Inactive Bench" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputStatus_emp"
+                                        selectedKey="{employeeModel>/status}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/EmployeeStatuses',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Last Working Date" />
                                     <DatePicker id="inputLWD_emp" value="{employeeModel>/lwd}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                 </f:SimpleForm>

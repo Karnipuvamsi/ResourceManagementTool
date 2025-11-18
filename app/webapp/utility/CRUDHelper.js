@@ -385,10 +385,13 @@ sap.ui.define([
             if (sTableId === "Customers") {
                 oEmptyData.SAPcustId = "";
                 oEmptyData.customerName = "";
-                oEmptyData.state = "";
-                oEmptyData.country = "";
+                oEmptyData.custCountryId = null;
+                oEmptyData.custStateId = null;
+                oEmptyData.custCityId = null;
                 oEmptyData.status = "";
                 oEmptyData.vertical = "";
+                oEmptyData.startDate = null;
+                oEmptyData.endDate = null;
             } else if (sTableId === "Employees") {
                 oEmptyData.ohrId = "";
                 oEmptyData.mailid = "";

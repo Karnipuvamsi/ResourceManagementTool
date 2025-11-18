@@ -1,9 +1,7 @@
 code;name
-FixedPrice;Fixed Price
-TransactionBased;Transaction Based
-FixedMonthly;Fixed Monthly
-PassThru;Pass Thru
+Fixed Price;Fixed Price
+Transaction Based;Transaction Based
+Fixed Monthly;Fixed Monthly
+Pass Thru;Pass Thru
 Divine;Divine
-
-
-
+Time & Material;Time & Material

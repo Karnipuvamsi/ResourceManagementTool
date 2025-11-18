@@ -65,7 +65,7 @@ sap.ui.define([
                 const mExpectedHeaders = {
                     "customerUpload": [
                         "customerName",
-                        "state", "country", "status", "vertical",
+                        "custCountryId", "custStateId", "custCityId", "status", "vertical",
                         "startDate", "endDate",
                     ],
                 "opportunityUpload": [
@@ -304,7 +304,7 @@ sap.ui.define([
                 const mExpectedHeaders = {
                     "customerUpload": [
                         "customerName",
-                        "state", "country", "status", "vertical",
+                        "custCountryId", "custStateId", "custCityId", "status", "vertical",
                         "startDate", "endDate",
                     ],
                 "opportunityUpload": [

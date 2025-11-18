@@ -22,6 +22,28 @@ service MyService {
   // Employee-Project Allocations
   entity Allocations   as projection on db.EmployeeProjectAllocation;
   
+  // Customer Country-State-City Master Data
+  entity CustomerCountries as projection on db.CustomerCountries;
+  entity CustomerStates    as projection on db.CustomerStates;
+  entity CustomerCities    as projection on db.CustomerCities;
+  
+  // Code Lists for Enum Dropdowns
+  entity CustomerStatuses    as projection on db.CustomerStatuses;
+  entity Verticals           as projection on db.Verticals;
+  entity Probabilities       as projection on db.Probabilities;
+  entity OpportunityStages   as projection on db.OpportunityStages;
+  entity Currencies          as projection on db.Currencies;
+  entity ProjectTypes        as projection on db.ProjectTypes;
+  entity ProjectStatuses    as projection on db.ProjectStatuses;
+  entity SowOptions          as projection on db.SowOptions;
+  entity PoOptions           as projection on db.PoOptions;
+  entity EmployeeStatuses    as projection on db.EmployeeStatuses;
+  entity EmployeeTypes       as projection on db.EmployeeTypes;
+  entity Genders             as projection on db.Genders;
+  entity EmployeeBands       as projection on db.EmployeeBands;
+  entity BandDesignations    as projection on db.BandDesignations;
+  entity AllocationStatuses  as projection on db.AllocationStatuses;
+  
   // ============================================
   // REPORT ENTITIES (from ReportService)
   // ============================================

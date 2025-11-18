@@ -11,6 +11,107 @@ namespace db;
 
 using {managed} from '@sap/cds/common';
 
+// ============================================
+// CODE LISTS FOR ENUMS (OData-Driven Dropdowns)
+// ============================================
+
+// Customer Status Code List
+entity CustomerStatuses {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Vertical Code List
+entity Verticals {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Opportunity Probability Code List
+entity Probabilities {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Opportunity Stage Code List
+entity OpportunityStages {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Currency Code List
+entity Currencies {
+    key code : String(10);
+        name  : String(100);
+}
+
+// Project Type Code List
+entity ProjectTypes {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Project Status Code List
+entity ProjectStatuses {
+    key code : String(50);
+        name  : String(100);
+}
+
+// SOW Received Code List
+entity SowOptions {
+    key code : String(10);
+        name  : String(50);
+}
+
+// PO Received Code List
+entity PoOptions {
+    key code : String(10);
+        name  : String(50);
+}
+
+// Employee Status Code List
+entity EmployeeStatuses {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Employee Type Code List
+entity EmployeeTypes {
+    key code : String(50);
+        name  : String(100);
+}
+
+// Gender Code List
+entity Genders {
+    key code : String(20);
+        name  : String(50);
+}
+
+// Employee Band Code List
+entity EmployeeBands {
+    key code : String(20);
+        name  : String(50);
+}
+
+// Band Designation Code List (Dependent on Band)
+entity BandDesignations {
+    key code        : String(100);
+        name        : String(100);
+        bandCode    : String(20);
+        
+        to_Band     : Association to one EmployeeBands
+                       on to_Band.code = $self.bandCode;
+}
+
+// Allocation Status Code List
+entity AllocationStatuses {
+    key code : String(50);
+        name  : String(100);
+}
+
+// ============================================
+// ENUM TYPES (Keep for backward compatibility)
+// ============================================
 
 type CustomerStatusEnum   : String enum {
     Active = 'Active';
@@ -32,11 +133,91 @@ type VerticalEnum : String enum {
     Services = 'Services';
 }
 
+// ---------------- CUSTOMER COUNTRY → STATE → CITY (SEPARATE FROM EMPLOYEE) ----------------
+entity CustomerCountries {
+    key id              : Integer;
+        name            : String(200);
+        iso3            : String(3);
+        iso2            : String(2);
+        numeric_code    : String(10);
+        phonecode       : String(10);
+        capital         : String(100);
+        currency        : String(10);
+        currency_name   : String(100);
+        currency_symbol : String(10);
+        tld             : String(10);
+        native          : String(200);
+        population      : Integer64;
+        gdp             : Decimal(15,2);
+        region          : String(100);
+        region_id       : String(20);
+        subregion       : String(100);
+        subregion_id    : String(20);
+        nationality     : String(100);
+        timezones       : String(1000);
+        latitude        : Decimal(11,8);
+        longitude       : Decimal(11,8);
+        emoji           : String(10);
+        emojiU          : String(20);
+        wikiDataId      : String(100);
+        
+        to_States       : Association to many CustomerStates
+                               on to_States.country_id = $self.id;
+        to_Cities       : Association to many CustomerCities
+                               on to_Cities.country_id = $self.id;
+}
+
+entity CustomerStates {
+    key id            : Integer;
+        name          : String(200);
+        country_id    : Integer;
+        country_code  : String(5);
+        country_name  : String(200);
+        iso2          : String(10);
+        iso3166_2     : String(20);
+        fips_code     : String(10);
+        type          : String(50);
+        level         : Integer;
+        parent_id     : Integer;
+        native        : String(200);
+        latitude      : Decimal(11,8);
+        longitude     : Decimal(11,8);
+        timezone      : String(50);
+        wikiDataId    : String(100);
+        
+        to_Country    : Association to one CustomerCountries
+                           on to_Country.id = $self.country_id;
+        to_Cities     : Association to many CustomerCities
+                           on to_Cities.state_id = $self.id;
+}
+
+entity CustomerCities {
+    key id            : Integer;
+        name          : String(200);
+        state_id      : Integer;
+        state_code    : String(10);
+        state_name    : String(200);
+        country_id    : Integer;
+        country_code  : String(5);
+        country_name  : String(200);
+        latitude      : Decimal(11,8);
+        longitude     : Decimal(11,8);
+        native        : String(200);
+        timezone      : String(50);
+        wikiDataId    : String(100);
+        
+        to_State      : Association to one CustomerStates
+                           on to_State.id = $self.state_id;
+        to_Country    : Association to one CustomerCountries
+                           on to_Country.id = $self.country_id;
+}
+
 entity Customer {
     key SAPcustId        : String;
         customerName     : String(100);
-        state            : String;
-        country          : String;
+        custCountryId    : Integer;
+        custStateId      : Integer;
+        custCityId       : Integer;
         status           : CustomerStatusEnum;
         vertical         : VerticalEnum;  // ✅ CHANGED: Now using enum instead of entity
         startDate        : Date;          // ✅ NEW: Customer start date
@@ -44,6 +225,13 @@ entity Customer {
         
         to_Opportunities : Association to many Opportunity
                                on to_Opportunities.customerId = $self.SAPcustId;
+        
+        to_CustCountry   : Association to one CustomerCountries
+                               on to_CustCountry.id = $self.custCountryId;
+        to_CustState     : Association to one CustomerStates
+                               on to_CustState.id = $self.custStateId;
+        to_CustCity      : Association to one CustomerCities
+                               on to_CustCity.id = $self.custCityId;
 }
 
 // -------------------- Opportunity --------------------

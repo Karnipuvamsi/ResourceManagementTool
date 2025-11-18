@@ -214,17 +214,17 @@
                                         </layoutData>
                                     </Input>
                                     <Label text="Project Type" />
-                                    <Select id="inputProjectType_proj" selectedKey="{projectModel>/projectType}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Project Type..." />
-                                            <core:Item key="FixedPrice" text="Fixed Price" />
-                                            <core:Item key="TransactionBased" text="Transaction Based" />
-                                            <core:Item key="FixedMonthly" text="Fixed Monthly" />
-                                            <core:Item key="PassThru" text="Pass Thru" />
-                                            <core:Item key="Divine" text="Divine" />
-                                            <core:Item key="TimeAndMaterial" text="Time &amp; Material" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputProjectType_proj"
+                                        selectedKey="{projectModel>/projectType}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/ProjectTypes',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                 </f:SimpleForm>
                             </VBox>
                             
@@ -242,14 +242,17 @@
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
                                     <Label text="Status" />
-                                    <Select id="inputStatus_proj" selectedKey="{projectModel>/status}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Status..." />
-                                            <core:Item key="Active" text="Active" />
-                                            <core:Item key="Closed" text="Closed" />
-                                            <core:Item key="ToBeCreated" text="TO BE CREATED" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputStatus_proj"
+                                        selectedKey="{projectModel>/status}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/ProjectStatuses',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="Opportunity" />
                                     <Input 
                                         id="inputOppId_proj" 
@@ -268,21 +271,29 @@
                                     <Label text="To Be Allocated" />
                                     <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" />
                                     <Label text="SOW Received" />
-                                    <Select id="inputSOWReceived_proj" selectedKey="{projectModel>/SOWReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select SOW Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputSOWReceived_proj"
+                                        selectedKey="{projectModel>/SOWReceived}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/SowOptions',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                     <Label text="PO Received" />
-                                    <Select id="inputPOReceived_proj" selectedKey="{projectModel>/POReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select PO Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
+                                    <ComboBox
+                                        id="inputPOReceived_proj"
+                                        selectedKey="{projectModel>/POReceived}"
+                                        width="100%"
+                                        showClearIcon="true"
+                                        items="{
+                                            path: 'default>/PoOptions',
+                                            sorter: { path: 'name' }
+                                        }">
+                                        <core:Item key="{default>code}" text="{default>name}" />
+                                    </ComboBox>
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>

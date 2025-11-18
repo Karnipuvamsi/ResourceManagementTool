@@ -126,22 +126,17 @@
                             columnsM="1"
                             class="sapUiNoContentPadding">
                             <Label text="Band" />
-                                    <Select id="inputBand_demand" selectedKey="{demandModel>/band}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select Band..." />
-                                            <core:Item key="1" text="1" />
-                                            <core:Item key="2" text="2" />
-                                            <core:Item key="3" text="3" />
-                                            <core:Item key="4A" text="4A" />
-                                            <core:Item key="4B-C" text="4B-C" />
-                                            <core:Item key="4B-LC" text="4B-LC" />
-                                            <core:Item key="4C" text="4C" />
-                                            <core:Item key="4D" text="4D" />
-                                            <core:Item key="5A" text="5A" />
-                                            <core:Item key="5B" text="5B" />
-                                            <core:Item key="Subcon" text="Subcon" />
-                                        </items>
-                                    </Select>
+                            <ComboBox
+                                id="inputBand_demand"
+                                selectedKey="{demandModel>/band}"
+                                width="100%"
+                                showClearIcon="true"
+                                items="{
+                                    path: 'default>/EmployeeBands',
+                                    sorter: { path: 'name' }
+                                }">
+                                <core:Item key="{default>code}" text="{default>name}" />
+                            </ComboBox>
                         </f:SimpleForm>
                     </VBox>
                 </HBox>

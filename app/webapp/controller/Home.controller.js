@@ -52,57 +52,8 @@ sap.ui.define([
             const oTableModel = new sap.ui.model.json.JSONModel();
             this.getView().setModel(oTableModel, "tableModel");
 
-            // ✅ Initialize Country-City mapping for dependent dropdowns
-            this._mCountryToCities = {
-                "South Africa": ["Johannesburg (Gauteng)"],
-                "China": ["Dalian", "Foshan (Guangdong)", "Kunshan (Jiangsu)"],
-                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)"],
-                "Japan": ["Tokyo (Chiyoda-ku)", "Yokohama (Kanagawa)"],
-                "Malaysia": ["Kuala Lumpur / Petaling Jaya (Selangor)"],
-                "Philippines": ["Bataan", "Manila / Quezon City"],
-                "Singapore": ["Singapore"],
-                "Colombia": ["Bogota"],
-                "Costa Rica": ["Heredia"],
-                "Brazil": ["Belo Horizonte (MG)", "Uberlândia (MG)"],
-                "Guatemala": ["Guatemala City"],
-                "Mexico": ["Juárez (Chihuahua)", "Guadalajara (Jalisco)", "Monterrey / San Pedro Garza García (Nuevo León)"],
-                "Egypt": ["Cairo"],
-                "Israel": ["Netanya"],
-                "Turkey": ["Istanbul"],
-                "Canada": ["Toronto (Ontario)"],
-                "USA": ["Atlanta (Georgia)", "Danville (Illinois)", "New York (New York)", "Richardson (Texas)", "Wilkes-Barre (Pennsylvania)"],
-                "Australia": ["Melbourne (Victoria)", "Sydney (New South Wales)"],
-                "Bulgaria": ["Sofia"],
-                "France": ["Paris"],
-                "Hungary": ["Budapest"],
-                "Italy": ["Milano"],
-                "Germany": ["Munich"],
-                "Netherlands": ["Hoofddorp"],
-                "Poland": ["Katowice", "Kraków", "Lublin", "Bielsko-Biała", "Wrocław"],
-                "Portugal": ["Lisbon"],
-                "Republic of Ireland": ["Dublin"],
-                "Romania": ["Bucharest", "Cluj Napoca", "Iași"],
-                "Switzerland": ["Zug"],
-                "United Kingdom": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"]
-            };
-
-            // ✅ Initialize Band-Designation mapping for dependent dropdowns
-            this.mBandToDesignations = {
-                "1": ["Senior Vice President"],
-                "2": ["Vice President"],
-                "3": ["Assistant Vice President"],
-                "4A": ["Consultant", "Management Trainee"],
-                "4B-C": ["Consultant", "Assistant Manager"],
-                "4B-LC": ["Assistant Manager", "Lead Consultant"],
-                "4C": ["Manager", "Principal Consultant", "Project Manager"],
-                "4D": ["Senior Manager", "Senior Principal Consultant", "Senior Project Manager"],
-                "5A": ["Process Associate"],
-                "5B": ["Senior Associate", "Technical Associate"],
-                "Subcon": ["Subcon"]
-            };
-
-            // ✅ Populate Country dropdown in Customers fragment when loaded
-            this._populateCountryDropdown();
+            // ✅ All dropdowns now use OData from backend - no hardcoded values
+            // ✅ Band-Designation mapping loaded from OData (BandDesignations entity)
 
             // ✅ Initialize home counts model
             const oHomeCountsModel = new sap.ui.model.json.JSONModel({
@@ -281,7 +232,7 @@ sap.ui.define([
                     }
 
                     // ✅ Populate Country dropdown when Customers fragment loads
-                    this._populateCountryDropdown();
+                    // Country dropdowns now use OData binding - no manual population needed
 
                     // ✅ Set default filters for Customers FilterBar
                     const oFilterBar = this.byId("customerFilterBar");
@@ -657,13 +608,13 @@ sap.ui.define([
                     // ✅ Populate Country dropdown when Employees fragment loads
                     // Use multiple timeouts to ensure fragment is fully rendered
                     setTimeout(() => {
-                        this._populateCountryDropdown();
+                        // Country dropdowns now use OData binding - no manual population needed
                     }, 500);
                     setTimeout(() => {
-                        this._populateCountryDropdown();
+                        // Country dropdowns now use OData binding - no manual population needed
                     }, 1000);
                     setTimeout(() => {
-                        this._populateCountryDropdown();
+                        // Country dropdowns now use OData binding - no manual population needed
                     }, 2000);
 
                     // ✅ Initialize Employee form (no ID preview needed - manual OHR ID entry)
@@ -3771,22 +3722,30 @@ sap.ui.define([
 
         // ✅ NEW: Submit function that handles both Create and Update
         onSubmitCustomer: function () {
+            // -------------------------------
+            // ⭐ NEW: Read cascading fields
+            // -------------------------------
+            const sCustCountryId = this.byId("countryComboBox").getSelectedKey() || "";
+            const sCustStateId = this.byId("stateComboBox").getSelectedKey() || "";
+            const sCustCityId = this.byId("cityComboBox").getSelectedKey() || "";
+            
+            // -------------------------------
             const sCustId = this.byId("inputCustomerId").getValue(),
                 sCustName = this.byId("inputCustomerName").getValue(),
-                sState = this.byId("inputState")?.getValue() || "",
-                sCountry = this.byId("inputCountry").getValue(),
                 sStartDate = this.byId("inputStartDate_cus")?.getValue() || "",
                 sEndDate = this.byId("inputEndDate_cus")?.getValue() || "",
                 sStatus = this.byId("inputStatus").getSelectedKey(),
                 sVertical = this.byId("inputVertical").getSelectedKey();
 
-            // ✅ Validation - Check all required fields
+            // -------------------------------
+            // ⭐ VALIDATION updated for countryId instead of country text
+            // -------------------------------
             if (!sCustName || sCustName.trim() === "") {
                 sap.m.MessageBox.error("Customer Name is required!");
                 return;
             }
             
-            if (!sCountry || sCountry.trim() === "") {
+            if (!sCustCountryId) {
                 sap.m.MessageBox.error("Country is required!");
                 return;
             }
@@ -3814,9 +3773,11 @@ sap.ui.define([
                 
                 // For update, build entry with existing Customer ID (for verification) and new values
                 const oUpdateEntry = {
-                    "country": sCountry || "",
-                "customerName": sCustName,
-                    "state": sState || "",
+                    // ⭐ REPLACED your old fields with custCountryId, custStateId, custCityId
+                    "custCountryId": parseInt(sCustCountryId) || null,
+                    "custStateId": parseInt(sCustStateId) || null,
+                    "custCityId": parseInt(sCustCityId) || null,
+                    "customerName": sCustName,
                     "status": sStatus || "",
                     "vertical": sVertical || "",
                     "startDate": sStartDate || null,
@@ -3876,9 +3837,11 @@ sap.ui.define([
                 // CREATE MODE: No row selected, create new customer
                 // Don't send SAPcustId - backend will auto-generate it (C-0001, C-0002, etc.)
                 const oCreateEntry = {
-                    "country": sCountry || "",
+                    // ⭐ NEW: cascading IDs
+                    "custCountryId": parseInt(sCustCountryId) || null,
+                    "custStateId": parseInt(sCustStateId) || null,
+                    "custCityId": parseInt(sCustCityId) || null,
                     "customerName": sCustName,
-                    "state": sState || "",
                     "status": sStatus || "",
                     "vertical": sVertical || "",
                     "startDate": (sStartDate && sStartDate.trim() !== "") ? sStartDate : null,  // ✅ FIXED: Use null instead of empty string for Date
@@ -3890,7 +3853,7 @@ sap.ui.define([
                     sap.m.MessageBox.error("Customer Name is required!");
                     return;
                 }
-                if (!sCountry || sCountry.trim() === "") {
+                if (!sCustCountryId) {
                     sap.m.MessageBox.error("Country is required!");
                     return;
                 }
@@ -4800,9 +4763,34 @@ sap.ui.define([
                 // Reuse the improved initialization method
                 this._initializeCustomerIdField();
             }
+            
+            // Clear model
+            let oCustomerModel = this.getView().getModel("customerModel");
+            if (!oCustomerModel) {
+                oCustomerModel = new sap.ui.model.json.JSONModel({});
+                this.getView().setModel(oCustomerModel, "customerModel");
+            }
+            oCustomerModel.setData({
+                SAPcustId: oCustomerIdInput?.getValue() || "",
+                customerName: "",
+                custCountryId: "",
+                custStateId: "",
+                custCityId: "",
+                status: "",
+                vertical: "",
+                startDate: "",
+                endDate: ""
+            });
+            
+            // Clear UI controls (keep State and City enabled)
             this.byId("inputCustomerName")?.setValue("");
-            this.byId("inputState")?.setValue("");
-            this.byId("inputCountry")?.setValue("");
+            this.byId("countryComboBox")?.setSelectedKey("");
+            this.byId("stateComboBox")?.removeAllItems();
+            this.byId("stateComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select State..." }));
+            this.byId("stateComboBox")?.setSelectedKey("");
+            this.byId("cityComboBox")?.removeAllItems();
+            this.byId("cityComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+            this.byId("cityComboBox")?.setSelectedKey("");
             this.byId("inputStartDate_cus")?.setValue("");
             this.byId("inputEndDate_cus")?.setValue("");
             this.byId("inputStatus")?.setSelectedKey("");
@@ -6523,16 +6511,12 @@ sap.ui.define([
             this.byId("inputEmployeeType_emp")?.setSelectedKey("");
             this.byId("inputDoJ_emp")?.setValue("");
             this.byId("inputBand_emp")?.setSelectedKey("");
-            this.byId("inputRole_emp")?.setSelectedKey("");
-            // Clear designation dropdown items when band is cleared
-            const oDesignationSelect = this.byId("inputRole_emp");
-            if (oDesignationSelect) {
-                const aItems = oDesignationSelect.getItems();
-                aItems.forEach((oItem, iIndex) => {
-                    if (iIndex > 0) {
-                        oDesignationSelect.removeItem(oItem);
-                    }
-                });
+            // Clear designation ComboBox when band is cleared (keep enabled)
+            const oDesignationComboBox = this.byId("inputRole_emp");
+            if (oDesignationComboBox) {
+                oDesignationComboBox.removeAllItems();
+                oDesignationComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select Designation..." }));
+                oDesignationComboBox.setSelectedKey("");
             }
             this.byId("inputLocation_emp")?.setValue("");
             this.byId("inputCountry_emp")?.setSelectedKey("");  // ✅ NEW: Clear country
@@ -8267,119 +8251,215 @@ sap.ui.define([
             }
         },
 
-        // ✅ Helper: Populate Country dropdown for Employee form
-        _populateCountryDropdown: function () {
-            // ✅ Populate Employee Country Dropdown
-            const oEmployeeCountrySelect = this.byId("inputCountry_emp");
-            if (!oEmployeeCountrySelect) {
-                return;
-            }
-            
-            if (!this._mCountryToCities) {
-                return;
-            }
-            
-            const aCountries = Object.keys(this._mCountryToCities).sort();
-            
-            const aItems = oEmployeeCountrySelect.getItems();
-            
-            // Clear existing items (except placeholder)
-            aItems.forEach((oItem, iIndex) => {
-                if (iIndex > 0) { // Keep first placeholder item
-                    oEmployeeCountrySelect.removeItem(oItem);
-                }
-            });
-            
-            // Add country items
-            aCountries.forEach((sCountry) => {
-                oEmployeeCountrySelect.addItem(new sap.ui.core.Item({
-                    key: sCountry,
-                    text: sCountry
-                }));
-            });
-            
-        },
-
-        // ✅ Handler: Employee Country change - populate Employee City dropdown
+        // ✅ Handler: Employee Country change - populate Employee City dropdown from OData
         onEmployeeCountryChange: function (oEvent) {
-            const sSelectedCountry = oEvent.getParameter("selectedItem")?.getKey() || "";
-            const oCitySelect = this.byId("inputCity_emp");
+            const sSelectedCountryName = oEvent.getSource().getSelectedKey() || "";
+            const oCityComboBox = this.byId("inputCity_emp");
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
             
-            if (!oCitySelect) {
+            if (!oCityComboBox || !oModel) {
                 return;
             }
             
-            // Clear existing city items (except placeholder)
-            const aItems = oCitySelect.getItems();
-            aItems.forEach((oItem, iIndex) => {
-                if (iIndex > 0) { // Keep first placeholder item
-                    oCitySelect.removeItem(oItem);
-                }
-            });
-            
-            // Reset selection
-            oCitySelect.setSelectedKey("");
-            
-            if (!sSelectedCountry || !this._mCountryToCities) {
-                return;
-            }
-            
-            // Populate cities for selected country
-            const aCities = this._mCountryToCities[sSelectedCountry] || [];
-            aCities.forEach((sCity) => {
-                oCitySelect.addItem(new sap.ui.core.Item({
-                    key: sCity,
-                    text: sCity
-                }));
-            });
+            // Clear City
+            oCityComboBox.removeAllItems();
+            oCityComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+            oCityComboBox.setSelectedKey("");
             
             // Update model
             const oEmployeeModel = this.getView().getModel("employeeModel");
             if (oEmployeeModel) {
-                oEmployeeModel.setProperty("/country", sSelectedCountry);
-                oEmployeeModel.setProperty("/city", ""); // Reset city when country changes
+                oEmployeeModel.setProperty("/country", sSelectedCountryName);
+                oEmployeeModel.setProperty("/city", "");
             }
+            
+            if (!sSelectedCountryName || sSelectedCountryName === "") {
+                return;
+            }
+            
+            // Find country ID by name, then load cities
+            const oCountryBinding = oModel.bindList("/CustomerCountries", null, null, [
+                new sap.ui.model.Filter("name", sap.ui.model.FilterOperator.EQ, sSelectedCountryName)
+            ]);
+            
+            oCountryBinding.attachDataReceived((oCountryEvent) => {
+                const aCountries = oCountryEvent.getParameter("data")?.results || [];
+                if (aCountries.length === 0) {
+                    return;
+                }
+                
+                const iCountryId = aCountries[0].id;
+                
+                // Load cities for this country
+                const oCityBinding = oModel.bindList("/CustomerCities", null, null, [
+                    new sap.ui.model.Filter("country_id", sap.ui.model.FilterOperator.EQ, iCountryId)
+                ], { "$orderby": "name" });
+                
+                oCityBinding.attachDataReceived((oCityEvent) => {
+                    const aCities = oCityEvent.getParameter("data")?.results || [];
+                    aCities.forEach((oCity) => {
+                        oCityComboBox.addItem(new sap.ui.core.Item({
+                            key: oCity.name,
+                            text: oCity.name
+                        }));
+                    });
+                });
+            });
         },
 
-        // ✅ Handler: Band change - populate Designation dropdown
-        onBandChange: function (oEvent) {
-            const sSelectedBand = oEvent.getParameter("selectedItem")?.getKey() || "";
-            const oDesignationSelect = this.byId("inputRole_emp");
+        // ✅ Handler: Customer Country change - populate Customer State dropdown from OData
+        onCountryChange: function (oEvent) {
+            const oSelectedItem = oEvent.getParameter("selectedItem");
+            const sSelectedCountryId = oSelectedItem ? oSelectedItem.getKey() : "";
+            const oStateComboBox = this.byId("stateComboBox");
+            const oCityComboBox = this.byId("cityComboBox");
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
             
-            if (!oDesignationSelect) {
+            if (!oStateComboBox || !oModel) {
                 return;
             }
             
-            // Clear existing designation items (except placeholder)
-            const aItems = oDesignationSelect.getItems();
-            aItems.forEach((oItem, iIndex) => {
-                if (iIndex > 0) { // Keep first placeholder item
-                    oDesignationSelect.removeItem(oItem);
+            // Clear State and City
+            oStateComboBox.removeAllItems();
+            oStateComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select State..." }));
+            oStateComboBox.setSelectedKey("");
+            oStateComboBox.setEnabled(false);
+            
+            oCityComboBox?.removeAllItems();
+            oCityComboBox?.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+            oCityComboBox?.setSelectedKey("");
+            oCityComboBox?.setEnabled(false);
+            
+            // Update model
+            const oCustomerModel = this.getView().getModel("customerModel");
+            if (oCustomerModel) {
+                oCustomerModel.setProperty("/custCountryId", sSelectedCountryId);
+                oCustomerModel.setProperty("/custStateId", "");
+                oCustomerModel.setProperty("/custCityId", "");
+            }
+            
+            if (!sSelectedCountryId || sSelectedCountryId === "") {
+                return;
+            }
+            
+            const iCountryId = parseInt(sSelectedCountryId);
+            if (isNaN(iCountryId)) {
+                return;
+            }
+            
+            // Load states for selected country from OData
+            const oBinding = oModel.bindList("/CustomerStates", null, null, [
+                new sap.ui.model.Filter("country_id", sap.ui.model.FilterOperator.EQ, iCountryId)
+            ], { "$orderby": "name" });
+            
+            oBinding.attachDataReceived((oEvent) => {
+                const aStates = oEvent.getParameter("data")?.results || [];
+                if (aStates.length > 0) {
+                    aStates.forEach((oState) => {
+                        oStateComboBox.addItem(new sap.ui.core.Item({
+                            key: String(oState.id),
+                            text: oState.name
+                        }));
+                    });
+                    oStateComboBox.setEnabled(true);
                 }
             });
+        },
+
+        // ✅ Handler: Customer State change - populate Customer City dropdown from OData
+        onStateChange: function (oEvent) {
+            const oSelectedItem = oEvent.getParameter("selectedItem");
+            const sSelectedStateId = oSelectedItem ? oSelectedItem.getKey() : "";
+            const oCityComboBox = this.byId("cityComboBox");
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
             
-            // Reset selection
-            oDesignationSelect.setSelectedKey("");
-            
-            if (!sSelectedBand || !this.mBandToDesignations) {
+            if (!oCityComboBox || !oModel) {
                 return;
             }
             
-            // Populate designations for selected band
-            const aDesignations = this.mBandToDesignations[sSelectedBand] || [];
-            aDesignations.forEach((sDesignation) => {
-                oDesignationSelect.addItem(new sap.ui.core.Item({
-                    key: sDesignation,
-                    text: sDesignation
-                }));
+            // Clear City
+            oCityComboBox.removeAllItems();
+            oCityComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+            oCityComboBox.setSelectedKey("");
+            oCityComboBox.setEnabled(false);
+            
+            // Update model
+            const oCustomerModel = this.getView().getModel("customerModel");
+            if (oCustomerModel) {
+                oCustomerModel.setProperty("/custStateId", sSelectedStateId);
+                oCustomerModel.setProperty("/custCityId", "");
+            }
+            
+            if (!sSelectedStateId || sSelectedStateId === "") {
+                return;
+            }
+            
+            const iStateId = parseInt(sSelectedStateId);
+            if (isNaN(iStateId)) {
+                return;
+            }
+            
+            // Load cities for selected state from OData
+            const oBinding = oModel.bindList("/CustomerCities", null, null, [
+                new sap.ui.model.Filter("state_id", sap.ui.model.FilterOperator.EQ, iStateId)
+            ], { "$orderby": "name" });
+            
+            oBinding.attachDataReceived((oEvent) => {
+                const aCities = oEvent.getParameter("data")?.results || [];
+                if (aCities.length > 0) {
+                    aCities.forEach((oCity) => {
+                        oCityComboBox.addItem(new sap.ui.core.Item({
+                            key: String(oCity.id),
+                            text: oCity.name
+                        }));
+                    });
+                    oCityComboBox.setEnabled(true);
+                }
             });
+        },
+
+        // ✅ Handler: Band change - populate Designation dropdown from OData (always enabled, filtered)
+        onBandChange: function (oEvent) {
+            const sSelectedBand = oEvent.getParameter("selectedItem")?.getKey() || "";
+            const oDesignationComboBox = this.byId("inputRole_emp");
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            
+            if (!oDesignationComboBox || !oModel) {
+                return;
+            }
+            
+            // Clear Designation (keep enabled)
+            oDesignationComboBox.removeAllItems();
+            oDesignationComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select Designation..." }));
+            oDesignationComboBox.setSelectedKey("");
             
             // Update model
             const oEmployeeModel = this.getView().getModel("employeeModel");
             if (oEmployeeModel) {
                 oEmployeeModel.setProperty("/band", sSelectedBand);
-                oEmployeeModel.setProperty("/role", ""); // Reset designation when band changes
+                oEmployeeModel.setProperty("/role", ""); // Reset role when band changes
             }
+            
+            if (!sSelectedBand) {
+                return;
+            }
+            
+            // Load designations for selected band from OData
+            const oBinding = oModel.bindList("/BandDesignations", null, null, [
+                new sap.ui.model.Filter("bandCode", sap.ui.model.FilterOperator.EQ, sSelectedBand)
+            ], { "$orderby": "name" });
+            
+            oBinding.attachDataReceived((oEvent) => {
+                const aDesignations = oEvent.getParameter("data")?.results || [];
+                if (oDesignationComboBox) {
+                    aDesignations.forEach((oDesignation) => {
+                        oDesignationComboBox.addItem(new sap.ui.core.Item({
+                            key: oDesignation.code,
+                            text: oDesignation.name
+                        }));
+                    });
+                }
+            });
         },
 
         // ✅ NEW: Update EmployeeSkill records (create/delete based on selection)

@@ -76,9 +76,16 @@ sap.ui.define([
                 this.byId("inputEmployeeType_emp")?.setSelectedKey("");
                 this.byId("inputDoJ_emp")?.setValue("");
                 this.byId("inputBand_emp")?.setSelectedKey("");
-                this.byId("inputRole_emp")?.setSelectedKey("");
+                // Clear designation ComboBox (keep enabled)
+                const oDesignationComboBox = this.byId("inputRole_emp");
+                if (oDesignationComboBox) {
+                    oDesignationComboBox.removeAllItems();
+                    oDesignationComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select Designation..." }));
+                    oDesignationComboBox.setSelectedKey("");
+                }
                 this.byId("inputLocation_emp")?.setValue("");
-                this.byId("inputCity_emp")?.setValue("");
+                this.byId("inputCountry_emp")?.setSelectedKey("");
+                this.byId("inputCity_emp")?.setSelectedKey("");
                 this.byId("inputSupervisor_emp")?.setValue("");
                 this.byId("inputSupervisor_emp")?.data("selectedId", "");
                 this.byId("inputSkills_emp")?.removeAllSelectedItems();
@@ -99,29 +106,39 @@ sap.ui.define([
             const sBand = oObj.band || "";
             this.byId("inputBand_emp")?.setSelectedKey(sBand);
 
-            // Populate Designation dropdown based on Band selection
-            if (sBand && this.getView()) {
-                const oController = this.getView().getController();
-                if (oController && oController.mBandToDesignations) {
-                    const aDesignations = oController.mBandToDesignations[sBand] || [];
-                    const oDesignationSelect = this.byId("inputRole_emp");
-                    if (oDesignationSelect) {
-                        const aItems = oDesignationSelect.getItems();
-                        aItems.forEach((oItem, iIndex) => {
-                            if (iIndex > 0) {
-                                oDesignationSelect.removeItem(oItem);
-                            }
-                        });
-                        aDesignations.forEach((sDesignation) => {
-                            oDesignationSelect.addItem(new sap.ui.core.Item({
-                                key: sDesignation,
-                                text: sDesignation
+            // Populate Designation dropdown based on Band selection from OData (always enabled, filtered)
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            const oDesignationComboBox = this.byId("inputRole_emp");
+            if (oDesignationComboBox && oModel) {
+                // Always clear and reset
+                oDesignationComboBox.removeAllItems();
+                oDesignationComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select Designation..." }));
+                
+                if (sBand) {
+                    // Load designations for selected band from OData
+                    const oBinding = oModel.bindList("/BandDesignations", null, null, [
+                        new sap.ui.model.Filter("bandCode", sap.ui.model.FilterOperator.EQ, sBand)
+                    ], { "$orderby": "name" });
+                    
+                    oBinding.attachDataReceived((oEvent) => {
+                        const aDesignations = oEvent.getParameter("data")?.results || [];
+                        aDesignations.forEach((oDesignation) => {
+                            oDesignationComboBox.addItem(new sap.ui.core.Item({
+                                key: oDesignation.code,
+                                text: oDesignation.name
                             }));
                         });
-                    }
+                        // Set selected value if exists
+                        if (oObj.role) {
+                            oDesignationComboBox.setSelectedKey(oObj.role);
+                        }
+                    });
+                } else {
+                    // No band selected - just show placeholder
+                    oDesignationComboBox.setSelectedKey("");
                 }
             }
-            this.byId("inputRole_emp")?.setSelectedKey(oObj.role || "");
+            // Note: inputRole_emp selectedKey is set inside the OData callback above
             this.byId("inputLocation_emp")?.setValue(oObj.location || "");
             this.byId("inputCity_emp")?.setValue(oObj.city || "");
 
@@ -359,9 +376,34 @@ sap.ui.define([
                     oCustomerIdInput.setEnabled(false);
                     oCustomerIdInput.setPlaceholder("Auto-generated");
                 }
+                
+                // Clear model
+                let oCustomerModel = this.getView().getModel("customerModel");
+                if (!oCustomerModel) {
+                    oCustomerModel = new sap.ui.model.json.JSONModel({});
+                    this.getView().setModel(oCustomerModel, "customerModel");
+                }
+                oCustomerModel.setData({
+                    SAPcustId: oCustomerIdInput?.getValue() || "",
+                    customerName: "",
+                    custCountryId: "",
+                    custStateId: "",
+                    custCityId: "",
+                    status: "",
+                    vertical: "",
+                    startDate: "",
+                    endDate: ""
+                });
+                
+                // Clear UI controls (keep State and City enabled)
                 this.byId("inputCustomerName")?.setValue("");
-                this.byId("inputState")?.setValue("");
-                this.byId("inputCountry")?.setValue("");
+                this.byId("countryComboBox")?.setSelectedKey("");
+                this.byId("stateComboBox")?.removeAllItems();
+                this.byId("stateComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select State..." }));
+                this.byId("stateComboBox")?.setSelectedKey("");
+                this.byId("cityComboBox")?.removeAllItems();
+                this.byId("cityComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+                this.byId("cityComboBox")?.setSelectedKey("");
                 this.byId("inputStartDate_cus")?.setValue("");
                 this.byId("inputEndDate_cus")?.setValue("");
                 this.byId("inputStatus")?.setSelectedKey("");
@@ -371,12 +413,87 @@ sap.ui.define([
 
             // Row selected - populate form for update
             let oObj = aSelectedContexts[0].getObject();
+            
+            // Update model
+            let oCustomerModel = this.getView().getModel("customerModel");
+            if (!oCustomerModel) {
+                oCustomerModel = new sap.ui.model.json.JSONModel({});
+                this.getView().setModel(oCustomerModel, "customerModel");
+            }
+            oCustomerModel.setProperty("/SAPcustId", oObj.SAPcustId || "");
+            oCustomerModel.setProperty("/customerName", oObj.customerName || "");
+            oCustomerModel.setProperty("/custCountryId", oObj.custCountryId || "");
+            oCustomerModel.setProperty("/custStateId", oObj.custStateId || "");
+            oCustomerModel.setProperty("/custCityId", oObj.custCityId || "");
+            oCustomerModel.setProperty("/status", oObj.status || "");
+            oCustomerModel.setProperty("/vertical", oObj.vertical || "");
+            oCustomerModel.setProperty("/startDate", oObj.startDate || "");
+            oCustomerModel.setProperty("/endDate", oObj.endDate || "");
+            
+            // Update UI controls
             this.byId("inputCustomerId")?.setValue(oObj.SAPcustId || "");
             this.byId("inputCustomerId")?.setEnabled(false);
             this.byId("inputCustomerId")?.setPlaceholder("");
             this.byId("inputCustomerName")?.setValue(oObj.customerName || "");
-            this.byId("inputState")?.setValue(oObj.state || "");
-            this.byId("inputCountry")?.setValue(oObj.country || "");
+            this.byId("countryComboBox")?.setSelectedKey(String(oObj.custCountryId || ""));
+            
+            // If country is selected, load states
+            if (oObj.custCountryId) {
+                const oModel = this.getView().getModel("default") || this.getView().getModel();
+                if (oModel) {
+                    const oStateBinding = oModel.bindList("/CustomerStates", null, null, [
+                        new sap.ui.model.Filter("country_id", sap.ui.model.FilterOperator.EQ, parseInt(oObj.custCountryId))
+                    ], { "$orderby": "name" });
+                    
+                    oStateBinding.attachDataReceived((oEvent) => {
+                        const aStates = oEvent.getParameter("data")?.results || [];
+                        const oStateComboBox = this.byId("stateComboBox");
+                        if (oStateComboBox) {
+                            oStateComboBox.removeAllItems();
+                            oStateComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select State..." }));
+                            aStates.forEach((oState) => {
+                                oStateComboBox.addItem(new sap.ui.core.Item({
+                                    key: String(oState.id),
+                                    text: oState.name
+                                }));
+                            });
+                            oStateComboBox.setSelectedKey(String(oObj.custStateId || ""));
+                            
+                            // If state is selected, load cities
+                            if (oObj.custStateId) {
+                                const oCityBinding = oModel.bindList("/CustomerCities", null, null, [
+                                    new sap.ui.model.Filter("state_id", sap.ui.model.FilterOperator.EQ, parseInt(oObj.custStateId))
+                                ], { "$orderby": "name" });
+                                
+                                oCityBinding.attachDataReceived((oEvent) => {
+                                    const aCities = oEvent.getParameter("data")?.results || [];
+                                    const oCityComboBox = this.byId("cityComboBox");
+                                    if (oCityComboBox) {
+                                        oCityComboBox.removeAllItems();
+                                        oCityComboBox.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+                                        aCities.forEach((oCity) => {
+                                            oCityComboBox.addItem(new sap.ui.core.Item({
+                                                key: String(oCity.id),
+                                                text: oCity.name
+                                            }));
+                                        });
+                                        oCityComboBox.setSelectedKey(String(oObj.custCityId || ""));
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+            } else {
+                // No country selected - clear state and city (keep enabled)
+                this.byId("stateComboBox")?.removeAllItems();
+                this.byId("stateComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select State..." }));
+                this.byId("stateComboBox")?.setSelectedKey("");
+                this.byId("cityComboBox")?.removeAllItems();
+                this.byId("cityComboBox")?.addItem(new sap.ui.core.Item({ key: "", text: "Select City..." }));
+                this.byId("cityComboBox")?.setSelectedKey("");
+            }
+            
             this.byId("inputStartDate_cus")?.setValue(oObj.startDate || "");
             this.byId("inputEndDate_cus")?.setValue(oObj.endDate || "");
             this.byId("inputStatus")?.setSelectedKey(oObj.status || "");
