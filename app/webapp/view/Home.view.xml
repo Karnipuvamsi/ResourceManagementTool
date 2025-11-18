@@ -71,70 +71,94 @@
                         icon="sap-icon://home"
                     />
 
-                    <tnt:NavigationListGroup text="Master Data Management">
+                    <tnt:NavigationListGroup text="Master Data Management" id="masterdataDrop">
                         <tnt:NavigationListItem
+                            id="customersNav"
                             key="customers"
                             text="Customers"
                             icon="sap-icon://people-connected"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                            id="opportunitiesNav"
                             key="opportunities"
                             text="Opportunities"
                             icon="sap-icon://building"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                        id="projectsNav"
                             key="projects"
                             text="Projects"
                             icon="sap-icon://business-objects-experience"
+                             visible="false"
                         />
                         <!-- <tnt:NavigationListItem key="sapid" text="SAP ID" icon="sap-icon://key" /> -->
                         <tnt:NavigationListItem
+                        id="employeesNav"
                             key="employees"
                             text="Employees"
                             icon="sap-icon://employee"
+                             visible="false"
                         />
                         <!-- <tnt:NavigationListItem key="verticals" text="Verticals" /> -->
                     </tnt:NavigationListGroup>
 
-                    <tnt:NavigationListGroup text="Allocations">
+                    <tnt:NavigationListGroup text="Allocations" id="allocationsDrop">
                         <tnt:NavigationListItem
+                            id="overviewNav"
+        
                             key="overview"
                             text="Allocations Overview"
                             icon="sap-icon://overview-chart"
+                             visible="false"
                         />
                         <!-- <tnt:NavigationListItem key="requirements" text="Resource Requirements" icon="sap-icon://business-objects-experience" /> -->
                     </tnt:NavigationListGroup>
 
-                    <tnt:NavigationListGroup text="Reports">
+                    <tnt:NavigationListGroup text="Reports" id="reportsDrop">
                         <tnt:NavigationListItem
+                        
+                            id="employeeBenchReportNav"
                             key="employeeBenchReport"
                             text="Employee Bench Report"
                             icon="sap-icon://group"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                        id="employeeProbableReleaseReportNav"
                             key="employeeProbableReleaseReport"
                             text="Employee Probable Release Report"
                             icon="sap-icon://calendar"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                        id="revenueForecastReportNav"
                             key="revenueForecastReport"
                             text="Revenue Forecast Report"
                             icon="sap-icon://money-bills"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                        id="employeeAllocationReportNav"
                             key="employeeAllocationReport"
                             text="Employee Allocation Report"
                             icon="sap-icon://employee-approvals"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                        id="employeeSkillReportNav"
                             key="employeeSkillReport"
                             text="Employee Skill Report"
                             icon="sap-icon://competencies"
+                             visible="false"
                         />
                         <tnt:NavigationListItem
+                            id="projectsNearingCompletionReportNav"
                             key="projectsNearingCompletionReport"
                             text="Projects Nearing Completion Report"
                             icon="sap-icon://complete"
+                             visible="false"
                         />
                     </tnt:NavigationListGroup>
                 </tnt:NavigationList>
