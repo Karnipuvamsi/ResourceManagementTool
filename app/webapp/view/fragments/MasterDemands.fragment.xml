@@ -209,10 +209,10 @@
                                     </Input>
                                     <Label text="Quantity" />
                                     <Input id="inputQuantity" value="{demandModel>/quantity}" width="100%" />
-                                    <Label text="Allocated Count" />
+                                    <!-- <Label text="Allocated Count" />
                                     <Input id="inputAllocatedCount" value="{demandModel>/allocatedCount}" width="100%" enabled="false" />
                                     <Label text="Remaining Count" />
-                                    <Input id="inputRemainingCount" value="{demandModel>/remaining}" width="100%" enabled="false" />
+                                    <Input id="inputRemainingCount" value="{demandModel>/remaining}" width="100%" enabled="false" /> -->
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>
