@@ -65,6 +65,7 @@ module.exports = cds.service.impl(async function () {
 
     // ✅ NEW: Auto-generate Demand ID (Integer, sequential) and validate quantity
     this.before('CREATE', Demands, async (req) => {
+        console.log(req);
         try {
             // Get the highest existing demandId
             // For integer fields, use SELECT with max() function
@@ -107,6 +108,7 @@ module.exports = cds.service.impl(async function () {
         const sProjectId = req.data?.sapPId;
         const iNewQuantity = req.data?.quantity || 0;
         
+        
         if (sProjectId && iNewQuantity > 0) {
             try {
                 // Get project to check requiredResources
@@ -117,8 +119,9 @@ module.exports = cds.service.impl(async function () {
                     const iExistingTotal = aExistingDemands.reduce((sum, demand) => sum + (demand.quantity || 0), 0);
                     
                     // Calculate new total (existing + new)
-                    const iNewTotal = iExistingTotal + iNewQuantity;
-                    
+                    const iNewQuantityInt = parseInt(iNewQuantity || 0, 10);
+                    // const iNewTotal = iExistingTotal + iNewQuantity;
+                    const iNewTotal = iExistingTotal + iNewQuantityInt;
                     if (iNewTotal > oProject.requiredResources) {
                         const iExcess = iNewTotal - oProject.requiredResources;
                         return req.error(409, `Total demand quantity (${iNewTotal}) exceeds required resources (${oProject.requiredResources}) for project ${sProjectId}. Excess: ${iExcess}`);
