@@ -211,26 +211,24 @@
 
                                     <Label text="Business Unit" required="true" />
                                     <Input id="inputBusinessUnit_oppr" value="{opportunityModel>/businessUnit}" width="100%" required="true" />
-                                    <Label text="Probability" required="true" />
+                                    <Label text=" Actual Probability %" required="true" />
                                     <Select id="inputProbability_oppr" selectedKey="{opportunityModel>/probability}" width="100%" required="true">
                                         <items>
                                             <core:Item key="" text="Select Probability..." />
-                                            <core:Item key="ProposalStage" text="0%-ProposalStage" />
-                                            <core:Item key="SoWSent" text="33%-SoWSent" />
-                                            <core:Item key="SoWSigned" text="85%-SoWSigned" />
-                                            <core:Item key="PurchaseOrderReceived" text="100%-PurchaseOrderReceived" />
+                                            <core:Item key="0%" text="0%" />
+                                            <core:Item key="33%" text="33%" />
+                                            <core:Item key="85%" text="85%" />
+                                            <core:Item key="100%" text="100%" />
                                         </items>
                                     </Select>
-                                    <Label text="Stage" required="true" />
+                                    <Label text="SFDC Probability %" required="true" />
                                     <Select id="inputStage_oppr" selectedKey="{opportunityModel>/Stage}" width="100%" required="true">
                                         <items>
-                                            <core:Item key="" text="Select Stage..." />
-                                            <core:Item key="Discover" text="Discover" />
-                                            <core:Item key="Define" text="Define" />
-                                            <core:Item key="OnBid" text="On Bid" />
-                                            <core:Item key="DownSelect" text="Down Select" />
-                                            <core:Item key="SignedDeal" text="Signed Deal" />
-                                            <core:Item key="Confirmed" text="Confirmed" />
+                                            <core:Item key="" text="Select Probability..." />
+                                            <core:Item key="0%" text="0%" />
+                                            <core:Item key="33%" text="33%" />
+                                            <core:Item key="85%" text="85%" />
+                                            <core:Item key="100%" text="100%" />
                                         </items>
                                     </Select>
                                     

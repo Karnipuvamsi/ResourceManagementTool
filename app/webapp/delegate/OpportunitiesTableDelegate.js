@@ -35,7 +35,7 @@ sap.ui.define([
             return [
                         { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
                         { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opportunity ID", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
-                        { name: "probability", path: "probability", label: "Probability", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
+                        { name: "probability", path: "probability", label: "Actual Probability %", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
                         { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
                         { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String", sortable: true, filterable: true, groupable: true },
                         { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date", sortable: true, filterable: true, groupable: true },
@@ -85,13 +85,13 @@ sap.ui.define([
                 "sfdcOpportunityId": "SFDC Opp. ID",
                 "opportunityName": "Opp. Name",
                 "businessUnit": "Business Unit",
-                "probability": "Probability",
+                "probability": "Actual Probability %",
                 "salesSPOC": "Sales SPOC",
                 "deliverySPOC": "Delivery SPOC",
                 "expectedStart": "Expected Start",
                 "expectedEnd": "Expected End",
                 "tcv":"TCV",
-                "Stage": "Deal Stage",
+                "Stage": "SFDC Probability %",
                 "customerId": "Customer Name"
             };
 
