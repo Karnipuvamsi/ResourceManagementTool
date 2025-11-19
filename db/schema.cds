@@ -281,6 +281,7 @@ entity Employee {
         mailid            : String;
         gender            : GenderEnum;
         employeeType      : EmployeeTypeEnum;
+        unit              : Unit;
         doj               : Date;
         band              : EmployeeBandEnum;
         role              : String;

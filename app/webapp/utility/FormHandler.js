@@ -74,6 +74,8 @@ sap.ui.define([
                 this.byId("inputMailId_emp")?.setValue("");
                 this.byId("inputGender_emp")?.setSelectedKey("");
                 this.byId("inputEmployeeType_emp")?.setSelectedKey("");
+                this.byId("inputUnit_emp")?.setSelectedKey("");
+
                 this.byId("inputDoJ_emp")?.setValue("");
                 this.byId("inputBand_emp")?.setSelectedKey("");
                 this.byId("inputRole_emp")?.setSelectedKey("");
@@ -95,6 +97,7 @@ sap.ui.define([
             this.byId("inputMailId_emp")?.setValue(oObj.mailid || "");
             this.byId("inputGender_emp")?.setSelectedKey(oObj.gender || "");
             this.byId("inputEmployeeType_emp")?.setSelectedKey(oObj.employeeType || "");
+            this.byId("inputUnit_emp")?.setSelectedKey(oObj.unit || "");
             this.byId("inputDoJ_emp")?.setValue(oObj.doj || "");
             const sBand = oObj.band || "";
             this.byId("inputBand_emp")?.setSelectedKey(sBand);
@@ -361,6 +364,10 @@ sap.ui.define([
                     projectType: "",
                     status: "",
                     oppId: "",
+                    segment: "",
+                    vertical: "",
+                    subVertical: "",
+                    unit: "",
                     requiredResources: "",
                     allocatedResources: "",
                     toBeAllocated: "",
@@ -399,6 +406,10 @@ sap.ui.define([
             oProjModel.setProperty("/SOWReceived", oObj.SOWReceived || "");
             oProjModel.setProperty("/POReceived", oObj.POReceived || "");
             oProjModel.setProperty("/oppId", oObj.oppId || "");
+            oProjModel.setProperty("/segment", oObj.segment || "");
+            oProjModel.setProperty("/vertical", oObj.vertical || "");
+            oProjModel.setProperty("/subVertical", oObj.subVertical || "");
+            oProjModel.setProperty("/unit", oObj.unit || "");
 
             this.byId("inputSapProjId_proj")?.setValue(oObj.sapPId || "");
             this.byId("inputSapProjId_proj")?.setEnabled(false);
@@ -414,6 +425,10 @@ sap.ui.define([
             this.byId("inputToBeAllocated_proj")?.setValue(oObj.toBeAllocated != null ? String(oObj.toBeAllocated) : "");
             this.byId("inputSOWReceived_proj")?.setSelectedKey(oObj.SOWReceived || "");
             this.byId("inputPOReceived_proj")?.setSelectedKey(oObj.POReceived || "");
+            this.byId("inputsegment_proj")?.setSelectedKey(oObj.segment || "");
+            this.byId("inputVertical_proj")?.setSelectedKey(oObj.vertical || "");
+            this.byId("inputSubVertical_proj")?.setSelectedKey(oObj.subVertical || "");
+            this.byId("inputUnit_proj")?.setSelectedKey(oObj.unit || "");
 
             const sGPMId = oObj.gpm || "";
             const oGPMInput = this.byId("inputGPM_proj");

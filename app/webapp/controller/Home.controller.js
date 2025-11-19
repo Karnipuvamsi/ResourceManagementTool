@@ -5069,6 +5069,7 @@ sap.ui.define([
                 sMailId = this.byId("inputMailId_emp").getValue(),
                 sGender = this.byId("inputGender_emp").getSelectedKey(),
                 sEmployeeType = this.byId("inputEmployeeType_emp").getSelectedKey(),
+                sUnit = this.byId("inputUnit_emp").getSelectedKey(),
                 sDoJ = this.byId("inputDoJ_emp").getValue(),
                 sBand = this.byId("inputBand_emp").getSelectedKey(),
                 sRole = this.byId("inputRole_emp").getSelectedKey(), // ✅ FIXED: Role is a Select control
@@ -5113,6 +5114,7 @@ sap.ui.define([
                     "mailid": sMailId || "",
                     "gender": sGender || "",
                     "employeeType": sEmployeeType || "",
+                    "unit":sUnit || "",
                     "doj": (sDoJ && typeof sDoJ === "string" && sDoJ.trim() !== "") ? sDoJ : null,  // Date field - use null if empty
                     "band": sBand || "",
                     "role": sRole || "",
@@ -5184,6 +5186,7 @@ sap.ui.define([
                     "mailid": sMailId || "",
                     "gender": sGender || "",
                     "employeeType": sEmployeeType || "",
+                    "unit": sUnit,
                     "doj": (sDoJ && typeof sDoJ === "string" && sDoJ.trim() !== "") ? sDoJ : null,  // Date field - use null if empty
                     "band": sBand || "",
                     "role": sRole || "",

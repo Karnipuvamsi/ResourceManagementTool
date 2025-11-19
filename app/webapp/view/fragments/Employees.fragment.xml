@@ -295,6 +295,17 @@
                                     </Select>
                                     <Label text="Last Working Date" />
                                     <DatePicker id="inputLWD_emp" value="{employeeModel>/lwd}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
+                                    <Label text="Unit/Service Line" />
+                                    <Select id="inputUnit_emp" selectedKey="{employeeModel>/unit}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Unit..." />
+                                            <core:Item key="GEV" text="GEV" />
+                                            <core:Item key="HMS" text="HMS" />
+                                            <core:Item key="CNH" text="CNH" />
+                                            <core:Item key="FS" text="FS" />                                                                                
+
+                                        </items>
+                                    </Select>
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>

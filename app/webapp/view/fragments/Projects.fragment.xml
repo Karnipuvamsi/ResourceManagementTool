@@ -225,6 +225,22 @@
                                             <core:Item key="TimeAndMaterial" text="Time &amp; Material" />
                                         </items>
                                     </Select>
+                                    <Label text="SOW Received" />
+                                    <Select id="inputSOWReceived_proj" selectedKey="{projectModel>/SOWReceived}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select SOW Received..." />
+                                            <core:Item key="Yes" text="Yes" />
+                                            <core:Item key="No" text="No" />
+                                        </items>
+                                    </Select>
+                                    <Label text="PO Received" />
+                                    <Select id="inputPOReceived_proj" selectedKey="{projectModel>/POReceived}" width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select PO Received..." />
+                                            <core:Item key="Yes" text="Yes" />
+                                            <core:Item key="No" text="No" />
+                                        </items>
+                                    </Select>
                                 </f:SimpleForm>
                             </VBox>
                             
@@ -308,22 +324,7 @@
                                     <Input id="inputAllocatedResources_proj" value="{projectModel>/allocatedResources}" width="100%" type="Number" />
                                     <Label text="To Be Allocated" />
                                     <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" />
-                                    <Label text="SOW Received" />
-                                    <Select id="inputSOWReceived_proj" selectedKey="{projectModel>/SOWReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select SOW Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
-                                    <Label text="PO Received" />
-                                    <Select id="inputPOReceived_proj" selectedKey="{projectModel>/POReceived}" width="100%">
-                                        <items>
-                                            <core:Item key="" text="Select PO Received..." />
-                                            <core:Item key="Yes" text="Yes" />
-                                            <core:Item key="No" text="No" />
-                                        </items>
-                                    </Select>
+                                    
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>
