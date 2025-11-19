@@ -5106,7 +5106,7 @@ sap.ui.define([
                 sDoJ = this.byId("inputDoJ_emp").getValue(),
                 sBand = this.byId("inputBand_emp").getSelectedKey(),
                 sRole = this.byId("inputRole_emp").getSelectedKey(), // ✅ FIXED: Role is a Select control
-                sLocation = this.byId("inputLocation_emp").getValue(),
+                sLocation = this.byId("inputLocation_emp").getSelectedKey(),
                 sCountry = this.byId("inputCountry_emp").getSelectedKey(),  // ✅ NEW: Country field
                 sCity = this.byId("inputCity_emp").getSelectedKey(),  // ✅ CHANGED: Now uses getSelectedKey
                 // Get Supervisor OHR ID from data attribute (not displayed name)

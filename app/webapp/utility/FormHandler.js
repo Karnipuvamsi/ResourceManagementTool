@@ -79,6 +79,7 @@ sap.ui.define([
                 this.byId("inputBand_emp")?.setSelectedKey("");
                 this.byId("inputRole_emp")?.setSelectedKey("");
                 this.byId("inputLocation_emp")?.setValue("");
+                this.byId("inputCountry_emp")?.setSelectedKey("");
                 this.byId("inputCity_emp")?.setValue("");
                 this.byId("inputSupervisor_emp")?.setValue("");
                 this.byId("inputSupervisor_emp")?.data("selectedId", "");
@@ -125,6 +126,8 @@ sap.ui.define([
             }
             this.byId("inputRole_emp")?.setSelectedKey(oObj.role || "");
             this.byId("inputLocation_emp")?.setValue(oObj.location || "");
+            // inputCountry_emp
+            this.byId("inputCountry_emp")?.setValue(oObj.city || "");
             this.byId("inputCity_emp")?.setValue(oObj.city || "");
 
             const sSupervisorId = oObj.supervisorOHR || "";

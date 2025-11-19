@@ -244,8 +244,17 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
-                                    <Label text="Location" />
-                                    <Input id="inputLocation_emp" value="{employeeModel>/location}" width="100%" />
+                                  <Label text="Location" />
+                                    <Select id="inputLocation_emp"
+                                            selectedKey="{employeeModel>/location}"
+                                            width="100%">
+                                        <items>
+                                            <core:Item key="" text="Select Location..." />
+                                            <core:Item key="nearshore" text="Nearshore" />
+                                            <core:Item key="offshore" text="Offshore" />
+                                            <core:Item key="onshore" text="Onshore" />
+                                        </items>
+                                    </Select>
                                     <Label text="Country" />
                                     <Select id="inputCountry_emp" selectedKey="{employeeModel>/country}" width="100%" change="onEmployeeCountryChange">
                                         <items>
