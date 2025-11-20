@@ -5497,9 +5497,9 @@ sap.ui.define([
                 sSkills = aSelectedSkills.join(", "),
                 sBand = this.byId("inputBand").getSelectedKey(),
                 sSapPId = (this.byId("inputProject")?.data("selectedId")) || this.byId("inputProject")?.getValue() || "",
-                sQuantity = this.byId("inputQuantity").getValue(),
-                sAllocatedCount = this.byId("inputAllocatedCount").getValue(),
-                sRemainingCount = this.byId("inputRemainingCount").getValue();
+                sQuantity = this.byId("inputQuantity").getValue();
+                // sAllocatedCount = this.byId("inputAllocatedCount").getValue(),
+                // sRemainingCount = this.byId("inputRemainingCount").getValue();
 
             const oTable = this.byId("MasterDemands");
             const oModel = oTable.getModel();
@@ -5531,8 +5531,8 @@ sap.ui.define([
                     "band": sBand || "",
                     "sapPId": sSapPId || "",
                     "quantity": sQuantity,
-                    "allocatedCount": sAllocatedCount,
-                    "remaining": sRemainingCount
+                    // "allocatedCount": sAllocatedCount,
+                    // "remaining": sRemainingCount
                 };
 
                 try {
@@ -5568,8 +5568,8 @@ sap.ui.define([
                     "band": sBand || "",
                     "sapPId": sSapPId || "",
                     "quantity": sQuantity,
-                    "allocatedCount": sAllocatedCount,
-                    "remaining": sRemainingCount
+                    // "allocatedCount": sAllocatedCount,
+                    // "remaining": sRemainingCount
                 };
 
                 console.log("Creating demand with data:", oCreateEntry);

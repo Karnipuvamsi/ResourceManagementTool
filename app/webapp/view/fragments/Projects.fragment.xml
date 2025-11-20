@@ -86,7 +86,7 @@
                                 }'
                             />
                             <!-- SOW Received Filter -->
-                            <mdc:FilterField
+                            <!-- <mdc:FilterField
                                 id="filterSOWReceived"
                                 label="SOW Received"
                                 conditions="{filterModel>/Projects/conditions/SOWReceived}"
@@ -99,7 +99,7 @@
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
                                 }'
-                            />
+                            /> -->
                         </mdc:filterItems>
                     </mdc:FilterBar>
                 </VBox>

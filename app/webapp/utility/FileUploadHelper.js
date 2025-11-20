@@ -65,7 +65,7 @@ sap.ui.define([
                 const mExpectedHeaders = {
                     "customerUpload": [
                         "customerName",
-                        "state", "country", "status", "vertical",
+                        "custCountryId", "custStateId", "custCityId", "status", "vertical",
                         "startDate", "endDate",
                     ],
                     "opportunityUpload": [
@@ -81,7 +81,7 @@ sap.ui.define([
                         "endDate", "gpm", "projectType",
                         "oppId", "status", "requiredResources",
                         "allocatedResources", "toBeAllocated",
-                        "SOWReceived", "POReceived",
+                        "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
                     "verticalUpload": [
                         "id", "verticalName"
@@ -199,6 +199,22 @@ sap.ui.define([
                 });
             }
             for (const [iIndex, oRecord] of this._csvPayload.entries()) {
+
+                console.log("oRecord", oRecord);
+
+
+
+                // Convert to ISO format
+                var oStartDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(oRecord.startDate);
+                var oEndDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(oRecord.endDate);
+
+
+                console.log(oStartDate);
+                
+                oRecord.startDate = oStartDate.toISOString().split("T")[0]; // "2025-11-11"
+                oRecord.endDate = oEndDate.toISOString().split("T")[0]; // "2025-11-11"
+
+
                 try {
                     const oRes = await fetch(`${sServiceUrl}${sEntitySet}`, {
                         method: "POST",

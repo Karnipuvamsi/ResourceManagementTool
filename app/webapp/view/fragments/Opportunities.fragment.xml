@@ -71,7 +71,7 @@
                                 }'
                             />
                             <!-- Business Unit Filter -->
-                            <mdc:FilterField
+                            <!-- <mdc:FilterField
                                 id="filterBusinessUnit"
                                 label="Business Unit"
                                 conditions="{filterModel>/Opportunities/conditions/businessUnit}"
@@ -83,7 +83,7 @@
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
                                 }'
-                            />
+                            /> -->
                             <!-- Stage Filter -->
                             <mdc:FilterField
                                 id="filterStage"

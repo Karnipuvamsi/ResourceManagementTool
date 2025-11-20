@@ -30,6 +30,9 @@ module.exports = cds.service.impl(async function () {
         // Get the highest existing numeric part of SAPcustId
         const result = await SELECT.one`max(SAPcustId)`.from(Customers);
 
+        console.log("my req data",req.data);
+        
+
         
 
 
@@ -1779,5 +1782,8 @@ module.exports = cds.service.impl(async function () {
             req.reject(500, `Error getting band-designation mappings: ${oError.message}`);
         }
     });
+
+
+    
 
 });
