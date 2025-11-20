@@ -132,6 +132,15 @@
                 
                 <!-- ===== FORM PANEL ===== -->
                 <Panel headerText="Demand Details" class="sapUiResponsiveMargin" expandable="false">
+                      <headerToolbar>
+                    <Toolbar>
+                        <Title text="Demand Details" level="H2" />
+                        <ToolbarSpacer />
+                        <Button id="editButton_masterDemands" text="Edit" type="Emphasized" press="onEditMasterDemandsForm" enabled="false" class="sapUiSmallMarginEnd" />
+                        <Button id="submitButton_masterDemands" text="Submit" type="Accept" press="onSubmitMasterDemands" class="sapUiSmallMarginEnd" />
+                        <Button id="cancelFormButton_masterDemands" text="Cancel" type="Reject" press="onCancelMasterDataForm" />
+                    </Toolbar>
+                </headerToolbar>
                     <VBox class="sapUiSmallMargin">
                         <HBox width="100%">
                             <!-- Left Column (8 fields) -->
@@ -209,22 +218,17 @@
                                     </Input>
                                     <Label text="Quantity" />
                                     <Input id="inputQuantity" value="{demandModel>/quantity}" width="100%" />
-                                    <Label text="Allocated Count" />
+                                    <!-- <Label text="Allocated Count" />
                                     <Input id="inputAllocatedCount" value="{demandModel>/allocatedCount}" width="100%" enabled="false" />
                                     <Label text="Remaining Count" />
-                                    <Input id="inputRemainingCount" value="{demandModel>/remaining}" width="100%" enabled="false" />
+                                    <Input id="inputRemainingCount" value="{demandModel>/remaining}" width="100%" enabled="false" /> -->
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>
                         
-                        <!-- Buttons Row -->
-                        <HBox class="sapUiMediumMarginTop" justifyContent="Center" width="100%">
-                            <Button id="editButton_masterDemands" text="Edit" type="Emphasized" press="onEditMasterDemandsForm" enabled="false" class="sapUiSmallMarginEnd" />
-                            <Button id="submitButton_masterDemands" text="Submit" type="Accept" press="onSubmitMasterDemands" />
-                            <Button id="cancelFormButton_msterDemands" text="Cancel" type="Reject" press="onCancelMasterDataForm" class="sapUiSmallMarginBegin" />
-                        </HBox>
+                  
                     </VBox>
-                </Panel>
+                </Panel>                  
             </VBox>
         </layout:content>
     </layout:DynamicPage>

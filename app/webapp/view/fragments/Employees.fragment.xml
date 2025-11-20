@@ -163,6 +163,17 @@
                 
                 <!-- ===== FORM PANEL ===== -->
                 <Panel headerText="Employee Details" class="sapUiResponsiveMargin" expandable="false">
+                        <!-- Header Toolbar with Buttons -->
+                    <headerToolbar>
+                        <Toolbar>
+                            <Title text="Employee Details" level="H2" />
+                            <ToolbarSpacer />
+                            <Button id="editButton_emp" text="Edit" type="Emphasized" press="onEditEmployeeForm" enabled="false" class="sapUiSmallMarginEnd" />
+                            <Button id="submitButton_emp" text="Submit" type="Accept" press="onSubmitEmployee" />
+                            <Button id="cancelFormButton_emp" text="Cancel" type="Reject" press="onCancelEmployeeForm" class="sapUiSmallMarginBegin" />
+                            
+                        </Toolbar>
+                    </headerToolbar>
                     <VBox class="sapUiSmallMargin">
                         <HBox width="100%">
                             <!-- Left Column (8 fields) -->
@@ -319,12 +330,6 @@
                             </VBox>
                         </HBox>
                         
-                        <!-- Buttons Row -->
-                        <HBox class="sapUiMediumMarginTop" justifyContent="Center" width="100%">
-                            <Button id="editButton_emp" text="Edit" type="Emphasized" press="onEditEmployeeForm" enabled="false" class="sapUiSmallMarginEnd" />
-                            <Button id="submitButton_emp" text="Submit" type="Accept" press="onSubmitEmployee" />
-                            <Button id="cancelFormButton_emp" text="Cancel" type="Reject" press="onCancelEmployeeForm" class="sapUiSmallMarginBegin" />
-                        </HBox>
                     </VBox>
                 </Panel>
             </VBox>

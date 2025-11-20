@@ -1,57 +1,29 @@
 ohrId,fullName,mailid,gender,employeeType,unit,doj,band,role,location,supervisorOHR,skills,city,lwd,status,empallocpercentage
-
 703431717,Rajesh Kumar,rajesh.kumar@genpact.com,Male,Full Time,FS,2010-05-15,1,Executive Director,Offshore,,Leadership,Hyderabad,,Allocated,100
-
 703416950,Anjali Sharma,anjali.sharma@genpact.com,Female,Full Time,FS,2015-08-20,2,Senior Manager,Offshore,703431717,SAP BOA,Hyderabad,,Allocated,100
-
 703013588,Prateek Singh,prateek.singh@genpact.com,Male,Full Time,FS,2018-03-10,3,Team Lead,Offshore,703386317,Java,Hyderabad,,Unproductive Bench,100
-
 703282959,Meera Patel,meera.patel@genpact.com,Female,Full Time,FS,2017-11-05,3,Senior Consultant,Onshore,703386317,SAP Fiori,Newyork,,Unproductive Bench,30
-
 703387205,Arjun Reddy,arjun.reddy@genpact.com,Male,Full Time,FS,2016-07-22,2,Manager,Offshore,703431717,Project Management,Hyderabad,,Unproductive Bench,40
-
 703280408,Deepak Verma,deepak.verma@genpact.com,Male,Full Time,FS,2014-09-12,3,Senior Lead,Offshore,703387205,SAP MM,Hyderabad,,Unproductive Bench,50
-
 703386913,Priya Nair,priya.nair@genpact.com,Female,Full Time,FS,2019-02-18,3,Lead Consultant,Offshore,703386317,SAP PP/QM,Bangalore,,Unproductive Bench,60
-
 703258477,Kalyani Padala,padala.kalyani@genpact.com,Female,Full Time,FS,2019-11-12,4C,Data Migratio Lead,Offshore,703416950,SAP BOA,Hyderabad,,Allocated,100
-
 850074794,Jayachandra Pakanati,Jayachandra.Pakanati@genpact.com,Male,Subcon,FS,2024-03-05,Subcon,Functional 4A_1,Offshore,703258477,SAP FICO,Hyderabad,,Allocated,100
-
 850083737,Karthik Vamaraju Venkata,VamarajuVenkata.Karthik@genpact.com,Male,Intern,FS,2025-09-25,Intern,Technical 4A_1,Offshore,703013588,Java,Hyderabad,2025-12-31,Resigned,70
-
-850082824,Nageshwar Rao Bhukya,NageshwarRao.Bhukya@genpact.com,Male,Subcon,2025-12-08,Subcon,FS,Functional 4A_1,Onshore,703282959,SAP Fiori,Newyork,,Allocated,100
-
 703391253,Pallavi Santhanakrishnan,Pallavi.Santhanakrishnan@genpact.com,Female,Full Time,FS,2024-06-24,3,Portfolio Led,Offshore,703386317,Project Management,Hyderabad,,Allocated,20
-
 703386317,Sundara Satish Kumar Suri,Satish.Suri@genpact.com,Male,Full Time,FS,2024-09-04,1,Global Lead,Offshore,703431717,Leadership,Hyderabad,,Allocated,10
-
 703116821,P V Venkat Rao,pvvenkat.rao@genpact.com,Male,Full Time,FS,2013-04-29,4D,PMO,Offshore,703387205,Project Management,Hyderabad,,Allocated,30
-
 703317633,Potu Reddy,Potu.Reddy@genpact.com,Male,Full Time,FS,2022-02-18,4C,Data Migratio Lead,Offshore,703280408,SAP MM,Bangalore,,Allocated,100
-
 703308586,Vikas Kumar,Vikas.Kumar14@genpact.com,Male,Full Time,FS,2021-12-18,4B,Lead 4A_1,Offshore,703386913,SAP PP/QM,Noida,,Allocated,20
-
 703387105,Mamidi Sireesha,Mamidi.Sireesha@genpact.com,Female,Full Time,FS,2024-10-04,4B,Tehnical 4A_1,Offshore,703280408,SAP ABAP,Bangalore,,Allocated,40
-
 999999901,Neehit Mittal,neehit.mittal@genpact.com,Male,Full Time,FS,2015-01-01,2,Sales SPOC,Offshore,703431717,Sales,Hyderabad,,Allocated,100
-
 999999902,Mithilesh Methuku,mithilesh.methuku@genpact.com,Male,Full Time,FS,2016-01-01,2,Delivery SPOC,Offshore,703431717,Delivery,Hyderabad,,Allocated,100
-
 999999903,Radhika Tanikella,radhika.tanikella@genpact.com,Female,Full Time,FS,2017-01-01,2,Delivery SPOC,Offshore,703431717,Delivery,Hyderabad,,Allocated,100
-
 999999904,Ravi Kolachina,ravi.kolachina@genpact.com,Male,Full Time,FS,2018-01-01,2,Delivery SPOC,Offshore,703431717,Delivery,Hyderabad,,Allocated,100
-
 999999905,Naveen Chiluveru,naveen.chiluveru@genpact.com,Male,Full Time,FS,2019-01-01,2,Delivery SPOC,Offshore,703431717,Delivery,Hyderabad,,Allocated,100
-
 999999906,Arn K Reddy,arn.reddy@genpact.com,Male,Full Time,FS,2020-01-01,2,Delivery SPOC,Offshore,703431717,Delivery,Hyderabad,,Allocated,100
-
 999999907,Sridhar Rao,sridhar.rao@genpact.com,Male,Full Time,FS,2014-01-01,1,GPM,Offshore,703431717,Project Management,Hyderabad,,Allocated,100
-
 999999908,K N Sathisha,kn.sathisha@genpact.com,Male,Full Time,FS,2015-06-01,1,GPM,Offshore,703431717,Project Management,Hyderabad,,Allocated,100
-
 999999909,Anil Tarmani,anil.tarmani@genpact.com,Male,Full Time,FS,2016-01-01,1,GPM,Offshore,703431717,Project Management,Hyderabad,,Allocated,100
-
 999999910,Shiva Koneru,shiva.koneru@genpact.com,Male,Full Time,FS,2017-01-01,1,GPM,Offshore,703431717,Project Management,Hyderabad,,Allocated,100
 
  
