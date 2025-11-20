@@ -5562,6 +5562,7 @@ sap.ui.define([
 
             } else {
                 // ✅ CREATE MODE
+                
                 const oCreateEntry = {
                     "demandId": sDemandId,
                     "skill": sSkills || "",
