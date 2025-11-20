@@ -149,124 +149,22 @@ sap.ui.define([
             this.byId("inputLWD_emp")?.setValue(oObj.lwd || "");
         },
 
-        // onMasterDemandsDialogData: function (aSelectedContexts) {
-        //     if (!aSelectedContexts || aSelectedContexts.length === 0) {
-        //         // No selection - clear form for new entry
-        //         const oTable = this.byId("MaterDemands");
-        //         let sNextId = ""; // Employees might not have auto-generated IDs
-        //         try {
-        //             // For now, just clear - Employees might use manual OHR IDs
-        //             sNextId = "";
-        //         } catch (e) {
-        //             console.log("Could not generate next Employee ID");
-        //         }
-
-        //         this.byId("inputDemandId")?.setValue(sNextId);
-        //         this.byId("inputDemandId")?.setEnabled(false); // Employees might need manual OHR ID entry
-
-        //         this.byId("inputSkills")?.removeAllSelectedItems();
-
-        //         this.byId("inputBand")?.setSelectedKey("");
-
-        //         this.byId("inputProject")?.setValue("");
-        //         this.byId("inputProject")?.data("selectedId", "");
-
-        //         this.byId("inputQuantity")?.setValue("");
-        //         this.byId("inputAllocatedCount")?.setValue("");
-        //         this.byId("inputRemainingCount")?.setValue("");
-        //         return;
-        //     }
-
-        //     // Row selected - populate form for update
-        //     let oObj = aSelectedContexts[0].getObject();
-        //     this.byId("inputDemandId")?.setValue(oObj.demandId || "");
-        //     this.byId("inputDemandId")?.setEnabled(false); // Disable OHR ID in update mode (key field)
-        //     const sSkills = oObj.skill || "";
-        //     const oSkillsComboBox = this.byId("inputSkills");
-        //     if (oSkillsComboBox && sSkills) {
-        //         // Split comma-separated skills and set as selected keys
-        //         const aSkillNames = sSkills.split(",").map(s => s.trim()).filter(s => s !== "");
-        //         oSkillsComboBox.setSelectedKeys(aSkillNames);
-        //     } else if (oSkillsComboBox) {
-        //         oSkillsComboBox.removeAllSelectedItems();
-        //     }
-
-        //     const sBand = oObj.band || "";
-        //     this.byId("inputBand")?.setSelectedKey(sBand);
-
-        //     const sSapPId = oObj.sapPId || "";
-        //     const oSapPIdInput = this.byId("inputProject");
-        //     if (sSapPId && oSapPIdInput) {
-        //         // First check association (same pattern as Customer, Opportunity, GPM)
-        //         if (oObj.to_Project && oObj.to_Project.projectName) {
-        //             oSapPIdInput.setValue(oObj.to_Project.projectNameName);
-        //             oSapPIdInput.data("selectedId", sSapPId);
-        //         } else {
-        //             // Load async if association not available
-        //             oSapPIdInput.setValue(sSapPId);
-        //             oSapPIdInput.data("selectedId", sSapPId);
-        //             const oModel = this.getView().getModel();
-        //             if (oModel && /^\d{6,10}$/.test(sSapPId.trim())) {
-        //                 const oEmployeeContext = oModel.bindContext(`/Demands('${sSapPId}')`, null, { deferred: true });
-        //                 oEmployeeContext.execute().then(() => {
-        //                     const oSapPId = oEmployeeContext.getObject();
-        //                     if (oSapPId && oSapPId.projectName) {
-        //                         oSapPIdInput.setValue(oSapPId.fullName);
-        //                         oSapPIdInput.data("selectedId", sSapPId);
-        //                     }
-        //                 }).catch(() => { });
-        //             }
-        //         }
-        //     } else if (oSapPIdInput) {
-        //         oSapPIdInput.setValue("");
-        //         oSapPIdInput.data("selectedId", "");
-        //     }
-
-
-        //     this.byId("inputQuantity")?.setValue(oObj.quantity || "");
-        //     // this.byId("inputAllocatedCount")?.setValue(oObj.allocatedCount || "");
-        //     this.byId("inputAllocatedCount")?.setValue(1 || "");
-
-        //     this.byId("inputRemainingCount")?.setValue(oObj.remaining || "");
-
-
-        //     // ✅ Populate Designation dropdown based on Band selection
-
-
-
-        //     // ✅ Supervisor field - display name from association, store ID
-
-        //     // ✅ Load skills from employee.skills field (comma-separated string)
-
-        // },
         onMasterDemandsDialogData: function (aSelectedContexts) {
+            
+
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 // No selection - clear form for new entry
-                const oTable = this.byId("MaterDemands");
-                let sNextId = "";
+                const oTable = this.byId("MasterDemands");
+                let sNextId = ""; // Employees might not have auto-generated IDs
                 try {
-                    if (oTable) {
-                        sNextId = this._generateNextIdFromBinding(oTable, "MaterDemands", "demandId") || sNextId;
-                    }
+                    // For now, just clear - Employees might use manual OHR IDs
+                    sNextId = "";
                 } catch (e) {
+                    console.log("Could not generate next Employee ID");
                 }
-
-                let oMasterDemandModel = this.getView().getModel("demandModel");
-                if (!oMasterDemandModel) {
-                    oMasterDemandModel = new sap.ui.model.json.JSONModel({});
-                    this.getView().setModel(oProjModel, "demandModel");
-                }
-                oMasterDemandModel.setData({
-                    demandId: "",
-                    skill: "",
-                    band: "",
-                    sapPId: "",
-                    quantity: ""
-                });
 
                 this.byId("inputDemandId")?.setValue(sNextId);
-                this.byId("inputDemandId")?.setEnabled(false);
-                this.byId("inputDemandId")?.setPlaceholder("Auto-generated");
+                this.byId("inputDemandId")?.setEnabled(false); // Employees might need manual OHR ID entry
 
                 this.byId("inputSkills")?.removeAllSelectedItems();
 
@@ -278,29 +176,13 @@ sap.ui.define([
                 this.byId("inputQuantity")?.setValue("");
                 this.byId("inputAllocatedCount")?.setValue("");
                 this.byId("inputRemainingCount")?.setValue("");
-
                 return;
             }
 
             // Row selected - populate form for update
             let oObj = aSelectedContexts[0].getObject();
-
-            let oMasterDemandModel = this.getView().getModel("demandModel");
-            if (!oMasterDemandModel) {
-                oMasterDemandModel = new sap.ui.model.json.JSONModel({});
-                this.getView().setModel(oMasterDemandModel, "demandModel");
-            }
-
-            oMasterDemandModel.setProperty("/demandId", oObj.demandId || "");
-            oMasterDemandModel.setProperty("/skill", oObj.skill || "");
-            oMsterDemandModel.setProperty("/band", oObj.band || "");
-            oMasterDemandModel.setProperty("/sapPId", oObj.sapPId || "");
-            oMasterDemandModel.setProperty("/quantity", oObj.quantity != null ? oObj.quantity : null);
-
-
             this.byId("inputDemandId")?.setValue(oObj.demandId || "");
-            this.byId("inputDemandId")?.setEnabled(false);
-            this.byId("inputDemandId")?.setPlaceholder("");
+            this.byId("inputDemandId")?.setEnabled(false); // Disable OHR ID in update mode (key field)
             const sSkills = oObj.skill || "";
             const oSkillsComboBox = this.byId("inputSkills");
             if (oSkillsComboBox && sSkills) {
@@ -349,7 +231,127 @@ sap.ui.define([
 
             this.byId("inputRemainingCount")?.setValue(oObj.remaining || "");
 
+
+            // ✅ Populate Designation dropdown based on Band selection
+
+
+
+            // ✅ Supervisor field - display name from association, store ID
+
+            // ✅ Load skills from employee.skills field (comma-separated string)
+
         },
+        // onMasterDemandsDialogData: function (aSelectedContexts) {
+        //     if (!aSelectedContexts || aSelectedContexts.length === 0) {
+        //         // No selection - clear form for new entry
+        //         const oTable = this.byId("MaterDemands");
+        //         let sNextId = "";
+        //         try {
+        //             if (oTable) {
+        //                 sNextId = this._generateNextIdFromBinding(oTable, "MaterDemands", "demandId") || sNextId;
+        //             }
+        //         } catch (e) {
+        //         }
+
+        //         let oMasterDemandModel = this.getView().getModel("demandModel");
+        //         if (!oMasterDemandModel) {
+        //             oMasterDemandModel = new sap.ui.model.json.JSONModel({});
+        //             this.getView().setModel(oProjModel, "demandModel");
+        //         }
+        //         oMasterDemandModel.setData({
+        //             demandId: "",
+        //             skill: "",
+        //             band: "",
+        //             sapPId: "",
+        //             quantity: ""
+        //         });
+
+        //         this.byId("inputDemandId")?.setValue(sNextId);
+        //         this.byId("inputDemandId")?.setEnabled(false);
+        //         this.byId("inputDemandId")?.setPlaceholder("Auto-generated");
+
+        //         this.byId("inputSkills")?.removeAllSelectedItems();
+
+        //         this.byId("inputBand")?.setSelectedKey("");
+
+        //         this.byId("inputProject")?.setValue("");
+        //         this.byId("inputProject")?.data("selectedId", "");
+
+        //         this.byId("inputQuantity")?.setValue("");
+        //         this.byId("inputAllocatedCount")?.setValue("");
+        //         this.byId("inputRemainingCount")?.setValue("");
+
+        //         return;
+        //     }
+
+        //     // Row selected - populate form for update
+        //     let oObj = aSelectedContexts[0].getObject();
+
+        //     let oMasterDemandModel = this.getView().getModel("demandModel");
+        //     if (!oMasterDemandModel) {
+        //         oMasterDemandModel = new sap.ui.model.json.JSONModel({});
+        //         this.getView().setModel(oMasterDemandModel, "demandModel");
+        //     }
+
+        //     oMasterDemandModel.setProperty("/demandId", oObj.demandId || "");
+        //     oMasterDemandModel.setProperty("/skill", oObj.skill || "");
+        //     oMsterDemandModel.setProperty("/band", oObj.band || "");
+        //     oMasterDemandModel.setProperty("/sapPId", oObj.sapPId || "");
+        //     oMasterDemandModel.setProperty("/quantity", oObj.quantity != null ? oObj.quantity : null);
+
+
+        //     this.byId("inputDemandId")?.setValue(oObj.demandId || "");
+        //     this.byId("inputDemandId")?.setEnabled(false);
+        //     this.byId("inputDemandId")?.setPlaceholder("");
+        //     const sSkills = oObj.skill || "";
+        //     const oSkillsComboBox = this.byId("inputSkills");
+        //     if (oSkillsComboBox && sSkills) {
+        //         // Split comma-separated skills and set as selected keys
+        //         const aSkillNames = sSkills.split(",").map(s => s.trim()).filter(s => s !== "");
+        //         oSkillsComboBox.setSelectedKeys(aSkillNames);
+        //     } else if (oSkillsComboBox) {
+        //         oSkillsComboBox.removeAllSelectedItems();
+        //     }
+
+        //     const sBand = oObj.band || "";
+        //     this.byId("inputBand")?.setSelectedKey(sBand);
+
+        //     const sSapPId = oObj.sapPId || "";
+        //     const oSapPIdInput = this.byId("inputProject");
+        //     if (sSapPId && oSapPIdInput) {
+        //         // First check association (same pattern as Customer, Opportunity, GPM)
+        //         if (oObj.to_Project && oObj.to_Project.projectName) {
+        //             oSapPIdInput.setValue(oObj.to_Project.projectNameName);
+        //             oSapPIdInput.data("selectedId", sSapPId);
+        //         } else {
+        //             // Load async if association not available
+        //             oSapPIdInput.setValue(sSapPId);
+        //             oSapPIdInput.data("selectedId", sSapPId);
+        //             const oModel = this.getView().getModel();
+        //             if (oModel && /^\d{6,10}$/.test(sSapPId.trim())) {
+        //                 const oEmployeeContext = oModel.bindContext(`/Demands('${sSapPId}')`, null, { deferred: true });
+        //                 oEmployeeContext.execute().then(() => {
+        //                     const oSapPId = oEmployeeContext.getObject();
+        //                     if (oSapPId && oSapPId.projectName) {
+        //                         oSapPIdInput.setValue(oSapPId.fullName);
+        //                         oSapPIdInput.data("selectedId", sSapPId);
+        //                     }
+        //                 }).catch(() => { });
+        //             }
+        //         }
+        //     } else if (oSapPIdInput) {
+        //         oSapPIdInput.setValue("");
+        //         oSapPIdInput.data("selectedId", "");
+        //     }
+
+
+        //     this.byId("inputQuantity")?.setValue(oObj.quantity || "");
+        //     // this.byId("inputAllocatedCount")?.setValue(oObj.allocatedCount || "");
+        //     this.byId("inputAllocatedCount")?.setValue(1 || "");
+
+        //     this.byId("inputRemainingCount")?.setValue(oObj.remaining || "");
+
+        // },
 
         /**
          * Form data handler for Opportunity form
