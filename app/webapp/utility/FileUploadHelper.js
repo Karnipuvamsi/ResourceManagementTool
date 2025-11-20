@@ -37,7 +37,7 @@ sap.ui.define([
             const oFileUploader = oEvent.getSource();
             const oFiles = oEvent.getParameter("files");
             const oFile = oFiles && oFiles.length > 0 ? oFiles[0] : (oFileUploader.oFileUpload ? oFileUploader.oFileUpload.files[0] : null);
-            
+
             if (!oFile) {
                 sap.m.MessageToast.show("Please select a CSV file.");
                 return;
@@ -48,7 +48,7 @@ sap.ui.define([
                 sap.m.MessageToast.show("Upload dialog not found.");
                 return;
             }
-            
+
             const sButtonId = oDialog.data("uploadButtonId");
             const that = this;
 
@@ -68,11 +68,11 @@ sap.ui.define([
                         "state", "country", "status", "vertical",
                         "startDate", "endDate",
                     ],
-                "opportunityUpload": [
-                    "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
-                    "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
-                    "Stage", "tcv", "currency", "customerId",
-                ],
+                    "opportunityUpload": [
+                        "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
+                        "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
+                        "Stage", "tcv", "currency", "customerId",
+                    ],
                     "employeeUpload": [
                         "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                     ],
@@ -274,21 +274,21 @@ sap.ui.define([
                     sap.m.MessageBox.error("Invalid event object for template download.");
                     return;
                 }
-                
+
                 const oSource = oEvent.getSource();
                 const sFullId = oSource.getId();
-                
+
                 // Extract button ID - handle both full ID and base ID
                 let sButtonId = sFullId.split("--").pop();
-                
+
                 // If the ID doesn't end with "Upload", it might be a different format
                 // Try to find the upload button ID from common patterns
                 if (!sButtonId.endsWith("Upload")) {
                     // Check if it contains upload-related keywords
                     const aParts = sFullId.split("--");
                     for (let i = aParts.length - 1; i >= 0; i--) {
-                        if (aParts[i].includes("Upload") || aParts[i] === "customerUpload" || 
-                            aParts[i] === "opportunityUpload" || aParts[i] === "employeeUpload" || 
+                        if (aParts[i].includes("Upload") || aParts[i] === "customerUpload" ||
+                            aParts[i] === "opportunityUpload" || aParts[i] === "employeeUpload" ||
                             aParts[i] === "projectUpload" || aParts[i] === "verticalUpload") {
                             sButtonId = aParts[i];
                             break;
@@ -303,25 +303,16 @@ sap.ui.define([
                 // Employee: ohrId is the key but required for upload
                 const mExpectedHeaders = {
                     "customerUpload": [
-                        "customerName",
-                        "state", "country", "status", "vertical",
-                        "startDate", "endDate",
+                        "customerName", "custCountryId", "custStateId", "custCityId", "status", "vertical", "startDate", "endDate",
                     ],
-                "opportunityUpload": [
-                    "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
-                    "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
-                    "Stage", "tcv", "currency", "customerId",
-                ],
+                    "opportunityUpload": [
+                        "opportunityName", "sfdcOpportunityId", "businessUnit", "probability", "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC", "Stage", "tcv", "currency", "customerId",
+                    ],
                     "employeeUpload": [
-                        "ohrId", "mailid", "fullName",
-                        "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
+                        "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage", "unit"
                     ],
                     "projectUpload": [
-                        "sfdcPId", "projectName", "startDate",
-                        "endDate", "gpm", "projectType",
-                        "oppId", "status", "requiredResources",
-                        "allocatedResources", "toBeAllocated",
-                        "SOWReceived", "POReceived",
+                        "sfdcPId", "projectName", "startDate", "endDate", "gpm", "projectType", "oppId", "status", "requiredResources", "allocatedResources", "toBeAllocated", "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
                     "verticalUpload": [
                         "id", "verticalName"
@@ -369,12 +360,12 @@ sap.ui.define([
                         oLink.style.display = "none";
                         document.body.appendChild(oLink);
                         oLink.click();
-                        
+
                         setTimeout(() => {
                             document.body.removeChild(oLink);
                             URL.revokeObjectURL(sUrl);
                         }, 100);
-                        
+
                         sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
                     } catch (oDownloadError) {
                         console.error("Error downloading CSV:", oDownloadError);
@@ -401,13 +392,13 @@ sap.ui.define([
                 oLink.style.display = "none";
                 document.body.appendChild(oLink);
                 oLink.click();
-                
+
                 // Clean up after a short delay
                 setTimeout(() => {
                     document.body.removeChild(oLink);
                     URL.revokeObjectURL(sUrl);
                 }, 100);
-                
+
                 sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
             } catch (oError) {
                 sap.m.MessageBox.error("Failed to download template: " + oError.message);
