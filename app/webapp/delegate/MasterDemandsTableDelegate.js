@@ -437,7 +437,8 @@ sap.ui.define([
                 "state": "State",
                 "country": "Country",
                 "status": "Status",
-                "vertical": "Vertical"  // ✅ UPDATED: Now using enum instead of verticalId
+                "vertical": "Vertical",
+                 "sapPId":"SAP PID" // ✅ UPDATED: Now using enum instead of verticalId
             };
 
             // Smart header generation with better fallback
