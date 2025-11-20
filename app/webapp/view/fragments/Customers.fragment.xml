@@ -167,7 +167,7 @@
                             columnsM="1"
                             class="sapUiNoContentPadding">
                             <Label text="Customer ID" />
-                            <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" />
+                            <Input id="inputCustomerId" value="{customerModel>/SAPcustId}" width="100%" enabled="false" placeholder="Auto-generated" visible="false" />
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
                             <!-- COUNTRY -->

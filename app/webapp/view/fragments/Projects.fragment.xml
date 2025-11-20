@@ -213,7 +213,7 @@
                                         </layoutData>
                                     </Input>
                                     <Label text="Internal Project ID" />
-                                    <Input id="inputSapProjId_proj" value="{projectModel>/sapPId}" width="100%" enabled="false" placeholder="Auto-generated" />
+                                    <Input id="inputSapProjId_proj" value="{projectModel>/sapPId}" width="100%" enabled="false" placeholder="Auto-generated" visible="false"/>
                                     <Label text="Actual Project ID" />
                                     <Input id="inputSfdcProjId_proj" value="{projectModel>/sfdcPId}" width="100%" />
                                     <Label text="Project Name" />

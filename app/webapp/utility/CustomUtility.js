@@ -526,7 +526,8 @@ sap.ui.define([
             const aTableIds = [
                 "Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses", "Res", "Allocations",
                 "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
-                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable"
+                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable",
+                "MasterDemands"
             ];
             aTableIds.forEach((sTableId) => {
                 const oTable = this.byId(sTableId);

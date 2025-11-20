@@ -213,7 +213,7 @@
                                         </layoutData>
                                     </Input>
                                     <Label text="SAP Opportunity ID" />
-                                    <Input id="inputSapOppId_oppr" value="{opportunityModel>/sapOpportunityId}" width="100%" enabled="false" placeholder="Auto-generated" />
+                                    <Input id="inputSapOppId_oppr" value="{opportunityModel>/sapOpportunityId}" width="100%" enabled="false" placeholder="Auto-generated" visible="false"/>
                                     <Label text="SFDC Opportunity ID" />
                                     <Input id="inputSfdcOppId_oppr" value="{opportunityModel>/sfdcOpportunityId}" width="100%" />
                                     <Label text="Opportunity Name" required="true" />

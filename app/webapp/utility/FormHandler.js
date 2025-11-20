@@ -127,8 +127,37 @@ sap.ui.define([
             this.byId("inputRole_emp")?.setSelectedKey(oObj.role || "");
             this.byId("inputLocation_emp")?.setValue(oObj.location || "");
             // inputCountry_emp
-            this.byId("inputCountry_emp")?.setValue(oObj.city || "");
-            this.byId("inputCity_emp")?.setValue(oObj.city || "");
+            // this.byId("inputCountry_emp")?.setSelectedKey(oObj.country || "");
+            // this.byId("inputCity_emp")?.setSelectedKey(oObj.city || "");
+            const sCountry = oObj.country || "";
+            this.byId("inputCountry_emp")?.setSelectedKey(sCountry || "");
+            if (sCountry && this.getView()) {
+                const oController = this.getView().getController();
+                if (oController && oController._mCountryToCities) {
+                    const aCities = oController._mCountryToCities[sCountry] || [];
+                    const oCitySelect = this.byId("inputCity_emp");
+                    if (oCitySelect) {
+                        // Remove old items except the first placeholder
+                        const aItems = oCitySelect.getItems();
+                        aItems.forEach((oItem, iIndex) => {
+                            if (iIndex > 0) {
+                                oCitySelect.removeItem(oItem);
+                            }
+                        });
+                        // Add new city items
+                        aCities.forEach((sCity) => {
+                            oCitySelect.addItem(new sap.ui.core.Item({
+                                key: sCity,
+                                text: sCity
+                            }));
+                        });
+                    }
+                }
+            }
+
+            this.byId("inputCity_emp")?.setSelectedKey(oObj.city || "");
+
+
 
             const sSupervisorId = oObj.supervisorOHR || "";
             const oSupervisorInput = this.byId("inputSupervisor_emp");
@@ -150,7 +179,7 @@ sap.ui.define([
         },
 
         onMasterDemandsDialogData: function (aSelectedContexts) {
-            
+
 
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 // No selection - clear form for new entry

@@ -261,9 +261,9 @@
                                             width="100%">
                                         <items>
                                             <core:Item key="" text="Select Location..." />
-                                            <core:Item key="nearshore" text="Nearshore" />
-                                            <core:Item key="offshore" text="Offshore" />
-                                            <core:Item key="onshore" text="Onshore" />
+                                            <core:Item key="Nearshore" text="Nearshore" />
+                                            <core:Item key="Offshore" text="Offshore" />
+                                            <core:Item key="Onshore" text="Onshore" />
                                         </items>
                                     </Select>
                                     <Label text="Country" />

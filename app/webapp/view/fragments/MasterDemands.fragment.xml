@@ -157,7 +157,7 @@
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
                                     <Label text="Demand ID" />
-                                    <Input id="inputDemandId" value="{demandModel>/demandId}" width="100%" enabled="false" />
+                                    <Input id="inputDemandId" value="{demandModel>/demandId}" width="100%" enabled="false" visible="false"/>
                                     <Label text="Skills" />
                                     <MultiComboBox 
                                         id="inputSkills" 
