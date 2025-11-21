@@ -1,9 +1,13 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition  
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="opportunityDynamicPage"
         fitContent="false"
@@ -35,72 +39,394 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
-                        variantBackreference="opportunityFilterBar"
                         filterConditions="{filterModel>/Opportunities/conditions}"
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- SAP Opportunity ID Filter -->
-                            <mdc:FilterField
-                                id="filterSapOppId"
-                                label="SAP Opp ID"
-                                conditions="{filterModel>/Opportunities/conditions/sapOpportunityId}"
-                                propertyKey="sapOpportunityId"
-                                maxConditions="-1"
-                                required="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- SFDC Opportunity ID Filter -->
-                            <mdc:FilterField
-                                id="filterSfdcOppId"
-                                label="SFDC Opp ID"
-                                conditions="{filterModel>/Opportunities/conditions/sfdcOpportunityId}"
-                                propertyKey="sfdcOpportunityId"
-                                maxConditions="-1"
-                                required="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Business Unit Filter -->
-                            <mdc:FilterField
-                                id="filterBusinessUnit"
-                                label="Business Unit"
-                                conditions="{filterModel>/Opportunities/conditions/businessUnit}"
-                                propertyKey="businessUnit"
-                                maxConditions="-1"
-                                required="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Stage Filter -->
-                            <mdc:FilterField
-                                id="filterStage"
-                                label="Stage"
-                                conditions="{filterModel>/Opportunities/conditions/Stage}"
-                                propertyKey="Stage"
-                                maxConditions="-1"
-                                required="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                        </mdc:filterItems>
-                    </mdc:FilterBar>
-                </VBox>
+
+    <!-- ========== SAP OPPORTUNITY ID ========== -->
+    <mdc:FilterField
+        id="filterSapOppId"
+        label="SAP Opp ID"
+        width="200px"
+        propertyKey="sapOpportunityId"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/sapOpportunityId}"
+        valueHelp="vhSapOppId"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSapOppId"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['sapOpportunityId','sfdcOpportunityId','opportunityName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSapOppId" title="Select SAP Opp ID">
+                        <mdcvc:MDCTable keyPath="sapOpportunityId" descriptionPath="sapOpportunityId">
+                            <mdc:Table
+                                id="tblSAPOppVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                 p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['sapOpportunityId','opportunityName'] }
+                                }"
+                            >   <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                               </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="sapOpportunityId" header="SAP Opp ID">
+                                        <Text text="{sapOpportunityId}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+    <!-- ========== SFDC OPPORTUNITY ID ========== -->
+    <mdc:FilterField
+        id="filterSfdcOppId"
+        label="SFDC Opp ID"
+        width="200px"
+        propertyKey="sfdcOpportunityId"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/sfdcOpportunityId}"
+        valueHelp="vhSfdcOppId"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSfdcOppId"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['sfdcOpportunityId','sapOpportunityId','opportunityName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSfdcOppId" title="Select SFDC Opp ID">
+                        <mdcvc:MDCTable keyPath="sfdcOpportunityId" descriptionPath="sfdcOpportunityId">
+                            <mdc:Table
+                                id="tblSfdcOppVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['sfdcOpportunityId','opportunityName'] }
+                                }"
+                            >   <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                              </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="sfdcOpportunityId" header="SFDC Opp ID">
+                                        <Text text="{sfdcOpportunityId}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+    <!-- ========== OPPORTUNITY NAME (VH) ========== -->
+    <mdc:FilterField
+        id="filterOpportunityName"
+        label="Opportunity Name"
+        width="250px"
+        propertyKey="opportunityName"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/opportunityName}"
+        valueHelp="vhOpportunityName"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhOpportunityName"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['opportunityName','sapOpportunityId'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgOppName" title="Select Opportunity Name">
+                        <mdcvc:MDCTable keyPath="opportunityName" descriptionPath="opportunityName">
+                            <mdc:Table
+                                id="tblOppNameVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['opportunityName'] }
+                                }"
+                            >   <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                              </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="sapOpportunityId" header="SAP Opp ID">
+                                        <Text text="{sapOpportunityId}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+    <!-- ========== BUSINESS UNIT (VH) ========== -->
+    <mdc:FilterField
+        id="filterBusinessUnit"
+        label="Business Unit"
+        width="200px"
+        propertyKey="businessUnit"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/businessUnit}"
+        valueHelp="vhBusinessUnit"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhBusinessUnit"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['businessUnit'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgBusinessUnit" title="Select Business Unit">
+                        <mdcvc:MDCTable keyPath="businessUnit" descriptionPath="businessUnit">
+                            <mdc:Table
+                                id="tblBusinessUnitVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['businessUnit'] }
+                                }"
+                            >   <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="businessUnit" header="Business Unit">
+                                        <Text text="{businessUnit}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+   
+
+    <!-- ========== SALES SPOC (VH) ========== -->
+    <mdc:FilterField
+        id="filterSalesSpoc"
+        label="Sales SPOC"
+        width="200px"
+        propertyKey="salesSPOC"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/salesSPOC}"
+        valueHelp="vhSalesSpoc"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSalesSpoc"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['salesSPOC','opportunityName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSalesSpoc" title="Select Sales SPOC">
+                        <mdcvc:MDCTable keyPath="salesSPOC" descriptionPath="salesSPOC">
+                            <mdc:Table
+                                id="tblSalesSpocVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['salesSPOC'] }
+                                }"
+                            >   <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                             </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="salesSPOC" header="Sales SPOC">
+                                        <Text text="{salesSPOC}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+    <!-- ========== DELIVERY SPOC (VH) ========== -->
+    <mdc:FilterField
+        id="filterDeliverySpoc"
+        label="Delivery SPOC"
+        width="200px"
+        propertyKey="deliverySPOC"
+        maxConditions="-1"
+        conditions="{filterModel>/Opportunities/conditions/deliverySPOC}"
+        valueHelp="vhDeliverySpoc"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhDeliverySpoc"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['deliverySPOC','opportunityName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgDeliverySpoc" title="Select Delivery SPOC">
+                        <mdcvc:MDCTable keyPath="deliverySPOC" descriptionPath="deliverySPOC">
+                            <mdc:Table
+                                id="tblDeliverySpocVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/OpportunitiesTableDelegate',
+                                    payload: { collectionPath: 'Opportunities', searchKeys: ['deliverySPOC'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column propertyKey="deliverySPOC" header="Delivery SPOC">
+                                        <Text text="{deliverySPOC}" />
+                                    </mdct:Column>
+                                    <mdct:Column propertyKey="opportunityName" header="Opportunity Name">
+                                        <Text text="{opportunityName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+    <!-- ========== CUSTOMER (ASSOCIATION) ========== -->
+    <mdc:FilterField
+        id="filterOpportunityCustomer"
+        label="Customer"
+        width="250px"
+        propertyKey="customerId"
+        display="Description"
+        valueHelp="vhOppCustomer"
+        conditions="{filterModel>/Opportunities/conditions/customerId}"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhOppCustomer"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['SAPcustId','customerName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgOppCustomerVH" title="Select Customer">
+                        <mdcvc:MDCTable keyPath="SAPcustId" descriptionPath="customerName">
+                            <mdc:Table
+                                id="tblOppCustomerVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                 enableAutoColumnWidth="true"
+                                 threshold="200"
+                                 filter="opportunityFilterBar"
+                                 filterConditions="{filterModel>/Opportunities/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/CustomersTableDelegate',
+                                    payload: { collectionPath: 'Customers', searchKeys: ['customerName','vertical'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Customer ID" propertyKey="SAPcustId">
+                                        <Text text="{SAPcustId}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Customer Name" propertyKey="customerName">
+                                        <Text text="{customerName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+    </mdc:filterItems>
+</mdc:FilterBar>
+ </VBox>
             </layout:DynamicPageHeader>
         </layout:header>
         

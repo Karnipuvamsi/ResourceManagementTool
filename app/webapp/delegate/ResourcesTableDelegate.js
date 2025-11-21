@@ -582,6 +582,131 @@ sap.ui.define([
             }
         };
     };
+    ResourcesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // Always call Base first
+    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+
+    // 1️⃣ Extract search text from ValueHelp Dialog
+    let sSearch = "";
+    try {
+        const oVH = oTable?.getParent()?.getParent();   // MDCTable → Dialog → ValueHelp
+        const aContent = oVH?.getContent?.();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent?.getSearch?.() || "";
+    } catch (e) {}
+
+    // 2️⃣ Try main Resource FilterBar search
+    if (!sSearch) {
+        const oFB = sap.ui.getCore().byId("resourceFilterBar");
+        sSearch = oFB?.getSearch?.() || "";
+    }
+
+    // 3️⃣ If still nothing → do NOT override
+    if (!sSearch) return;
+
+    // 4️⃣ Identify calling table
+    const sTableId = oTable.getId();
+    let aFilters = [];
+
+    // ============================
+    // 🔵 OHR ID VH
+    // ============================
+    if (sTableId.includes("tblResOHRIdVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive:false
+            }),
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 BAND VH
+    // ============================
+    else if (sTableId.includes("tblResBandVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 SKILLS VH
+    // ============================
+    else if (sTableId.includes("tblResSkillsVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 👉 SAFETY CHECK
+    // ============================
+    if (aFilters.length === 0) {
+        console.warn("Resources VH → No mapping for table:", sTableId);
+        return;
+    }
+
+    // ============================
+    // 🔥 APPLY FILTER (OR group)
+    // ============================
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: aFilters,
+            and: false
+        })
+    ];
+
+    console.log("RESOURCES VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+};
+
 
     return ResourcesTableDelegate;
 });

@@ -518,6 +518,119 @@ sap.ui.define([
             }
         };
     };
+    AllocationsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // Always call Base first
+    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+
+    // 1️⃣ Extract search text from ValueHelp Dialog
+    let sSearch = "";
+    try {
+        const oVH = oTable?.getParent()?.getParent();   // MDCTable → Dialog → ValueHelp
+        const aContent = oVH?.getContent?.();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent?.getSearch?.() || "";
+    } catch (e) {}
+
+    // 2️⃣ Try main Allocation FilterBar search
+    if (!sSearch) {
+        const oFB = sap.ui.getCore().byId("allocationFilterBar");
+        sSearch = oFB?.getSearch?.() || "";
+    }
+
+    // 3️⃣ If no search text → stop here
+    if (!sSearch) return;
+
+    // 4️⃣ Identify which Allocation VH table triggered this delegate
+    const sTableId = oTable.getId();
+    let aFilters = [];
+
+    // ============================
+    // 🔵 PROJECT NAME VH
+    // ============================
+    if (sTableId.includes("tblAllocProjectNameVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "projectName",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "SOWReceived",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 PROJECT TYPE VH
+    // ============================
+    else if (sTableId.includes("tblAllocProjectTypeVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectName",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 SOW RECEIVED VH
+    // ============================
+    else if (sTableId.includes("tblAllocSOWReceivedVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "SOWReceived",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectName",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // ❗ SAFETY CHECK
+    // ============================
+    if (aFilters.length === 0) {
+        console.warn("Allocations VH → No mapping for table:", sTableId);
+        return;
+    }
+
+    // ============================
+    // 🔥 APPLY ODATA FILTER (OR group)
+    // ============================
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: aFilters,
+            and: false
+        })
+    ];
+
+    console.log("ALLOCATIONS VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+};
+
 
     return AllocationsTableDelegate;
 });

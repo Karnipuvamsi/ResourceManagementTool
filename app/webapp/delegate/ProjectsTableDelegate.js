@@ -319,6 +319,131 @@ sap.ui.define([
             }
         };
     };
+    ProjectsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // Call Base delegate first
+    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+
+    // 1️⃣ Extract search text from ValueHelp Dialog
+    let sSearch = "";
+    try {
+        const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+        const aContent = oVH?.getContent?.();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent?.getSearch?.() || "";
+    } catch (e) {}
+
+    // 2️⃣ Try main Project FilterBar search
+    if (!sSearch) {
+        const oFB = sap.ui.getCore().byId("projectFilterBar");
+        sSearch = oFB?.getSearch?.() || "";
+    }
+
+    // 3️⃣ If still nothing → do NOT apply search
+    if (!sSearch) return;
+
+    // 4️⃣ Detect table by ID
+    const sId = oTable.getId();
+    let aFilters = [];
+
+    // ============================
+    //   INTERNAL PID (SAP PID)
+    // ============================
+    if (sId.includes("tblSapPIdVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "sapPId",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    //   SFDC PID (Actual PID)
+    // ============================
+    else if (sId.includes("tblSfdcPIdVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "sfdcPId",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    //   PROJECT TYPE VH
+    // ============================
+    else if (sId.includes("tblProjectTypeVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "sapPId",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    //   SOW RECEIVED VH
+    // ============================
+    else if (sId.includes("tblSOWReceivedVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "SOWReceived",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "projectType",
+                operator: "Contains",
+                value1: sSearch,
+                caseSensitive:false
+            })
+        ];
+    }
+
+    // ============================
+    //   SAFETY CHECK
+    // ============================
+    if (aFilters.length === 0) {
+        console.warn("No Project VH mapping for table:", sId);
+        return;
+    }
+
+    // OR group (search across multiple fields)
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: aFilters,
+            and: false
+        })
+    ];
+
+    console.log("PROJECT VH FILTER APPLIED for", sId, oBindingInfo.filters);
+};
+
 
     return ProjectsTableDelegate;
 });
