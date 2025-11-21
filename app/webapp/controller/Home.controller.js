@@ -7243,6 +7243,9 @@ sap.ui.define([
             this.byId("inputSkills_emp")?.removeAllSelectedItems();
             this.byId("inputStatus_emp")?.setSelectedKey("");
             this.byId("inputLWD_emp")?.setValue("");
+            this.byId("inputStatus_emp")?.setSelectedKey("");
+            this.byId("inputUnit_emp")?.setSelectedKey("");
+            
 
             // Deselect any selected row
             const oTable = this.byId("Employees");
