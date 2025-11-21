@@ -304,6 +304,11 @@ sap.ui.define([
 
         
         
+        // ✅ Expand associations for Customers entity to display names instead of IDs
+        if (sPath === "/Customers" || sPath === "Customers") {
+            oBindingInfo.parameters.$expand = "to_CustCountry,to_CustState,to_CustCity";
+        }
+        
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         // This prevents duplicate filters and ensures case-insensitive filtering works correctly
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
@@ -797,6 +802,26 @@ sap.ui.define([
         const oModel = oTable.getModel();
         const sCollectionPath = "/" + oAssocConfig.targetEntity;
         
+        // Determine association navigation property name
+        // For Customer: custCountryId -> to_CustCountry, custStateId -> to_CustState, custCityId -> to_CustCity
+        let sAssocNavProp = "";
+        if (sTableId === "Customers") {
+            if (sPropertyName === "custCountryId") {
+                sAssocNavProp = "to_CustCountry";
+            } else if (sPropertyName === "custStateId") {
+                sAssocNavProp = "to_CustState";
+            } else if (sPropertyName === "custCityId") {
+                sAssocNavProp = "to_CustCity";
+            }
+        }
+        // For other entities, try to infer from property name (e.g., customerId -> to_Customer)
+        // This is a fallback - specific delegates can override if needed
+        if (!sAssocNavProp) {
+            // Try common patterns
+            const sBaseName = sPropertyName.replace(/Id$/, "");
+            sAssocNavProp = "to_" + sBaseName.charAt(0).toUpperCase() + sBaseName.slice(1);
+        }
+        
         const oComboBox = new ComboBox({
             selectedKey: "{" + sPropertyName + "}",
             value: "{" + sPropertyName + "}",
@@ -815,8 +840,23 @@ sap.ui.define([
         
         oComboBox.setModel(oModel);
 
+        // Create formatter function to display association name
+        const fnAssociationFormatter = function(sValue) {
+            // In display mode, try to get the association name
+            const oBindingContext = this.getBindingContext();
+            if (oBindingContext && sAssocNavProp) {
+                const oAssocContext = oBindingContext.getObject()[sAssocNavProp];
+                if (oAssocContext && oAssocContext[oAssocConfig.displayField]) {
+                    return oAssocContext[oAssocConfig.displayField];
+                }
+            }
+            // Fallback: return the ID value
+            return sValue || "";
+        };
+
         return new Field({
-            value: "{" + sPropertyName + "}",
+            value: sAssocNavProp ? "{" + sAssocNavProp + "/" + oAssocConfig.displayField + "}" : "{" + sPropertyName + "}",
+            formatter: fnAssociationFormatter,
             contentEdit: oComboBox,
             editMode: {
                 parts: [{ path: `edit>/${sTableId}/editingPath` }],

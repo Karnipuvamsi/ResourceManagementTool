@@ -74,10 +74,12 @@ sap.ui.define([
                 this.byId("inputMailId_emp")?.setValue("");
                 this.byId("inputGender_emp")?.setSelectedKey("");
                 this.byId("inputEmployeeType_emp")?.setSelectedKey("");
+                this.byId("inputUnit_emp")?.setSelectedKey("");
                 this.byId("inputDoJ_emp")?.setValue("");
                 this.byId("inputBand_emp")?.setSelectedKey("");
                 this.byId("inputRole_emp")?.setSelectedKey("");
                 this.byId("inputLocation_emp")?.setValue("");
+                this.byId("inputCountry_emp")?.setSelectedKey("");
                 this.byId("inputCity_emp")?.setValue("");
                 this.byId("inputSupervisor_emp")?.setValue("");
                 this.byId("inputSupervisor_emp")?.data("selectedId", "");
@@ -95,6 +97,7 @@ sap.ui.define([
             this.byId("inputMailId_emp")?.setValue(oObj.mailid || "");
             this.byId("inputGender_emp")?.setSelectedKey(oObj.gender || "");
             this.byId("inputEmployeeType_emp")?.setSelectedKey(oObj.employeeType || "");
+            this.byId("inputUnit_emp")?.setSelectedKey(oObj.unit || "");
             this.byId("inputDoJ_emp")?.setValue(oObj.doj || "");
             const sBand = oObj.band || "";
             this.byId("inputBand_emp")?.setSelectedKey(sBand);
@@ -123,7 +126,38 @@ sap.ui.define([
             }
             this.byId("inputRole_emp")?.setSelectedKey(oObj.role || "");
             this.byId("inputLocation_emp")?.setValue(oObj.location || "");
-            this.byId("inputCity_emp")?.setValue(oObj.city || "");
+            // inputCountry_emp
+            // this.byId("inputCountry_emp")?.setSelectedKey(oObj.country || "");
+            // this.byId("inputCity_emp")?.setSelectedKey(oObj.city || "");
+            const sCountry = oObj.country || "";
+            this.byId("inputCountry_emp")?.setSelectedKey(sCountry || "");
+            if (sCountry && this.getView()) {
+                const oController = this.getView().getController();
+                if (oController && oController._mCountryToCities) {
+                    const aCities = oController._mCountryToCities[sCountry] || [];
+                    const oCitySelect = this.byId("inputCity_emp");
+                    if (oCitySelect) {
+                        // Remove old items except the first placeholder
+                        const aItems = oCitySelect.getItems();
+                        aItems.forEach((oItem, iIndex) => {
+                            if (iIndex > 0) {
+                                oCitySelect.removeItem(oItem);
+                            }
+                        });
+                        // Add new city items
+                        aCities.forEach((sCity) => {
+                            oCitySelect.addItem(new sap.ui.core.Item({
+                                key: sCity,
+                                text: sCity
+                            }));
+                        });
+                    }
+                }
+            }
+
+            this.byId("inputCity_emp")?.setSelectedKey(oObj.city || "");
+
+
 
             const sSupervisorId = oObj.supervisorOHR || "";
             const oSupervisorInput = this.byId("inputSupervisor_emp");
@@ -145,9 +179,11 @@ sap.ui.define([
         },
 
         onMasterDemandsDialogData: function (aSelectedContexts) {
+
+
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 // No selection - clear form for new entry
-                const oTable = this.byId("MaterDemands");
+                const oTable = this.byId("MasterDemands");
                 let sNextId = ""; // Employees might not have auto-generated IDs
                 try {
                     // For now, just clear - Employees might use manual OHR IDs
@@ -160,15 +196,15 @@ sap.ui.define([
                 this.byId("inputDemandId")?.setEnabled(false); // Employees might need manual OHR ID entry
 
                 this.byId("inputSkills")?.removeAllSelectedItems();
-               
+
                 this.byId("inputBand")?.setSelectedKey("");
 
                 this.byId("inputProject")?.setValue("");
                 this.byId("inputProject")?.data("selectedId", "");
 
                 this.byId("inputQuantity")?.setValue("");
-                this.byId("inputAllocatedCount")?.setValue(""); 
-                this.byId("inputRemainingCount")?.setValue("");              
+                this.byId("inputAllocatedCount")?.setValue("");
+                this.byId("inputRemainingCount")?.setValue("");
                 return;
             }
 
@@ -189,7 +225,7 @@ sap.ui.define([
             const sBand = oObj.band || "";
             this.byId("inputBand")?.setSelectedKey(sBand);
 
-             const sSapPId = oObj.sapPId || "";
+            const sSapPId = oObj.sapPId || "";
             const oSapPIdInput = this.byId("inputProject");
             if (sSapPId && oSapPIdInput) {
                 // First check association (same pattern as Customer, Opportunity, GPM)
@@ -217,26 +253,134 @@ sap.ui.define([
                 oSapPIdInput.data("selectedId", "");
             }
 
-           
+
             this.byId("inputQuantity")?.setValue(oObj.quantity || "");
             // this.byId("inputAllocatedCount")?.setValue(oObj.allocatedCount || "");
             this.byId("inputAllocatedCount")?.setValue(1 || "");
-           
+
             this.byId("inputRemainingCount")?.setValue(oObj.remaining || "");
-            
+
 
             // ✅ Populate Designation dropdown based on Band selection
-            
-           
+
+
 
             // ✅ Supervisor field - display name from association, store ID
-           
+
             // ✅ Load skills from employee.skills field (comma-separated string)
-           
+
         },
+        // onMasterDemandsDialogData: function (aSelectedContexts) {
+        //     if (!aSelectedContexts || aSelectedContexts.length === 0) {
+        //         // No selection - clear form for new entry
+        //         const oTable = this.byId("MaterDemands");
+        //         let sNextId = "";
+        //         try {
+        //             if (oTable) {
+        //                 sNextId = this._generateNextIdFromBinding(oTable, "MaterDemands", "demandId") || sNextId;
+        //             }
+        //         } catch (e) {
+        //         }
+
+        //         let oMasterDemandModel = this.getView().getModel("demandModel");
+        //         if (!oMasterDemandModel) {
+        //             oMasterDemandModel = new sap.ui.model.json.JSONModel({});
+        //             this.getView().setModel(oProjModel, "demandModel");
+        //         }
+        //         oMasterDemandModel.setData({
+        //             demandId: "",
+        //             skill: "",
+        //             band: "",
+        //             sapPId: "",
+        //             quantity: ""
+        //         });
+
+        //         this.byId("inputDemandId")?.setValue(sNextId);
+        //         this.byId("inputDemandId")?.setEnabled(false);
+        //         this.byId("inputDemandId")?.setPlaceholder("Auto-generated");
+
+        //         this.byId("inputSkills")?.removeAllSelectedItems();
+
+        //         this.byId("inputBand")?.setSelectedKey("");
+
+        //         this.byId("inputProject")?.setValue("");
+        //         this.byId("inputProject")?.data("selectedId", "");
+
+        //         this.byId("inputQuantity")?.setValue("");
+        //         this.byId("inputAllocatedCount")?.setValue("");
+        //         this.byId("inputRemainingCount")?.setValue("");
+
+        //         return;
+        //     }
+
+        //     // Row selected - populate form for update
+        //     let oObj = aSelectedContexts[0].getObject();
+
+        //     let oMasterDemandModel = this.getView().getModel("demandModel");
+        //     if (!oMasterDemandModel) {
+        //         oMasterDemandModel = new sap.ui.model.json.JSONModel({});
+        //         this.getView().setModel(oMasterDemandModel, "demandModel");
+        //     }
+
+        //     oMasterDemandModel.setProperty("/demandId", oObj.demandId || "");
+        //     oMasterDemandModel.setProperty("/skill", oObj.skill || "");
+        //     oMsterDemandModel.setProperty("/band", oObj.band || "");
+        //     oMasterDemandModel.setProperty("/sapPId", oObj.sapPId || "");
+        //     oMasterDemandModel.setProperty("/quantity", oObj.quantity != null ? oObj.quantity : null);
 
 
+        //     this.byId("inputDemandId")?.setValue(oObj.demandId || "");
+        //     this.byId("inputDemandId")?.setEnabled(false);
+        //     this.byId("inputDemandId")?.setPlaceholder("");
+        //     const sSkills = oObj.skill || "";
+        //     const oSkillsComboBox = this.byId("inputSkills");
+        //     if (oSkillsComboBox && sSkills) {
+        //         // Split comma-separated skills and set as selected keys
+        //         const aSkillNames = sSkills.split(",").map(s => s.trim()).filter(s => s !== "");
+        //         oSkillsComboBox.setSelectedKeys(aSkillNames);
+        //     } else if (oSkillsComboBox) {
+        //         oSkillsComboBox.removeAllSelectedItems();
+        //     }
 
+        //     const sBand = oObj.band || "";
+        //     this.byId("inputBand")?.setSelectedKey(sBand);
+
+        //     const sSapPId = oObj.sapPId || "";
+        //     const oSapPIdInput = this.byId("inputProject");
+        //     if (sSapPId && oSapPIdInput) {
+        //         // First check association (same pattern as Customer, Opportunity, GPM)
+        //         if (oObj.to_Project && oObj.to_Project.projectName) {
+        //             oSapPIdInput.setValue(oObj.to_Project.projectNameName);
+        //             oSapPIdInput.data("selectedId", sSapPId);
+        //         } else {
+        //             // Load async if association not available
+        //             oSapPIdInput.setValue(sSapPId);
+        //             oSapPIdInput.data("selectedId", sSapPId);
+        //             const oModel = this.getView().getModel();
+        //             if (oModel && /^\d{6,10}$/.test(sSapPId.trim())) {
+        //                 const oEmployeeContext = oModel.bindContext(`/Demands('${sSapPId}')`, null, { deferred: true });
+        //                 oEmployeeContext.execute().then(() => {
+        //                     const oSapPId = oEmployeeContext.getObject();
+        //                     if (oSapPId && oSapPId.projectName) {
+        //                         oSapPIdInput.setValue(oSapPId.fullName);
+        //                         oSapPIdInput.data("selectedId", sSapPId);
+        //                     }
+        //                 }).catch(() => { });
+        //             }
+        //         }
+        //     } else if (oSapPIdInput) {
+        //         oSapPIdInput.setValue("");
+        //         oSapPIdInput.data("selectedId", "");
+        //     }
+
+
+        //     this.byId("inputQuantity")?.setValue(oObj.quantity || "");
+        //     // this.byId("inputAllocatedCount")?.setValue(oObj.allocatedCount || "");
+        //     this.byId("inputAllocatedCount")?.setValue(1 || "");
+
+        //     this.byId("inputRemainingCount")?.setValue(oObj.remaining || "");
+
+        // },
 
         /**
          * Form data handler for Opportunity form
@@ -365,7 +509,11 @@ sap.ui.define([
                     allocatedResources: "",
                     toBeAllocated: "",
                     SOWReceived: "",
-                    POReceived: ""
+                    POReceived: "",
+                    segment: "",
+                    vertical: "",
+                    subVertical: "",
+                    unit: "",
                 });
 
                 this.byId("inputSapProjId_proj")?.setValue(sNextId);
@@ -399,6 +547,11 @@ sap.ui.define([
             oProjModel.setProperty("/SOWReceived", oObj.SOWReceived || "");
             oProjModel.setProperty("/POReceived", oObj.POReceived || "");
             oProjModel.setProperty("/oppId", oObj.oppId || "");
+            oProjModel.setProperty("/segment", oObj.segment || "");
+            oProjModel.setProperty("/vertical", oObj.vertical || "");
+            oProjModel.setProperty("/subVertical", oObj.subVertical || "");
+            oProjModel.setProperty("/unit", oObj.unit || "");
+
 
             this.byId("inputSapProjId_proj")?.setValue(oObj.sapPId || "");
             this.byId("inputSapProjId_proj")?.setEnabled(false);
@@ -414,6 +567,11 @@ sap.ui.define([
             this.byId("inputToBeAllocated_proj")?.setValue(oObj.toBeAllocated != null ? String(oObj.toBeAllocated) : "");
             this.byId("inputSOWReceived_proj")?.setSelectedKey(oObj.SOWReceived || "");
             this.byId("inputPOReceived_proj")?.setSelectedKey(oObj.POReceived || "");
+            this.byId("inputsegment_proj")?.setSelectedKey(oObj.segment || "");
+            this.byId("inputVertical_proj")?.setSelectedKey(oObj.vertical || "");
+            this.byId("inputSubVertical_proj")?.setSelectedKey(oObj.subVertical || "");
+            this.byId("inputUnit_proj")?.setSelectedKey(oObj.unit || "");
+
 
             const sGPMId = oObj.gpm || "";
             const oGPMInput = this.byId("inputGPM_proj");
@@ -434,6 +592,13 @@ sap.ui.define([
          * Form data handler for Customer form
          */
         onCustDialogData: function (aSelectedContexts) {
+            // Initialize customerModel if it doesn't exist
+            let oCustomerModel = this.getView().getModel("customerModel");
+            if (!oCustomerModel) {
+                oCustomerModel = new sap.ui.model.json.JSONModel({});
+                this.getView().setModel(oCustomerModel, "customerModel");
+            }
+
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 // No selection - clear form for new entry
                 const oCustomerIdInput = this.byId("inputCustomerId");
@@ -453,28 +618,319 @@ sap.ui.define([
                     oCustomerIdInput.setEnabled(false);
                     oCustomerIdInput.setPlaceholder("Auto-generated");
                 }
-                this.byId("inputCustomerName")?.setValue("");
-                this.byId("inputState")?.setValue("");
-                this.byId("inputCountry")?.setValue("");
-                this.byId("inputStartDate_cus")?.setValue("");
-                this.byId("inputEndDate_cus")?.setValue("");
-                this.byId("inputStatus")?.setSelectedKey("");
-                this.byId("inputVertical")?.setSelectedKey("");
+
+                // Clear customerModel
+                oCustomerModel.setData({
+                    SAPcustId: oCustomerIdInput ? oCustomerIdInput.getValue() : "",
+                    customerName: "",
+                    custCountryId: "",
+                    custStateId: "",
+                    custCityId: "",
+                    status: "",
+                    vertical: "",
+                    startDate: "",
+                    endDate: ""
+                });
+
+                // Clear cascading dropdowns
+                const oCountryCombo = this.byId("countryComboBox");
+                const oStateCombo = this.byId("stateComboBox");
+                const oCityCombo = this.byId("cityComboBox");
+
+                if (oCountryCombo) {
+                    oCountryCombo.setSelectedKey("");
+                }
+                if (oStateCombo) {
+                    oStateCombo.setSelectedKey("");
+                    oStateCombo.unbindItems();
+                    oStateCombo.setEnabled(false);
+                }
+                if (oCityCombo) {
+                    oCityCombo.setSelectedKey("");
+                    oCityCombo.unbindItems();
+                    oCityCombo.setEnabled(false);
+                }
+
                 return;
             }
 
             // Row selected - populate form for update
             let oObj = aSelectedContexts[0].getObject();
+
+            // Convert IDs to strings for ComboBox selectedKey (ComboBoxes use string keys)
+            const sCountryId = oObj.custCountryId ? String(oObj.custCountryId) : "";
+            const sStateId = oObj.custStateId ? String(oObj.custStateId) : "";
+            const sCityId = oObj.custCityId ? String(oObj.custCityId) : "";
+
+            // Populate customerModel
+            oCustomerModel.setData({
+                SAPcustId: oObj.SAPcustId || "",
+                customerName: oObj.customerName || "",
+                custCountryId: sCountryId,
+                custStateId: sStateId,
+                custCityId: sCityId,
+                status: oObj.status || "",
+                vertical: oObj.vertical || "",
+                startDate: oObj.startDate || "",
+                endDate: oObj.endDate || ""
+            });
+
+            // Set basic fields
             this.byId("inputCustomerId")?.setValue(oObj.SAPcustId || "");
             this.byId("inputCustomerId")?.setEnabled(false);
             this.byId("inputCustomerId")?.setPlaceholder("");
-            this.byId("inputCustomerName")?.setValue(oObj.customerName || "");
-            this.byId("inputState")?.setValue(oObj.state || "");
-            this.byId("inputCountry")?.setValue(oObj.country || "");
-            this.byId("inputStartDate_cus")?.setValue(oObj.startDate || "");
-            this.byId("inputEndDate_cus")?.setValue(oObj.endDate || "");
-            this.byId("inputStatus")?.setSelectedKey(oObj.status || "");
-            this.byId("inputVertical")?.setSelectedKey(oObj.vertical || "");
+
+            // Handle cascading dropdowns
+            const oCountryCombo = this.byId("countryComboBox");
+            const oStateCombo = this.byId("stateComboBox");
+            const oCityCombo = this.byId("cityComboBox");
+
+            // Convert IDs to numbers for filtering (use the string IDs we already converted above)
+            const countryId = sCountryId ? Number(sCountryId) : null;
+            const stateId = sStateId ? Number(sStateId) : null;
+            const cityId = sCityId ? Number(sCityId) : null;
+
+            // Set country dropdown
+            if (oCountryCombo && sCountryId) {
+                oCountryCombo.setSelectedKey(sCountryId);
+
+                // Load states for this country
+                if (oStateCombo) {
+                    oStateCombo.setEnabled(true);
+                    // Ensure countryId is a number for filtering (same as onCountryChange handler)
+                    const nCountryIdForFilter = Number(countryId);
+                    console.log("Binding states for country ID:", nCountryIdForFilter, "(original:", countryId + ")");
+
+                    oStateCombo.bindItems({
+                        path: "default>/CustomerStates",
+                        filters: [
+                            new sap.ui.model.Filter("country_id", "EQ", nCountryIdForFilter)
+                        ],
+                        template: new sap.ui.core.ListItem({
+                            key: "{default>id}",
+                            text: "{default>name}"
+                        })
+                    });
+
+                    // Set state dropdown after binding completes
+                    if (sStateId && stateId) {
+                        const fnSetStateAndCity = () => {
+                            // Verify the state key exists in items before setting
+                            const aStateItems = oStateCombo.getItems();
+                            // Filter out placeholder items (empty key) and check if our key exists
+                            const aValidItems = aStateItems.filter(function (oItem) {
+                                const sKey = oItem.getKey();
+                                return sKey !== "" && sKey !== null && sKey !== undefined;
+                            });
+
+                            // Debug: Log loaded state keys
+                            const aLoadedKeys = aValidItems.map(function (oItem) {
+                                return oItem.getKey();
+                            });
+                            console.log("Loaded state keys for country " + countryId + ":", aLoadedKeys);
+                            console.log("Looking for state ID:", sStateId, "(type:", typeof sStateId + ")");
+
+                            // Check if the state key exists in valid items - handle comma-formatted numbers
+                            const bStateKeyExists = aValidItems.some(function (oItem) {
+                                // Get item key and remove commas/spaces (handle formatted numbers like "4,017")
+                                let sItemKey = String(oItem.getKey()).replace(/[,\s]/g, "");
+                                // Get search key and remove commas/spaces
+                                let sSearchKey = String(sStateId).replace(/[,\s]/g, "");
+
+                                // Try exact match after cleaning
+                                if (sItemKey === sSearchKey) {
+                                    return true;
+                                }
+                                // Try numeric comparison (handle cases where one is "4017" and other is 4017)
+                                const nItemKey = Number(sItemKey);
+                                const nSearchKey = Number(sSearchKey);
+                                if (!isNaN(nItemKey) && !isNaN(nSearchKey) && nItemKey === nSearchKey) {
+                                    return true;
+                                }
+                                return false;
+                            });
+
+                            // Also check if we have valid items loaded (not just placeholder)
+                            if (aValidItems.length > 0 && bStateKeyExists) {
+                                // Find the actual key from the items (might be comma-formatted)
+                                let sActualKey = sStateId;
+                                for (let i = 0; i < aValidItems.length; i++) {
+                                    const sItemKey = String(aValidItems[i].getKey()).replace(/[,\s]/g, "");
+                                    const sSearchKey = String(sStateId).replace(/[,\s]/g, "");
+                                    if (sItemKey === sSearchKey) {
+                                        // Use the actual key from the item (preserves formatting if needed)
+                                        sActualKey = aValidItems[i].getKey();
+                                        break;
+                                    }
+                                }
+
+                                // Update model first (ComboBox is bound to model) - use cleaned key
+                                oCustomerModel.setProperty("/custStateId", sStateId);
+                                // Set selectedKey using the actual formatted key from the item
+                                oStateCombo.setSelectedKey(sActualKey);
+                                console.log("State ID " + sStateId + " successfully set (using key: " + sActualKey + ")");
+
+                                // Load cities for this state and country
+                                if (oCityCombo && sCityId && cityId) {
+                                    oCityCombo.setEnabled(true);
+                                    oCityCombo.bindItems({
+                                        path: "default>/CustomerCities",
+                                        filters: [
+                                            new sap.ui.model.Filter("state_id", "EQ", stateId),
+                                            new sap.ui.model.Filter("country_id", "EQ", countryId)
+                                        ],
+                                        template: new sap.ui.core.ListItem({
+                                            key: "{default>id}",
+                                            text: "{default>name}"
+                                        })
+                                    });
+
+                                    // Set city after cities are loaded
+                                    const fnSetCity = () => {
+                                        const aCityItems = oCityCombo.getItems();
+                                        const aValidCityItems = aCityItems.filter(function (oItem) {
+                                            const sKey = oItem.getKey();
+                                            return sKey !== "" && sKey !== null && sKey !== undefined;
+                                        });
+
+                                        // Debug: Log loaded city keys
+                                        const aLoadedCityKeys = aValidCityItems.map(function (oItem) {
+                                            return oItem.getKey();
+                                        });
+                                        console.log("Loaded city keys for state " + stateId + ":", aLoadedCityKeys);
+                                        console.log("Looking for city ID:", sCityId);
+
+                                        const bCityKeyExists = aValidCityItems.some(function (oItem) {
+                                            // Get item key and remove commas/spaces (handle formatted numbers like "4,017")
+                                            let sItemKey = String(oItem.getKey()).replace(/[,\s]/g, "");
+                                            // Get search key and remove commas/spaces
+                                            let sSearchKey = String(sCityId).replace(/[,\s]/g, "");
+
+                                            if (sItemKey === sSearchKey) {
+                                                return true;
+                                            }
+                                            const nItemKey = Number(sItemKey);
+                                            const nSearchKey = Number(sSearchKey);
+                                            if (!isNaN(nItemKey) && !isNaN(nSearchKey) && nItemKey === nSearchKey) {
+                                                return true;
+                                            }
+                                            return false;
+                                        });
+
+                                        if (aValidCityItems.length > 0 && bCityKeyExists) {
+                                            // Find the actual key from the items (might be comma-formatted)
+                                            let sActualCityKey = sCityId;
+                                            for (let i = 0; i < aValidCityItems.length; i++) {
+                                                const sItemKey = String(aValidCityItems[i].getKey()).replace(/[,\s]/g, "");
+                                                const sSearchKey = String(sCityId).replace(/[,\s]/g, "");
+                                                if (sItemKey === sSearchKey) {
+                                                    // Use the actual key from the item (preserves formatting if needed)
+                                                    sActualCityKey = aValidCityItems[i].getKey();
+                                                    break;
+                                                }
+                                            }
+
+                                            // Update model first (ComboBox is bound to model) - use cleaned key
+                                            oCustomerModel.setProperty("/custCityId", sCityId);
+                                            // Set selectedKey using the actual formatted key from the item
+                                            oCityCombo.setSelectedKey(sActualCityKey);
+                                            console.log("City ID " + sCityId + " successfully set (using key: " + sActualCityKey + ")");
+                                        } else if (aValidCityItems.length > 0) {
+                                            // Items loaded but key not found - might be invalid, stop retrying
+                                            console.warn("City ID " + sCityId + " not found in loaded cities. Available keys:", aLoadedCityKeys);
+                                        } else {
+                                            // Items not loaded yet, retry
+                                            setTimeout(fnSetCity, 50);
+                                        }
+                                    };
+
+                                    // Get city binding and wait for data
+                                    const oCityBinding = oCityCombo.getBinding("items");
+                                    if (oCityBinding) {
+                                        oCityBinding.attachDataReceived(fnSetCity);
+                                        oCityBinding.refresh();
+                                    } else {
+                                        // Fallback: poll until city items are loaded
+                                        const fnPollForCities = () => {
+                                            const aCityItems = oCityCombo.getItems();
+                                            const aValidCityItems = aCityItems.filter(function (oItem) {
+                                                const sKey = oItem.getKey();
+                                                return sKey !== "" && sKey !== null && sKey !== undefined;
+                                            });
+                                            if (aValidCityItems.length > 0) {
+                                                fnSetCity();
+                                            } else {
+                                                setTimeout(fnPollForCities, 50);
+                                            }
+                                        };
+                                        setTimeout(fnPollForCities, 100);
+                                    }
+                                }
+                            } else if (aValidItems.length > 0) {
+                                // Items loaded but key not found - might be invalid state ID, log warning with details
+                                console.warn("State ID " + sStateId + " not found in loaded states for country " + countryId);
+                                console.warn("Available state keys:", aLoadedKeys);
+                                console.warn("Filter used: country_id EQ " + countryId + " (type: " + typeof countryId + ")");
+                            } else {
+                                // Items not loaded yet, try again after a delay
+                                setTimeout(fnSetStateAndCity, 50);
+                            }
+                        };
+
+                        // Get the binding after items are bound
+                        const oStateBinding = oStateCombo.getBinding("items");
+
+                        // Use multiple approaches for reliability
+                        let bStateSet = false;
+                        const fnSetStateOnce = () => {
+                            if (!bStateSet) {
+                                bStateSet = true;
+                                fnSetStateAndCity();
+                            }
+                        };
+
+                        if (oStateBinding) {
+                            // Approach 1: Use dataReceived event
+                            oStateBinding.attachDataReceived(fnSetStateOnce);
+                            oStateBinding.refresh();
+
+                            // Approach 2: Timeout fallback in case event doesn't fire
+                            setTimeout(() => {
+                                if (!bStateSet) {
+                                    fnSetStateOnce();
+                                }
+                            }, 300);
+                        } else {
+                            // Fallback: poll until items are loaded
+                            const fnPollForStates = () => {
+                                const aStateItems = oStateCombo.getItems();
+                                // Filter out placeholder items and check if we have valid items
+                                const aValidItems = aStateItems.filter(function (oItem) {
+                                    return oItem.getKey() !== "";
+                                });
+                                if (aValidItems.length > 0) {
+                                    fnSetStateOnce();
+                                } else {
+                                    setTimeout(fnPollForStates, 50);
+                                }
+                            };
+                            setTimeout(fnPollForStates, 100);
+                        }
+                    }
+                }
+            } else {
+                // No country selected - disable state and city
+                if (oStateCombo) {
+                    oStateCombo.setSelectedKey("");
+                    oStateCombo.unbindItems();
+                    oStateCombo.setEnabled(false);
+                }
+                if (oCityCombo) {
+                    oCityCombo.setSelectedKey("");
+                    oCityCombo.unbindItems();
+                    oCityCombo.setEnabled(false);
+                }
+            }
         },
 
         /**

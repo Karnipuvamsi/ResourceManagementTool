@@ -37,11 +37,13 @@ sap.ui.define([
             return {
                 "SAPcustId": "SAP Customer ID",
                 "customerName": "Customer Name",
-                "segment": "Segment",
-                "state": "State",
-                "country": "Country",
+                "custCountryId": "Country",
+                "custStateId": "State",
+                "custCityId": "City",
                 "status": "Status",
-                "vertical": "Vertical"
+                "vertical": "Vertical",
+                "startDate": "Start Date",
+                "endDate": "End Date"
             };
         }
         return {};
