@@ -296,7 +296,7 @@ entity Employee {
         skills             : String; // Simple string field - stores comma-separated skill names
         country            : String; // ✅ NEW: Employee country with value help
         city               : String;
-        lwd                : Date;
+        lwd                : Date ;
         status             : EmployeeStatusEnum;
         empallocpercentage : Integer64;
 

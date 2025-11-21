@@ -5117,6 +5117,9 @@ sap.ui.define([
                 sStatus = this.byId("inputStatus_emp").getSelectedKey(),
                 sLWD = this.byId("inputLWD_emp").getValue();
 
+                console.log("sLWD",sLWD);
+                
+
             // Validation
             if (!sFullName || sFullName.trim() === "") {
                 sap.m.MessageBox.error("Full Name is required!");

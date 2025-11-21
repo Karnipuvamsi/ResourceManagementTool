@@ -74,7 +74,7 @@ sap.ui.define([
                         "Stage", "tcv", "currency", "customerId",
                     ],
                     "employeeUpload": [
-                        "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
+                        "ohrId", "mailid", "fullName", "gender", "employeeType", "unit", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                     ],
                     "projectUpload": [
                         "sfdcPId", "projectName", "startDate",
@@ -83,8 +83,8 @@ sap.ui.define([
                         "allocatedResources", "toBeAllocated",
                         "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
-                    "verticalUpload": [
-                        "id", "verticalName"
+                    "demandUpload": [
+                        "skill", "band", "sapPId", "quantity", "allocatedCount", "remaining"
                     ],
                 };
                 const mExpectedMessage = {
@@ -92,7 +92,7 @@ sap.ui.define([
                     "opportunityUpload": "Opportunities",
                     "employeeUpload": "Employees",
                     "projectUpload": "Projects",
-                    "verticalUpload": "Verticals"
+                    "demandUpload": "Demands"
                 };
 
                 const aHeaders = aLines[0].split(",").map(h => h.trim());
@@ -125,14 +125,44 @@ sap.ui.define([
                     return;
                 }
 
+                const sHeaderDates = ["startDate", "endDate", "expectedStart", "expectedEnd", "doj", "lwd"];
+
                 const aPayloadArray = [];
+
+
                 for (let i = 1; i < aLines.length; i++) {
                     if (!aLines[i].trim()) continue;
                     const aRow = aLines[i].split(",");
+
                     const oRecord = {};
                     aHeaders.forEach((sHeader, iIndex) => {
-                        oRecord[sHeader] = aRow[iIndex]?.trim();
+
+
+                        if (sHeaderDates.includes(sHeader)) {
+                            // Convert to ISO format
+
+                            if (sHeader === "") {
+                                oRecord[sHeader] = null;
+                            } else {
+
+                                const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
+
+                                oRecord[sHeader] = oDate.toISOString().split("T")[0];
+                            }
+
+
+
+                        } else {
+                            oRecord[sHeader] = aRow[iIndex]?.trim();
+                        }
+
+
+
+
                     });
+
+
+
 
                     aPayloadArray.push(oRecord);
                 }
@@ -166,7 +196,7 @@ sap.ui.define([
                 customerUpload: "/Customers",
                 opportunityUpload: "/Opportunities",
                 employeeUpload: "/Employees",
-                verticalUpload: "/Verticals",
+                demandUpload: "/Demands",
                 projectUpload: "/Projects",
             };
             const sEntitySet = mEntityMap[sButtonId];
@@ -175,7 +205,9 @@ sap.ui.define([
             sap.m.MessageToast.show(`📤 Uploading ${this._csvPayload.length} records...`);
             oView.setBusy(true);
 
-            const oUploadBtn = sap.ui.getCore().byId("uploadSubmitBtn");
+            const oUploadBtn = this.byId("uploadSubmitBtn");
+
+
             if (oUploadBtn) oUploadBtn.setBusy(true);
 
             const sServiceUrl = oMainModel?.sServiceUrl || "";
@@ -200,19 +232,8 @@ sap.ui.define([
             }
             for (const [iIndex, oRecord] of this._csvPayload.entries()) {
 
-                console.log("oRecord", oRecord);
 
 
-
-                // Convert to ISO format
-                var oStartDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(oRecord.startDate);
-                var oEndDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(oRecord.endDate);
-
-
-                console.log(oStartDate);
-                
-                oRecord.startDate = oStartDate.toISOString().split("T")[0]; // "2025-11-11"
-                oRecord.endDate = oEndDate.toISOString().split("T")[0]; // "2025-11-11"
 
 
                 try {
@@ -319,19 +340,27 @@ sap.ui.define([
                 // Employee: ohrId is the key but required for upload
                 const mExpectedHeaders = {
                     "customerUpload": [
-                        "customerName", "custCountryId", "custStateId", "custCityId", "status", "vertical", "startDate", "endDate",
+                        "customerName",
+                        "custCountryId", "custStateId", "custCityId", "status", "vertical",
+                        "startDate", "endDate",
                     ],
                     "opportunityUpload": [
-                        "opportunityName", "sfdcOpportunityId", "businessUnit", "probability", "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC", "Stage", "tcv", "currency", "customerId",
+                        "opportunityName", "sfdcOpportunityId", "businessUnit", "probability",
+                        "salesSPOC", "expectedStart", "expectedEnd", "deliverySPOC",
+                        "Stage", "tcv", "currency", "customerId",
                     ],
                     "employeeUpload": [
-                        "ohrId", "mailid", "fullName", "gender", "employeeType", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage", "unit"
+                        "ohrId", "mailid", "fullName", "gender", "employeeType", "unit", "doj", "band", "role", "location", "supervisorOHR", "skills", "country", "city", "lwd", "status", "empallocpercentage",
                     ],
                     "projectUpload": [
-                        "sfdcPId", "projectName", "startDate", "endDate", "gpm", "projectType", "oppId", "status", "requiredResources", "allocatedResources", "toBeAllocated", "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
+                        "sfdcPId", "projectName", "startDate",
+                        "endDate", "gpm", "projectType",
+                        "oppId", "status", "requiredResources",
+                        "allocatedResources", "toBeAllocated",
+                        "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
-                    "verticalUpload": [
-                        "id", "verticalName"
+                    "demandUpload": [
+                        "skill", "band", "sapPId", "quantity", "allocatedCount", "remaining"
                     ],
                 };
 
@@ -349,7 +378,7 @@ sap.ui.define([
                     "opportunityUpload": "Opportunities",
                     "employeeUpload": "Employees",
                     "projectUpload": "Projects",
-                    "verticalUpload": "Verticals"
+                    "demandUpload": "Demands"
                 };
                 const sFileBase = mExpectedMessage[sButtonId] || sButtonId.replace("Upload", "");
                 const sFileName = `${sFileBase}_Template.csv`;

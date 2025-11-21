@@ -21,7 +21,7 @@
 			</f:content>
 		</f:SimpleForm>
 		<buttons>
-			<Button text="Upload File" press="onFileUploadSubmit" />
+			<Button id="uploadSubmitBtn" text="Upload File" press="onFileUploadSubmit" />
 			<Button id="OnUploadcloseBut" text="Cancel" press="onCloseUpload" />
 			<!-- <Button id="OnTemplateDownloadBut" icon="sap-icon://download" press="exportUploadTemplate" tooltip="Download Template"/> -->
 		</buttons>
