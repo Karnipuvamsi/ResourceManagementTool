@@ -288,7 +288,8 @@
                                         <items>
                                             <core:Item key="" text="Select Segment..." />
                                             <core:Item key="Data" text="Data" />
-                                            <core:Item key="TechAndAI" text="Tech And AI" />                                            
+                                            <core:Item key="Tech" text="Tech" />
+                                            <core:Item key="AI" text="AI" />                                           
                                         </items>
                                     </Select>
                                     <Label text="Vertical" />

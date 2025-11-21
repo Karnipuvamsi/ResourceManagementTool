@@ -136,7 +136,8 @@ type PoEnum               : String enum {
 
 type Segment              : String enum {
     Data = 'Data';
-    TechAndAI = 'Tech And AI';
+    Tech = 'Tech';
+    AI = 'AI';
 }
 
 type Vertical             : String enum {
