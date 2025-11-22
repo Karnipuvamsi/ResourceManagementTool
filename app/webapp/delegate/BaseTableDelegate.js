@@ -12,6 +12,7 @@
  *   });
  */
 
+
 sap.ui.define([
     "sap/ui/mdc/odata/v4/TableDelegate",
     "sap/ui/model/Sorter",
@@ -284,6 +285,9 @@ sap.ui.define([
     BaseTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         // Call parent implementation
         ODataTableDelegate.updateBindingInfo.apply(this, arguments);
+        
+
+        
 
         // Get collection path from payload or use default
         const oPayload = oTable.getPayload();
@@ -296,6 +300,9 @@ sap.ui.define([
         oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
             $count: true
         });
+
+
+        
         
         // ✅ Expand associations for Customers entity to display names instead of IDs
         if (sPath === "/Customers" || sPath === "Customers") {

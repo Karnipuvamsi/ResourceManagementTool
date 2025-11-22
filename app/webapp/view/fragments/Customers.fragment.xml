@@ -4,6 +4,9 @@
     xmlns:f="sap.ui.layout.form"
     xmlns:mdc="sap.ui.mdc"
     xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
     xmlns:layout="sap.f">
     <layout:DynamicPage
         id="customerDynamicPage"
@@ -25,56 +28,215 @@
         <layout:header>
             <layout:DynamicPageHeader pinnable="false">
     <VBox class="sapUiTinyMargin">
-                    <mdc:FilterBar
-                id="customerFilterBar"
-                delegate='{
-                    "name": "glassboard/delegate/CustomersFilterBarDelegate",
-                    "payload": {
-                        "collectionPath": "Customers"
-                    }
-                }'
-                search="onFilterSearch"
-                showAdaptFiltersButton="true"
-                showGoButton="true"
-                showRestoreButton="true"
-                        showVariantManagement="true"
-                        variantBackreference="customerFilterBar"
-                        filterConditions="{filterModel>/Customers/conditions}"
-                p13nMode="Item,Value">
-                        <!-- Static filter items - Default filters -->
-                        <mdc:filterItems>
-                            <!-- Customer Name Filter -->
-                            <mdc:FilterField
-                                id="filterCustomerName"
-                                label="Customer Name"
-                                conditions="{filterModel>/Customers/conditions/customerName}"
-                                propertyKey="customerName"
-                                maxConditions="-1"
-                                required="false"
-                                caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Vertical Filter -->
-                            <mdc:FilterField
-                                id="filterVertical"
-                                label="Vertical"
-                                conditions="{filterModel>/Customers/conditions/vertical}"
-                                propertyKey="vertical"
-                                maxConditions="-1"
-                                required="false"
-                                caseSensitive="false"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                        </mdc:filterItems>
-                    </mdc:FilterBar>
+   <mdc:FilterBar
+    id="customerFilterBar"
+    showGoButton="true"
+    showAdaptFiltersButton="true"
+    p13nMode="Item,Value"
+    filterConditions="{filterModel>/Customers/conditions}"
+    delegate="{
+                            'name': 'glassboard/delegate/CustomersFilterBarDelegate',
+                            'payload': { 'collectionPath': 'Customers' }
+                        }"
+>
+    <mdc:filterItems>
+        <!-- =============================================== -->
+        <!--      CUSTOMER NAME (FILTERFIELD + VALUE HELP)  -->
+        <!-- =============================================== -->
+        <mdc:FilterField
+            id="filterCustomerName"
+            label="Customer Name"
+            width="250px"
+            propertyKey="customerName"
+            display="Description"
+            editMode="Editable"
+            valueHelp="vhCustomerName"
+            conditions="{filterModel>/Customers/conditions/customerName}"
+        >
+            <mdc:dependents>
+                <mdc:ValueHelp
+                    id="vhCustomerName"
+                    delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['customerName', 'vertical'] }
+                                        }"
+                >
+                    <!-- TYPEAHEAD -->
+                    <mdc:typeahead>
+                             <mdcvh:Popover title="Select Customer">
+                                                <mdcvc:MTable
+                                                    keyPath="customerName"
+                                                    descriptionPath="customerName">
+
+                                                    <Table
+                                                        id="tblCustomerTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Customers' }">
+
+                                                        <columns>
+                                                            <Column><Text text="Customer Name" /></Column>
+                                                            <Column><Text text="Vertical" /></Column>
+                                                        </columns>
+
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{customerName}" />
+                                                                <Text text="{vertical}" />
+                                                            </ColumnListItem>
+                                                        </items>
+
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                    <!-- DIALOG -->
+                    <mdc:dialog>
+                        <mdcvh:Dialog id="dlgCustomerVH" title="Select Customer">
+                            <mdcvc:MDCTable keyPath="customerName" descriptionPath="customerName">
+                                <!-- DIALOG FILTER BAR -->
+                                <!-- <mdcvc:filterBar>
+                                    <mdcvh:FilterBar
+                                        id="fbCustomerVH"
+                                        showGoButton="true"
+                                        liveMode="false"
+                                        filterConditions="{filterModel>/Customers/conditions}"
+                                        delegate="{
+                                                                name: 'glassboard/delegate/CustomersFilterBarDelegate',
+                                                                payload: { collectionPath: 'Customers' }
+                                                            }"
+                                    >
+                                    </mdcvh:FilterBar>
+                                </mdcvc:filterBar> -->
+
+                                <!-- DIALOG TABLE -->
+                                <mdc:Table
+                                    id="tblCustomerVH"
+                                    autoBindOnInit="true"
+                                    width="100%"
+                                    selectionMode="Multi"
+                                    p13nMode="Column,Sort"
+                                    enableAutoColumnWidth="true"
+                                    threshold="200"
+                                    filter="customerFilterBar"
+                                    filterConditions="{filterModel>/Customers/conditions}"
+                                    delegate="{
+        name: 'glassboard/delegate/CustomersTableDelegate',
+        payload: {
+            collectionPath: 'Customers',
+            searchKeys: ['customerName','vertical']
+        }
+    }"
+                                >
+                                    <mdc:type>
+                                        <table:GridTableType rowCountMode="Auto" />
+                                    </mdc:type>
+
+                                    <!-- ************* FIX: ADD COLUMNS HERE ************* -->
+                                    <mdc:columns>
+                                        <mdct:Column
+                                            id="VHcolCustName"
+                                            header="Customer Name"
+                                            propertyKey="customerName"
+                                        >
+                                            <Text text="{customerName}" />
+                                        </mdct:Column>
+
+                                        <mdct:Column id="VHcolVertical" header="Vertical" propertyKey="vertical">
+                                            <Text text="{vertical}" />
+                                        </mdct:Column>
+                                    </mdc:columns>
+                                </mdc:Table>
+                            </mdcvc:MDCTable>
+                        </mdcvh:Dialog>
+                    </mdc:dialog>
+                </mdc:ValueHelp>
+            </mdc:dependents>
+        </mdc:FilterField>
+
+        <!-- ===========================
+                                 VERTICAL FILTER
+                             =========================== -->
+<!-- ===========================
+     VERTICAL FILTER - EXACT SAME BEHAVIOR AS CUSTOMER NAME
+     =========================== -->
+<mdc:FilterField
+    id="filterVertical"
+    label="Vertical"
+    width="250px"
+    propertyKey="vertical"
+    display="Description"
+    editMode="Editable"
+    valueHelp="vhVertical"
+    maxConditions="-1"
+    conditions="{filterModel>/Customers/conditions/vertical}"
+>
+    <mdc:dependents>
+        <mdc:ValueHelp
+            id="vhVertical"
+            delegate="{
+                name: 'glassboard/delegate/SearchValueHelpDelegate',
+                payload: { searchKeys: ['vertical', 'customerName'] }
+            }"
+        >
+            <!-- DIALOG - exactly like the Customer Name one -->
+            <mdc:dialog>
+                <mdcvh:Dialog id="dlgVerticalVH" title="Select Vertical">
+                    <mdcvc:MDCTable 
+                        keyPath="vertical" 
+                        descriptionPath="vertical"
+                    >
+                        <mdc:Table
+                            id="tblVerticalVH"
+                            autoBindOnInit="true"
+                            width="100%"
+                            selectionMode="Multi"
+                            p13nMode="Column,Sort"
+                            enableAutoColumnWidth="true"
+                            threshold="200"
+                            filter="customerFilterBar"
+                            filterConditions="{filterModel>/Customers/conditions}"
+                            delegate="{
+                                name: 'glassboard/delegate/CustomersTableDelegate',
+                                payload: {
+                                    collectionPath: 'Customers',
+                                    searchKeys: ['vertical','customerName']
+                                }
+                            }"
+                        >
+                            <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+
+                            <!-- SAME TWO COLUMNS AS IN CUSTOMER NAME DIALOG -->
+                            <mdc:columns>
+                                <mdct:Column
+                                    id="VHcolVertical1"
+                                    header="Vertical"
+                                    propertyKey="vertical"
+                                >
+                                    <Text text="{vertical}" />
+                                </mdct:Column>
+
+                                <mdct:Column 
+                                    id="VHcolCustName1"
+                                    header="Customer Name" 
+                                    propertyKey="customerName"
+                                >
+                                    <Text text="{customerName}" />
+                                </mdct:Column>
+                            </mdc:columns>
+                        </mdc:Table>
+                    </mdcvc:MDCTable>
+                </mdcvh:Dialog>
+            </mdc:dialog>
+        </mdc:ValueHelp>
+    </mdc:dependents>
+</mdc:FilterField>
+    </mdc:filterItems>
+</mdc:FilterBar>
+
                 </VBox>
             </layout:DynamicPageHeader>
         </layout:header>
