@@ -44,14 +44,14 @@ h2{ padding-left:0px  !important;}
 .sapFDynamicPageHeaderContent
 {margin-top:-20px !important; width:90% !important; padding-left:20px !important;}
  
-/* to reduce space between filter and table */
+/* to reduce space between filter and table 
 #container-glassboard---Home--customerDynamicPage-contentFitContainer,
 #container-glassboard---Home--opportunityDynamicPage-contentFitContainer,
 #container-glassboard---Home--projectDynamicPage-contentFitContainer,
 #container-glassboard---Home--employeeDynamicPage-contentFitContainer,
-#container-glassboard---Home--masterDemandsDynamicPage-contentFitContainer,
-#container-glassboard---Home--resDynamicPage-contentFitContainer
-{ margin-top:-25px !important;}
+#container-glassboard---Home--masterDemandsDynamicPage-contentFitContainer,*/
+#container-glassboard---Home--resDynamicPage-contentFitContainer, #container-glassboard---Home--allocationDynamicPage-contentFitContainer
+{ padding-top:10px !important;}
 
 .sapUiLayoutGrid > .sapMText {width: 180px; display: inline-block;}
 .customGrid .sapMText {width: 180px; display: inline-block;text-align: left;}
@@ -62,3 +62,7 @@ h2{ padding-left:0px  !important;}
 
 h4{ padding-left:0px !important;}
 .sapMIBar.sapMTB.sapMTBHeader-CTX{padding-left:0em !important;}
+.sapUiH2{font-size:32px !important; font-weight: bolder !important; color:#000 !important;}
+.sapMFlexItem>.sapMTextMaxWidth{padding-left: 20px !important;}
+
+.sapFDynamicPage-Std-Tablet .sapFDynamicPageContent{padding-top:10px !important; padding-bottom:10px !important;}

@@ -22,7 +22,7 @@
                     liveChange="onDemandSearch"
                     search="onDemandSearch" />                                 
             </Toolbar>
-            <ScrollContainer height="380px" vertical="true" horizontal="false">
+            <ScrollContainer height="220px" vertical="true" horizontal="false">
                 <mdc:Table
                     id="Demands"
                     header="Demands"
