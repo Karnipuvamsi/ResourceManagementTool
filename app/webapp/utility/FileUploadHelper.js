@@ -139,12 +139,12 @@ sap.ui.define([
 
 
                         if (sHeaderDates.includes(sHeader)) {
-                            // Convert to ISO format
-
+                            
                             if (sHeader === "") {
                                 oRecord[sHeader] = null;
                             } else {
-
+                                
+                                // Convert to ISO format
                                 const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
 
                                 oRecord[sHeader] = oDate.toISOString().split("T")[0];
