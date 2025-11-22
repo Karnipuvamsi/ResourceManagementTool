@@ -636,7 +636,7 @@ sap.ui.define([
                 for (let i = aParts.length - 1; i >= 0; i--) {
                     if (aParts[i].includes("Upload") || 
                         ["customerUpload", "opportunityUpload", "employeeUpload", 
-                         "projectUpload", "verticalUpload"].includes(aParts[i])) {
+                         "projectUpload", "demandUpload"].includes(aParts[i])) {
                         sButtonId = aParts[i];
                         break;
                     }
