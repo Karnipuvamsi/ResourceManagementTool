@@ -47,7 +47,7 @@
     <!-- ============================
          OHR ID  (VALUE HELP)
     ============================ -->
-    <mdc:FilterField
+<mdc:FilterField
         id="filterEmployeeOHRId"
         label="OHR ID"
         width="200px"
@@ -99,7 +99,7 @@
                 </mdc:dialog>
             </mdc:ValueHelp>
         </mdc:dependents>
-    </mdc:FilterField>
+         </mdc:FilterField>
 
 
 
