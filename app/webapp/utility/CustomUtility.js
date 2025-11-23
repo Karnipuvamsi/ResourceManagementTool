@@ -38,6 +38,8 @@ sap.ui.define([
                 currentTable: null  // Track which table is currently being edited
             });
             this.getView().setModel(oEditModel, "edit");
+
+
             // -------------------------------------------------------------
             const oMessageManager = sap.ui.getCore().getMessageManager();
             const oMessageModel = oMessageManager.getMessageModel();
@@ -45,6 +47,9 @@ sap.ui.define([
             oMessageManager.registerObject(this.getView(), true);
 
             const oBinding = oMessageModel.bindList("/");
+
+            console.log("oBinding",oBinding);
+            
             oBinding.attachChange(() => {
                 this.updateMessageButtonIcon(this);
             });
@@ -726,6 +731,9 @@ sap.ui.define([
         _updateMessageButtonIcon: function (oController) {
             const oView = oController.getView();
             const aMessages = oView.getModel("message").getData();
+
+            console.log("aMessages",aMessages);
+            
 
             const oButton = oView.byId("uploadLogButton");
 

@@ -55,7 +55,7 @@ sap.ui.define([
      * @param {string} sPropertyName - Property name
      * @returns {object|null} Enum config with values and labels, or null
      */
-    BaseTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
+    BaseTableDelegate._getEnumConfig = function (sTableId, sPropertyName) {
         return EnumConfig.getEnumConfig(sTableId, sPropertyName);
     };
 
@@ -67,7 +67,7 @@ sap.ui.define([
      * @param {string} sPropertyName - Property name
      * @returns {Promise<object|null>} Association config or null
      */
-    BaseTableDelegate._detectAssociation = function(oTable, sPropertyName) {
+    BaseTableDelegate._detectAssociation = function (oTable, sPropertyName) {
         const oModel = oTable.getModel();
         if (!oModel || !oModel.getMetaModel) {
             return Promise.resolve(null);
@@ -75,7 +75,7 @@ sap.ui.define([
 
         // Get table ID from payload
         const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || this._getDefaultTableId();
-        
+
         // Use shared AssociationConfig utility
         const oAssocConfig = AssociationConfig.getAssociationConfig(sTableId, sPropertyName);
         return Promise.resolve(oAssocConfig || null);
@@ -85,7 +85,7 @@ sap.ui.define([
      * Get default table ID (override in specific delegates if needed)
      * @returns {string} Default table ID
      */
-    BaseTableDelegate._getDefaultTableId = function() {
+    BaseTableDelegate._getDefaultTableId = function () {
         return "Customers"; // Default fallback
     };
 
@@ -103,7 +103,7 @@ sap.ui.define([
      * Clear property cache for a specific collection or all collections
      * @param {string} sCollectionPath - Optional collection path to clear, or undefined to clear all
      */
-    BaseTableDelegate.clearPropertyCache = function(sCollectionPath) {
+    BaseTableDelegate.clearPropertyCache = function (sCollectionPath) {
         if (sCollectionPath) {
             delete BaseTableDelegate._mPropertyCache[sCollectionPath];
         } else {
@@ -259,7 +259,7 @@ sap.ui.define([
      * @param {string} sCollectionPath - Collection path
      * @returns {Array} Fallback properties array
      */
-    BaseTableDelegate._getFallbackProperties = function(sCollectionPath) {
+    BaseTableDelegate._getFallbackProperties = function (sCollectionPath) {
         return []; // Default: no fallback properties
     };
 
@@ -267,7 +267,7 @@ sap.ui.define([
      * Get delegate name for logging (override in specific delegates)
      * @returns {string} Delegate name
      */
-    BaseTableDelegate._getDelegateName = function() {
+    BaseTableDelegate._getDelegateName = function () {
         return "BaseTableDelegate";
     };
 
@@ -292,7 +292,7 @@ sap.ui.define([
         // Get collection path from payload or use default
         const oPayload = oTable.getPayload();
         const sPath = oPayload?.collectionPath || this._getDefaultTableId();
-        
+
         // Set path - ensure it starts with "/"
         oBindingInfo.path = sPath.startsWith("/") ? sPath : "/" + sPath;
 
@@ -301,27 +301,24 @@ sap.ui.define([
             $count: true
         });
 
-
-        
-        
         // ✅ Expand associations for Customers entity to display names instead of IDs
         if (sPath === "/Customers" || sPath === "Customers") {
             oBindingInfo.parameters.$expand = "to_CustCountry,to_CustState,to_CustCity";
         }
-        
+
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         // This prevents duplicate filters and ensures case-insensitive filtering works correctly
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
             const sCollectionPath = sPath.replace(/^\//, "");
-            
+
             const fnMakeCaseInsensitive = (aFilters) => {
                 if (!aFilters || !Array.isArray(aFilters)) return aFilters;
-                
+
                 return aFilters.map((oFilter) => {
                     if (!oFilter || !oFilter.getPath) return oFilter;
-                    
+
                     const sFilterPath = oFilter.getPath();
                     // Check if this is a string property
                     let bIsString = false;
@@ -335,7 +332,7 @@ sap.ui.define([
                     } catch (e) {
                         // If we can't determine, skip modification
                     }
-                    
+
                     // Recreate filter with caseSensitive: false for string filters
                     if (bIsString) {
                         try {
@@ -344,7 +341,7 @@ sap.ui.define([
                             const vValue2 = oFilter.getValue2();
                             const aNestedFilters = (oFilter.getFilters && typeof oFilter.getFilters === "function") ? oFilter.getFilters() : null;
                             const bAnd = (oFilter.getAnd && typeof oFilter.getAnd === "function") ? oFilter.getAnd() : true;
-                            
+
                             // Recreate the filter with caseSensitive: false
                             const oNewFilter = new sap.ui.model.Filter({
                                 path: sFilterPath,
@@ -355,13 +352,13 @@ sap.ui.define([
                                 filters: aNestedFilters ? fnMakeCaseInsensitive(aNestedFilters) : undefined,
                                 and: aNestedFilters ? bAnd : undefined
                             });
-                            
+
                             return oNewFilter;
                         } catch (e) {
                             return oFilter;
                         }
                     }
-                    
+
                     // Recursively process nested filters
                     if (oFilter.getFilters && typeof oFilter.getFilters === "function") {
                         const aNestedFilters = oFilter.getFilters();
@@ -384,15 +381,15 @@ sap.ui.define([
                             }
                         }
                     }
-                    
+
                     return oFilter;
                 });
             };
-            
+
             // ✅ Group filters by path and combine same-field filters with OR, remove duplicates
             const fnOptimizeFilters = (vFilters) => {
                 if (!vFilters) return null;
-                
+
                 // Handle single Filter object
                 if (!Array.isArray(vFilters)) {
                     // If it's a single filter with nested filters, process those
@@ -408,19 +405,19 @@ sap.ui.define([
                     }
                     return vFilters;
                 }
-                
+
                 if (vFilters.length === 0) return null;
-                
+
                 // First, make filters case-insensitive
                 let aProcessedFilters = fnMakeCaseInsensitive(vFilters);
-                
+
                 // Group filters by path (field name)
                 const mFiltersByPath = {};
                 const aOtherFilters = []; // Filters without a path (nested/complex filters)
-                
+
                 aProcessedFilters.forEach((oFilter) => {
                     if (!oFilter) return;
-                    
+
                     // Handle nested filters recursively
                     if (oFilter.getFilters && oFilter.getFilters()) {
                         const aNested = oFilter.getFilters();
@@ -433,23 +430,23 @@ sap.ui.define([
                         }
                         return;
                     }
-                    
+
                     if (!oFilter.getPath) {
                         aOtherFilters.push(oFilter);
                         return;
                     }
-                    
+
                     const sFilterPath = oFilter.getPath();
                     if (!mFiltersByPath[sFilterPath]) {
                         mFiltersByPath[sFilterPath] = [];
                     }
-                    
+
                     // Check for duplicates before adding
                     const sValue1 = String(oFilter.getValue1() || "");
                     const sValue2 = String(oFilter.getValue2() || "");
                     const sOperator = String(oFilter.getOperator() || "");
                     const sFilterKey = `${sOperator}|${sValue1}|${sValue2}`;
-                    
+
                     // Check if this exact filter already exists
                     const bIsDuplicate = mFiltersByPath[sFilterPath].some((oExistingFilter) => {
                         const sExistingValue1 = String(oExistingFilter.getValue1() || "");
@@ -458,15 +455,15 @@ sap.ui.define([
                         const sExistingKey = `${sExistingOperator}|${sExistingValue1}|${sExistingValue2}`;
                         return sFilterKey === sExistingKey;
                     });
-                    
+
                     if (!bIsDuplicate) {
                         mFiltersByPath[sFilterPath].push(oFilter);
                     }
                 });
-                
+
                 // Build optimized filter array
                 const aOptimizedFilters = [];
-                
+
                 // For each field, combine multiple values with OR
                 Object.keys(mFiltersByPath).forEach((sPath) => {
                     const aFieldFilters = mFiltersByPath[sPath];
@@ -482,12 +479,12 @@ sap.ui.define([
                         aOptimizedFilters.push(oOrFilter);
                     }
                 });
-                
+
                 // Add other filters (nested/complex) as-is
                 aOtherFilters.forEach((oFilter) => {
                     aOptimizedFilters.push(oFilter);
                 });
-                
+
                 // Return optimized filters
                 if (aOptimizedFilters.length === 0) {
                     return null;
@@ -501,7 +498,7 @@ sap.ui.define([
                     });
                 }
             };
-            
+
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
         }
@@ -520,7 +517,7 @@ sap.ui.define([
      */
     BaseTableDelegate.getFilterDelegate = function () {
         const oDelegate = this; // Store reference to delegate for use in nested functions
-        
+
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 // Normalize signature: MDC may call (oTable, vProperty, mBag) or (vProperty, oTable, mBag)
@@ -539,14 +536,14 @@ sap.ui.define([
                     (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
                     (mPropertyBag && (mPropertyBag.name || mPropertyBag.propertyKey)) ||
                     (mPropertyBag && mPropertyBag.property && (mPropertyBag.property.name || mPropertyBag.property.path || mPropertyBag.property.key));
-                
+
                 if (!sPropertyName) {
                     return Promise.reject("Invalid property for filter item");
                 }
 
                 // Get table ID from payload or use default
                 const sTableId = (oTable.getPayload && oTable.getPayload()?.collectionPath?.replace(/^\//, "")) || oDelegate._getDefaultTableId();
-                
+
                 // Determine data type from metadata
                 let sDataType = "sap.ui.model.type.String";
                 try {
@@ -573,14 +570,14 @@ sap.ui.define([
                 if (oEnumConfig) {
                     return Promise.resolve(oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType));
                 }
-                
+
                 // Check if it's an association field
                 return oDelegate._detectAssociation(oTable, sPropertyName)
                     .then((oAssocConfig) => {
                         if (oAssocConfig) {
                             return oDelegate._createAssociationFilterField(oTable, sPropertyName, oAssocConfig, sDataType);
                         }
-                        
+
                         // Default: create standard filter field
                         return oDelegate._createStandardFilterField(oTable, sPropertyName, sDataType);
                     });
@@ -596,7 +593,7 @@ sap.ui.define([
      * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createEnumFilterField = function(oTable, sPropertyName, oEnumConfig, sDataType) {
+    BaseTableDelegate._createEnumFilterField = function (oTable, sPropertyName, oEnumConfig, sDataType) {
         const oComboBox = new ComboBox({
             showSecondaryValues: false,
             items: oEnumConfig.values.map((sValue, iIndex) => {
@@ -630,7 +627,7 @@ sap.ui.define([
      * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createAssociationFilterField = function(oTable, sPropertyName, oAssocConfig, sDataType) {
+    BaseTableDelegate._createAssociationFilterField = function (oTable, sPropertyName, oAssocConfig, sDataType) {
         // Format label
         const sLabel = sPropertyName
             .replace(/([A-Z])/g, ' $1')
@@ -655,7 +652,7 @@ sap.ui.define([
      * @param {string} sDataType - Data type (optional, defaults to String)
      * @returns {object} Filter field configuration
      */
-    BaseTableDelegate._createStandardFilterField = function(oTable, sPropertyName, sDataType) {
+    BaseTableDelegate._createStandardFilterField = function (oTable, sPropertyName, sDataType) {
         // Format label
         const sLabel = sPropertyName
             .replace(/([A-Z])/g, ' $1')
@@ -679,7 +676,7 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {object} Map of property names to header labels
      */
-    BaseTableDelegate._getCustomHeaders = function(sTableId) {
+    BaseTableDelegate._getCustomHeaders = function (sTableId) {
         return {}; // Default: no custom headers
     };
 
@@ -689,7 +686,7 @@ sap.ui.define([
      * @param {object} mCustomHeaders - Custom header mappings
      * @returns {object} Object with label and tooltip
      */
-    BaseTableDelegate._formatHeaderLabel = function(sPropertyName, mCustomHeaders) {
+    BaseTableDelegate._formatHeaderLabel = function (sPropertyName, mCustomHeaders) {
         if (mCustomHeaders[sPropertyName]) {
             return {
                 label: mCustomHeaders[sPropertyName],
@@ -716,7 +713,7 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {function} Formatter function
      */
-    BaseTableDelegate._createEditModeFormatter = function(sTableId) {
+    BaseTableDelegate._createEditModeFormatter = function (sTableId) {
         return function (sPath) {
             const rowPath = this.getBindingContext() && this.getBindingContext().getPath();
             if (sPath && sPath.includes(",")) {
@@ -732,7 +729,7 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {object} Binding configuration
      */
-    BaseTableDelegate._createEditableBinding = function(sTableId) {
+    BaseTableDelegate._createEditableBinding = function (sTableId) {
         return {
             parts: [{ path: `edit>/${sTableId}/editingPath` }],
             mode: "TwoWay",
@@ -755,7 +752,7 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {object} Field instance
      */
-    BaseTableDelegate._createEnumField = function(oTable, sPropertyName, oEnumConfig, sTableId) {
+    BaseTableDelegate._createEnumField = function (oTable, sPropertyName, oEnumConfig, sTableId) {
         const aItems = oEnumConfig.values.map((sVal, iIndex) => {
             return new Item({
                 key: sVal,
@@ -763,7 +760,7 @@ sap.ui.define([
             });
         });
 
-        const fnEnumFormatter = function(sKey) {
+        const fnEnumFormatter = function (sKey) {
             if (!sKey) return "";
             const iIndex = oEnumConfig.values.indexOf(sKey);
             return iIndex >= 0 ? oEnumConfig.labels[iIndex] : sKey;
@@ -798,10 +795,10 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {object} Field instance
      */
-    BaseTableDelegate._createAssociationField = function(oTable, sPropertyName, oAssocConfig, sTableId) {
+    BaseTableDelegate._createAssociationField = function (oTable, sPropertyName, oAssocConfig, sTableId) {
         const oModel = oTable.getModel();
         const sCollectionPath = "/" + oAssocConfig.targetEntity;
-        
+
         // Determine association navigation property name
         // For Customer: custCountryId -> to_CustCountry, custStateId -> to_CustState, custCityId -> to_CustCity
         let sAssocNavProp = "";
@@ -821,7 +818,7 @@ sap.ui.define([
             const sBaseName = sPropertyName.replace(/Id$/, "");
             sAssocNavProp = "to_" + sBaseName.charAt(0).toUpperCase() + sBaseName.slice(1);
         }
-        
+
         const oComboBox = new ComboBox({
             selectedKey: "{" + sPropertyName + "}",
             value: "{" + sPropertyName + "}",
@@ -837,12 +834,13 @@ sap.ui.define([
             filterSecondaryValues: true,
             placeholder: "Select " + oAssocConfig.displayField
         });
-        
+
         oComboBox.setModel(oModel);
 
         // Create formatter function to display association name
-        const fnAssociationFormatter = function(sValue) {
+        const fnAssociationFormatter = function (sValue) {
             // In display mode, try to get the association name
+
             const oBindingContext = this.getBindingContext();
             if (oBindingContext && sAssocNavProp) {
                 const oAssocContext = oBindingContext.getObject()[sAssocNavProp];
@@ -855,8 +853,15 @@ sap.ui.define([
         };
 
         return new Field({
-            value: sAssocNavProp ? "{" + sAssocNavProp + "/" + oAssocConfig.displayField + "}" : "{" + sPropertyName + "}",
-            formatter: fnAssociationFormatter,
+
+            value: {
+                path: sAssocNavProp
+                    ? sAssocNavProp + "/" + oAssocConfig.displayField
+                    : sPropertyName,
+                formatter: fnAssociationFormatter
+            },
+
+
             contentEdit: oComboBox,
             editMode: {
                 parts: [{ path: `edit>/${sTableId}/editingPath` }],
@@ -872,7 +877,7 @@ sap.ui.define([
      * @param {string} sTableId - Table ID
      * @returns {object} Field instance
      */
-    BaseTableDelegate._createStandardField = function(sPropertyName, sTableId) {
+    BaseTableDelegate._createStandardField = function (sPropertyName, sTableId) {
         return new Field({
             value: "{" + sPropertyName + "}",
             tooltip: "{" + sPropertyName + "}",
@@ -895,7 +900,7 @@ sap.ui.define([
      */
     BaseTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         const oDelegate = this; // Store reference to delegate for use in nested functions
-        
+
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
@@ -918,7 +923,7 @@ sap.ui.define([
                     const bIsEnum = !!oEnumConfig;
                     const oAssocPromise = oDelegate._detectAssociation(oTable, sPropertyName);
 
-                    oAssocPromise.then(function(oAssocConfig) {
+                    oAssocPromise.then(function (oAssocConfig) {
                         const bIsAssoc = !!oAssocConfig;
                         let oField;
 
@@ -939,7 +944,7 @@ sap.ui.define([
                         });
 
                         resolve(oColumn);
-                    }).catch(function() {
+                    }).catch(function () {
                         // Fallback to regular field
                         const oField = oDelegate._createStandardField(sPropertyName, sTableId);
                         const oColumn = new Column({

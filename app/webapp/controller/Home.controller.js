@@ -441,22 +441,6 @@ sap.ui.define([
                     }, 300);
                 }.bind(this));
             } else if (sKey === "projects") {
-                const oProjectsPage = this.getView().byId(sPageId);
-
-                // ✅ CRITICAL: Check if content already exists and remove it to prevent duplicate IDs
-                if (oProjectsPage && oProjectsPage.getContent) {
-                    const aExistingContent = oProjectsPage.getContent();
-                    if (aExistingContent && aExistingContent.length > 0) {
-                        aExistingContent.forEach((oContent) => {
-                            if (oContent && oContent.destroy) {
-                                oContent.destroy();
-                            }
-                        });
-                        oProjectsPage.removeAllContent();
-                        // Reset flag so fragment can be reloaded if needed
-                        this._bProjectsLoaded = false;
-                    }
-                }
 
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bProjectsLoaded) {
@@ -471,6 +455,23 @@ sap.ui.define([
                 }
 
                 this._bProjectsLoaded = true;
+                const oProjectsPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Check if content already exists and remove it to prevent duplicate IDs
+                if (oProjectsPage && oProjectsPage.getContent) {
+                    const aExistingContent = oProjectsPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oProjectsPage.removeAllContent();
+            
+                    }
+                }
+
+
 
                 Fragment.load({
                     id: this.getView().getId(),
@@ -5117,9 +5118,6 @@ sap.ui.define([
                 sStatus = this.byId("inputStatus_emp").getSelectedKey(),
                 sLWD = this.byId("inputLWD_emp").getValue();
 
-                console.log("sLWD",sLWD);
-                
-
             // Validation
             if (!sFullName || sFullName.trim() === "") {
                 sap.m.MessageBox.error("Full Name is required!");
@@ -5150,7 +5148,7 @@ sap.ui.define([
                     "mailid": sMailId || "",
                     "gender": sGender || "",
                     "employeeType": sEmployeeType || "",
-                    "unit":sUnit || "",
+                    "unit": sUnit || "",
                     "doj": (sDoJ && typeof sDoJ === "string" && sDoJ.trim() !== "") ? sDoJ : null,  // Date field - use null if empty
                     "band": sBand || "",
                     "role": sRole || "",
@@ -5501,8 +5499,8 @@ sap.ui.define([
                 sBand = this.byId("inputBand").getSelectedKey(),
                 sSapPId = (this.byId("inputProject")?.data("selectedId")) || this.byId("inputProject")?.getValue() || "",
                 sQuantity = this.byId("inputQuantity").getValue();
-                // sAllocatedCount = this.byId("inputAllocatedCount").getValue(),
-                // sRemainingCount = this.byId("inputRemainingCount").getValue();
+            // sAllocatedCount = this.byId("inputAllocatedCount").getValue(),
+            // sRemainingCount = this.byId("inputRemainingCount").getValue();
 
             const oTable = this.byId("MasterDemands");
             const oModel = oTable.getModel();
@@ -5565,7 +5563,7 @@ sap.ui.define([
 
             } else {
                 // ✅ CREATE MODE
-                
+
                 const oCreateEntry = {
                     "demandId": sDemandId,
                     "skill": sSkills || "",
