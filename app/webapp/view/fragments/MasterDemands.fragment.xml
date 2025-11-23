@@ -115,7 +115,7 @@
                                 </SegmentedButton>
                                 <Button icon="sap-icon://delete" id="Delete_demand" tooltip="Delete" press="onDeletePress" enabled="false" />
                                 <SplitButton
-                                    id="demandUpload"
+                                    id="masterDemandUpload"
                                     icon="sap-icon://upload"
                                     tooltip="Upload"
                                     type="Transparent"

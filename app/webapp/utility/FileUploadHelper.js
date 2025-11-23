@@ -83,7 +83,7 @@ sap.ui.define([
                         "allocatedResources", "toBeAllocated",
                         "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
-                    "demandUpload": [
+                    "masterDemandUpload": [
                         "skill", "band", "sapPId", "quantity", "allocatedCount", "remaining"
                     ],
                 };
@@ -92,7 +92,7 @@ sap.ui.define([
                     "opportunityUpload": "Opportunities",
                     "employeeUpload": "Employees",
                     "projectUpload": "Projects",
-                    "demandUpload": "Demands"
+                    "masterDemandUpload": "Demands"
                 };
 
                 const aHeaders = aLines[0].split(",").map(h => h.trim());
@@ -196,7 +196,7 @@ sap.ui.define([
                 customerUpload: "/Customers",
                 opportunityUpload: "/Opportunities",
                 employeeUpload: "/Employees",
-                demandUpload: "/Demands",
+                masterDemandUpload: "/Demands",
                 projectUpload: "/Projects",
             };
             const sEntitySet = mEntityMap[sButtonId];
@@ -359,7 +359,7 @@ sap.ui.define([
                         "allocatedResources", "toBeAllocated",
                         "SOWReceived", "POReceived", "segment", "vertical", "subVertical", "unit"
                     ],
-                    "demandUpload": [
+                    "masterDemandUpload": [
                         "skill", "band", "sapPId", "quantity", "allocatedCount", "remaining"
                     ],
                 };
@@ -378,7 +378,7 @@ sap.ui.define([
                     "opportunityUpload": "Opportunities",
                     "employeeUpload": "Employees",
                     "projectUpload": "Projects",
-                    "demandUpload": "Demands"
+                    "masterDemandUpload": "Demands"
                 };
                 const sFileBase = mExpectedMessage[sButtonId] || sButtonId.replace("Upload", "");
                 const sFileName = `${sFileBase}_Template.csv`;
