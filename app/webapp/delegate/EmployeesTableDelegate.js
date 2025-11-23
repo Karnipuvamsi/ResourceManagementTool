@@ -387,6 +387,132 @@ sap.ui.define([
             }
         };
     };
+    EmployeesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // Always call Base first
+    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+
+    // 1️⃣ Extract search text from ValueHelp Dialog
+    let sSearch = "";
+    try {
+        const oVH = oTable?.getParent()?.getParent();   // MDCTable → Dialog → ValueHelp
+        const aContent = oVH?.getContent?.();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent?.getSearch?.() || "";
+    } catch (e) {}
+
+    // 2️⃣ Fallback → Main Employee FilterBar search
+    if (!sSearch) {
+        const oFB = sap.ui.getCore().byId("employeeFilterBar");
+        sSearch = oFB?.getSearch?.() || "";
+    }
+
+    // 3️⃣ No search → No override
+    if (!sSearch) return;
+
+    // 4️⃣ Determine WHICH VH Table called this delegate
+    const sTableId = oTable.getId();
+
+    let aFilters = [];
+
+    // ============================
+    // 🔵 OHR ID VH
+    // ============================
+    if (sTableId.includes("tblEmployeeOHRIdVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 BAND VH
+    // ============================
+    else if (sTableId.includes("tblEmployeeBandVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // 🔵 SKILLS VH
+    // ============================
+    else if (sTableId.includes("tblEmployeeSkillsVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({
+                path: "skills",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "band",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            }),
+            new sap.ui.model.Filter({
+                path: "ohrId",
+                operator: sap.ui.model.FilterOperator.Contains,
+                value1: sSearch,
+                caseSensitive: false
+            })
+        ];
+    }
+
+    // ============================
+    // ❗ SAFETY CHECK
+    // ============================
+    if (aFilters.length === 0) {
+        console.warn("Employees VH → No mapping for table:", sTableId);
+        return;
+    }
+
+    // ============================
+    // 🔥 APPLY OR-GROUP FILTER
+    // ============================
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: aFilters,
+            and: false
+        })
+    ];
+
+    console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+};
+
 
     return EmployeesTableDelegate;
 });

@@ -287,6 +287,104 @@ sap.ui.define([
         return Promise.resolve(true);
     };
 
+    OpportunitiesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+    // call Base first
+    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+
+    // get search text from the ValueHelp content
+    let sSearch = "";
+    try {
+        const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+        const aContent = oVH?.getContent?.();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent?.getSearch?.();
+    } catch (e) {}
+
+    // Fallback to main Opportunity FilterBar (if any)
+    if (!sSearch) {
+        const oFilterBar = sap.ui.getCore().byId("opportunityFilterBar");
+        if (oFilterBar?.getSearch) sSearch = oFilterBar.getSearch();
+    }
+
+    // if nothing searched → no filter injected
+    if (!sSearch) return;
+
+    // table ID to decide which fields to filter
+    const sId = oTable.getId();
+
+    let aFilters = [];
+
+    // ----------- SAP Opp ID VH -------------------
+    if (sId.includes("tblSAPOppVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // ----------- SFDC Opp ID VH -------------------
+    else if (sId.includes("tblSfdcOppVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "sfdcOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // ----------- Opportunity Name VH -------------------
+    else if (sId.includes("tblOppNameVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new sap.ui.model.Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false})
+        ];
+    }
+
+    // ----------- Business Unit VH -------------------
+    else if (sId.includes("tblBusinessUnitVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "businessUnit", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // ----------- Sales SPOC VH -------------------
+    else if (sId.includes("tblSalesSpocVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "salesSPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // ----------- Delivery SPOC VH -------------------
+    else if (sId.includes("tblDeliverySpocVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "deliverySPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // ----------- Customer VH inside Opportunities -------------------
+    else if (sId.includes("tblOppCustomerVH")) {
+        aFilters = [
+            new sap.ui.model.Filter({ path: "customerName", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new sap.ui.model.Filter({ path: "SAPcustId", operator: "Contains", value1: sSearch, caseSensitive: false })
+        ];
+    }
+
+    // fallback if no mapping found
+    if (aFilters.length === 0) {
+        console.warn("No filter mapping for table:", sId);
+        return;
+    }
+
+    // OR group
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: aFilters,
+            and: false
+        })
+    ];
+
+    console.log("OPPORTUNITY VH FILTER APPLIED for", sId, oBindingInfo.filters);
+};
+
+
     // Provide FilterField creation for Adaptation Filter panel in table p13n
     OpportunitiesTableDelegate.getFilterDelegate = function () {
         return {
@@ -335,6 +433,7 @@ sap.ui.define([
                 }));
             }
         };
+        
     };
 
     return OpportunitiesTableDelegate;

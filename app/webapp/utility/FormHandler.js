@@ -189,7 +189,11 @@ sap.ui.define([
                     // For now, just clear - Employees might use manual OHR IDs
                     sNextId = "";
                 } catch (e) {
-                    console.log("Could not generate next Employee ID");
+                    sap.m.MessageToast.show("Could not generate next Demand ID: " + e.message, {
+                        duration: 4000, // 4 seconds
+                        width: "20em"
+                    });
+
                 }
 
                 this.byId("inputDemandId")?.setValue(sNextId);
@@ -699,7 +703,7 @@ sap.ui.define([
                     oStateCombo.setEnabled(true);
                     // Ensure countryId is a number for filtering (same as onCountryChange handler)
                     const nCountryIdForFilter = Number(countryId);
-                    console.log("Binding states for country ID:", nCountryIdForFilter, "(original:", countryId + ")");
+
 
                     oStateCombo.bindItems({
                         path: "default>/CustomerStates",
@@ -727,8 +731,6 @@ sap.ui.define([
                             const aLoadedKeys = aValidItems.map(function (oItem) {
                                 return oItem.getKey();
                             });
-                            console.log("Loaded state keys for country " + countryId + ":", aLoadedKeys);
-                            console.log("Looking for state ID:", sStateId, "(type:", typeof sStateId + ")");
 
                             // Check if the state key exists in valid items - handle comma-formatted numbers
                             const bStateKeyExists = aValidItems.some(function (oItem) {
@@ -768,7 +770,7 @@ sap.ui.define([
                                 oCustomerModel.setProperty("/custStateId", sStateId);
                                 // Set selectedKey using the actual formatted key from the item
                                 oStateCombo.setSelectedKey(sActualKey);
-                                console.log("State ID " + sStateId + " successfully set (using key: " + sActualKey + ")");
+
 
                                 // Load cities for this state and country
                                 if (oCityCombo && sCityId && cityId) {
@@ -797,8 +799,6 @@ sap.ui.define([
                                         const aLoadedCityKeys = aValidCityItems.map(function (oItem) {
                                             return oItem.getKey();
                                         });
-                                        console.log("Loaded city keys for state " + stateId + ":", aLoadedCityKeys);
-                                        console.log("Looking for city ID:", sCityId);
 
                                         const bCityKeyExists = aValidCityItems.some(function (oItem) {
                                             // Get item key and remove commas/spaces (handle formatted numbers like "4,017")
@@ -834,7 +834,7 @@ sap.ui.define([
                                             oCustomerModel.setProperty("/custCityId", sCityId);
                                             // Set selectedKey using the actual formatted key from the item
                                             oCityCombo.setSelectedKey(sActualCityKey);
-                                            console.log("City ID " + sCityId + " successfully set (using key: " + sActualCityKey + ")");
+
                                         } else if (aValidCityItems.length > 0) {
                                             // Items loaded but key not found - might be invalid, stop retrying
                                             console.warn("City ID " + sCityId + " not found in loaded cities. Available keys:", aLoadedCityKeys);

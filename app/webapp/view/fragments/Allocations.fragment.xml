@@ -1,9 +1,13 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition  
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="allocationDynamicPage"
         fitContent="false"
@@ -35,57 +39,188 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        variantBackreference="allocationFilterBar"
                         filterConditions="{filterModel>/Allocations/conditions}"
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
-                        <mdc:filterItems>
-                            <!-- Project Name Filter -->
-                            <mdc:FilterField
-                                id="filterAllocationProjectName"
-                                label="Project Name"
-                                conditions="{filterModel>/Allocations/conditions/projectName}"
-                                propertyKey="projectName"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Project Type Filter -->
-                            <mdc:FilterField
-                                id="filterAllocationProjectType"
-                                label="Project Type"
-                                conditions="{filterModel>/Allocations/conditions/projectType}"
-                                propertyKey="projectType"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- SOW Received Filter -->
-                            <mdc:FilterField
-                                id="filterAllocationSOWReceived"
-                                label="SOW Received"
-                                conditions="{filterModel>/Allocations/conditions/SOWReceived}"
-                                propertyKey="SOWReceived"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                        </mdc:filterItems>
+                       <mdc:filterItems>
+
+    <!-- ============================
+         ALLOCATION → PROJECT NAME
+    ============================ -->
+    <mdc:FilterField
+        id="filterAllocationProjectName"
+        label="Project Name"
+        width="250px"
+        propertyKey="projectName"
+        maxConditions="-1"
+        conditions="{filterModel>/Allocations/conditions/projectName}"
+        valueHelp="vhAllocProjectName"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhAllocProjectName"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['projectName','projectType','SOWReceived'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgAllocProjectName" title="Select Project">
+                        <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                            <mdc:Table
+                                id="tblAllocProjectNameVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="allocationFilterBar"
+                                filterConditions="{filterModel>/Allocations/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/AllocationsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['projectName','projectType'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                              </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Project Name" propertyKey="projectName">
+                                        <Text text="{projectName}" />
+                                    </mdct:Column>
+
+                                    <mdct:Column header="Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+    <!-- ============================
+         ALLOCATION → PROJECT TYPE
+    ============================ -->
+    <mdc:FilterField
+        id="filterAllocationProjectType"
+        label="Project Type"
+        width="200px"
+        propertyKey="projectType"
+        maxConditions="-1"
+        conditions="{filterModel>/Allocations/conditions/projectType}"
+        valueHelp="vhAllocProjectType"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhAllocProjectType"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['projectType','projectName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgAllocProjectType" title="Select Project Type">
+                        <mdcvc:MDCTable keyPath="projectType" descriptionPath="projectType">
+                            <mdc:Table
+                                id="tblAllocProjectTypeVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="allocationFilterBar"
+                                filterConditions="{filterModel>/Allocations/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/AllocationsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['projectType','projectName'] }
+                                }"
+                            > <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Project Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+
+                                    <mdct:Column header="Project Name" propertyKey="projectName">
+                                        <Text text="{projectName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+    <!-- ============================
+         ALLOCATION → SOW RECEIVED
+    ============================ -->
+    <mdc:FilterField
+        id="filterAllocationSOWReceived"
+        label="SOW Received"
+        width="200px"
+        propertyKey="SOWReceived"
+        maxConditions="-1"
+        conditions="{filterModel>/Allocations/conditions/SOWReceived}"
+        valueHelp="vhAllocSOWReceived"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhAllocSOWReceived"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['SOWReceived','projectName','projectType'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgAllocSOWReceived" title="Select SOW Status">
+                        <mdcvc:MDCTable keyPath="SOWReceived" descriptionPath="SOWReceived">
+                            <mdc:Table
+                                id="tblAllocSOWReceivedVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                               
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="allocationFilterBar"
+                                filterConditions="{filterModel>/Allocations/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/AllocationsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['SOWReceived','projectName'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="SOW Received" propertyKey="SOWReceived">
+                                        <Text text="{SOWReceived}" />
+                                    </mdct:Column>
+
+                                    <mdct:Column header="Project Name" propertyKey="projectName">
+                                        <Text text="{projectName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+</mdc:filterItems>
+
                     </mdc:FilterBar>
                 </VBox>
             </layout:DynamicPageHeader>
@@ -112,7 +247,7 @@
                     liveChange="onAllocationSearch"
                     search="onAllocationSearch" />
             </Toolbar>
-            <ScrollContainer height="380px" vertical="true" horizontal="false">
+            <ScrollContainer height="220px" vertical="true" horizontal="false">
                 <mdc:Table
                     id="Allocations"
                     header="Projects"

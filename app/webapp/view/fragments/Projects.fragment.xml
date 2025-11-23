@@ -1,9 +1,13 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition 
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="projectDynamicPage"
         fitContent="false"
@@ -40,67 +44,239 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- SAP PID Filter -->
-                            <mdc:FilterField
-                                id="filterSapPId"
-                                label="Internal PID"
-                                conditions="{filterModel>/Projects/conditions/sapPId}"
-                                propertyKey="sapPId"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- SFDC PID Filter -->
-                            <mdc:FilterField
-                                id="filterSfdcPId"
-                                label="Actual PID"
-                                conditions="{filterModel>/Projects/conditions/sfdcPId}"
-                                propertyKey="sfdcPId"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Project Type Filter -->
-                            <mdc:FilterField
-                                id="filterProjectType"
-                                label="Project Type"
-                                conditions="{filterModel>/Projects/conditions/projectType}"
-                                propertyKey="projectType"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- SOW Received Filter -->
-                            <!-- <mdc:FilterField
-                                id="filterSOWReceived"
-                                label="SOW Received"
-                                conditions="{filterModel>/Projects/conditions/SOWReceived}"
-                                propertyKey="SOWReceived"
-                                maxConditions="-1"
-                                required="false"
-                                defaultOperator="EQ"
-                                width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            /> -->
-                        </mdc:filterItems>
+
+    <!-- ============================
+         INTERNAL PID (SAP PID)
+    ============================ -->
+    <mdc:FilterField
+        id="filterSapPId"
+        label="Internal PID"
+        width="200px"
+        propertyKey="sapPId"
+        maxConditions="-1"
+        conditions="{filterModel>/Projects/conditions/sapPId}"
+        valueHelp="vhSapPId"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSapPId"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['sapPId','sfdcPId','projectType'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSapPId" title="Select Internal PID">
+                        <mdcvc:MDCTable keyPath="sapPId" descriptionPath="sapPId">
+                            <mdc:Table
+                                id="tblSapPIdVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="projectFilterBar"
+                                filterConditions="{filterModel>/Projects/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/ProjectsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['sapPId','projectType'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Internal PID" propertyKey="sapPId">
+                                        <Text text="{sapPId}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Project Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+
+    <!-- ============================
+         SFDC PID (Actual PID)
+    ============================ -->
+    <mdc:FilterField
+        id="filterSfdcPId"
+        label="Actual PID"
+        width="200px"
+        propertyKey="sfdcPId"
+        maxConditions="-1"
+        conditions="{filterModel>/Projects/conditions/sfdcPId}"
+        valueHelp="vhSfdcPId"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSfdcPId"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['sfdcPId','sapPId','projectType'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSfdcPId" title="Select Actual PID">
+                        <mdcvc:MDCTable keyPath="sfdcPId" descriptionPath="sfdcPId">
+                            <mdc:Table
+                                id="tblSfdcPIdVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="projectFilterBar"
+                                filterConditions="{filterModel>/Projects/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/ProjectsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['sfdcPId','projectType'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Actual PID" propertyKey="sfdcPId">
+                                        <Text text="{sfdcPId}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Project Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+
+    <!-- ============================
+         PROJECT TYPE
+    ============================ -->
+    <mdc:FilterField
+        id="filterProjectType"
+        label="Project Type"
+        width="200px"
+        propertyKey="projectType"
+        maxConditions="-1"
+        conditions="{filterModel>/Projects/conditions/projectType}"
+        valueHelp="vhProjectType"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhProjectType"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['projectType','sapPId','sfdcPId'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgProjectType" title="Select Project Type">
+                        <mdcvc:MDCTable keyPath="projectType" descriptionPath="projectType">
+                            <mdc:Table
+                                id="tblProjectTypeVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="projectFilterBar"
+                                filterConditions="{filterModel>/Projects/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/ProjectsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['projectType'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Project Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Internal PID" propertyKey="sapPId">
+                                        <Text text="{sapPId}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+
+
+    <!-- ============================
+         SOW RECEIVED
+    ============================ -->
+    <mdc:FilterField
+        id="filterSOWReceived"
+        label="SOW Received"
+        width="200px"
+        propertyKey="SOWReceived"
+        maxConditions="-1"
+        conditions="{filterModel>/Projects/conditions/SOWReceived}"
+        valueHelp="vhSOWReceived"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhSOWReceived"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['SOWReceived','projectType'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgSOWReceived" title="Select SOW Status">
+                        <mdcvc:MDCTable keyPath="SOWReceived" descriptionPath="SOWReceived">
+                            <mdc:Table
+                                id="tblSOWReceivedVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="200"
+                                filter="projectFilterBar"
+                                filterConditions="{filterModel>/Projects/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/ProjectsTableDelegate',
+                                    payload: { collectionPath: 'Projects', searchKeys: ['SOWReceived'] }
+                                }"
+                            >  <mdc:type>
+                                <table:GridTableType rowCountMode="Auto" />
+                            </mdc:type> 
+                                <mdc:columns>
+                                    <mdct:Column header="SOW Received" propertyKey="SOWReceived">
+                                        <Text text="{SOWReceived}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Project Type" propertyKey="projectType">
+                                        <Text text="{projectType}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+    </mdc:FilterField>
+
+</mdc:filterItems>
+
                     </mdc:FilterBar>
                 </VBox>
             </layout:DynamicPageHeader>
@@ -288,7 +464,8 @@
                                         <items>
                                             <core:Item key="" text="Select Segment..." />
                                             <core:Item key="Data" text="Data" />
-                                            <core:Item key="TechAndAI" text="Tech And AI" />                                            
+                                            <core:Item key="Tech" text="Tech" />
+                                            <core:Item key="AI" text="AI" />                                           
                                         </items>
                                     </Select>
                                     <Label text="Vertical" />
