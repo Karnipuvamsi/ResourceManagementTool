@@ -296,7 +296,7 @@ sap.ui.define([
             this.getView().getModel("message").setData(oMessageManager.getMessageModel().getData());
 
             this._csvPayload = null;
-            await oMainModel.refresh();
+            // await oMainModel.refresh();
             oView.setBusy(false);
 
             sap.m.MessageToast.show(`📋 Upload complete: ${iSuccessCount} success, ${iFailureCount} failed`);

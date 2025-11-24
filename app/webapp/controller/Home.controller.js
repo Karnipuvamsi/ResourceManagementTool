@@ -2870,7 +2870,8 @@ sap.ui.define([
 
             // ✅ CRITICAL: Use correct entity name "Allocations"
             const oBinding = oModel.bindList("/Allocations", null, [], [], {
-                groupId: "changesGroup"
+                $$groupId: "changesGroup",
+                 $$updateGroupId: "changesGroup"
             });
 
             // ✅ Create all allocations in the batch
