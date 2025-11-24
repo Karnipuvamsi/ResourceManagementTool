@@ -1,125 +1,110 @@
+/**
+ * Master Demands FilterBar Delegate
+ * 
+ * Extends BaseFilterBarDelegate with entity-specific configurations.
+ * This delegate handles fragment name mapping and excluded properties for various filter bars.
+ */
+
 sap.ui.define([
-    "sap/ui/mdc/FilterBarDelegate",
-    "sap/ui/mdc/FilterField",
-    "sap/ui/core/Element"
-], function (FilterBarDelegate, FilterField, Element) {
+    "glassboard/delegate/BaseFilterBarDelegate"
+], function (BaseFilterBarDelegate) {
     "use strict";
 
-    const GenericFilterBarDelegate = Object.assign({}, FilterBarDelegate);
+    const MasterDemandsFilterBarDelegate = Object.assign({}, BaseFilterBarDelegate);
 
-    // Dynamically fetch properties from metadata
-    GenericFilterBarDelegate.fetchProperties = async function (oFilterBar) {
-        const oModel = oFilterBar.getModel("default");
-        const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
-        const oMetaModel = oModel.getMetaModel();
+    // ============================================
+    // ENTITY-SPECIFIC FRAGMENT NAME MAPPING
+    // ============================================
 
-        await oMetaModel.requestObject("/"); // Ensure metadata is loaded
-        const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
-        const oEntityType = oMetaModel.getObject(sEntityTypePath);
+    /**
+     * Override fragment name mapping to support additional entities
+     * @param {string} sFilterBarId - FilterBar ID
+     * @returns {string} Fragment name
+     */
+    MasterDemandsFilterBarDelegate._getFragmentName = function(sFilterBarId) {
+        // First try base delegate's mapping
+        const sBaseFragmentName = BaseFilterBarDelegate._getFragmentName.call(this, sFilterBarId);
+        if (sBaseFragmentName && sBaseFragmentName !== "Customers") {
+            return sBaseFragmentName;
+        }
 
-        const typeMap = {
-            "Edm.String": "sap.ui.model.odata.type.String",
-            "Edm.Int32": "sap.ui.model.odata.type.Int32",
-            "Edm.Boolean": "sap.ui.model.odata.type.Boolean",
-            "Edm.DateTimeOffset": "sap.ui.model.odata.type.DateTimeOffset",
-            "Edm.Date": "sap.ui.model.odata.type.Date",
-            "Edm.Decimal": "sap.ui.model.odata.type.Decimal",
-            "Edm.Double": "sap.ui.model.odata.type.Double",
-            "Edm.Guid": "sap.ui.model.odata.type.Guid"
+        // Additional mappings for more entities
+        if (sFilterBarId.includes("demandFilterBar") || 
+            sFilterBarId.includes("masterDemandFilterBar") || 
+            sFilterBarId.includes("masterDemandsFilterBar")) {
+            return "Demands";
+        } else if (sFilterBarId.includes("allocationFilterBar")) {
+            return "Allocations";
+        } else if (sFilterBarId.includes("employeeSkillFilterBar")) {
+            return "EmployeeSkills";
+        }
+
+        // Fallback to base delegate's default
+        return sBaseFragmentName || "Customers";
+    };
+
+    // ============================================
+    // ENTITY-SPECIFIC EXCLUDED PROPERTIES
+    // ============================================
+
+    /**
+     * Override excluded properties to support multiple entities
+     * @param {string} sEntitySet - Entity set name
+     * @returns {Array<string>} Array of property names to exclude
+     */
+    MasterDemandsFilterBarDelegate._getExcludedProperties = function(sEntitySet) {
+        // Get base excluded properties
+        const aBaseExcluded = BaseFilterBarDelegate._getExcludedProperties.call(this, sEntitySet);
+        
+        // Additional excluded properties for other entities
+        const mExcludedByEntity = {
+            "Customers": ["CustomerID"],
+            "Demands": [], // Add any excluded properties for Demands here
+            "Projects": [], // Add any excluded properties for Projects here
+            "Opportunities": [], // Add any excluded properties for Opportunities here
+            "Employees": [], // Add any excluded properties for Employees here
+            "Allocations": [], // Add any excluded properties for Allocations here
+            "EmployeeSkills": [] // Add any excluded properties for EmployeeSkills here
         };
 
-        const aProperties = [];
-
-        for (const sKey in oEntityType) {
-            if (sKey.startsWith("$")) continue;
-
-            const oProp = oEntityType[sKey];
-
-            // 🛑 EXCLUDE "CustomerID" PROPERTY FROM FILTERS
-            if (sKey === "CustomerID") {
-                console.log(`[Delegate] Skipping excluded property: ${sKey}`);
-                continue;
-            }
-
-            // Skip navigation properties
-            if (oProp.$isCollection || oProp.$Type?.startsWith("MyService.")) continue;
-
-            aProperties.push({
-                name: sKey,
-                label: sKey,
-                dataType: typeMap[oProp.$Type] || "sap.ui.model.odata.type.String",
-                maxConditions: -1,
-                required: false // Already non-mandatory
-            });
-        }
-
-        console.log("[Delegate] Properties fetched:", aProperties);
-        return aProperties;
+        const aEntityExcluded = mExcludedByEntity[sEntitySet] || [];
+        
+        // Combine and return unique excluded properties
+        return [...new Set([...aBaseExcluded, ...aEntityExcluded])];
     };
 
-    // Create FilterField dynamically
-    GenericFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
-        const sId = oFilterBar.getId() + "--filter--" + sPropertyName;
+    // ============================================
+    // ENTITY-SPECIFIC ADD ITEM (for custom labels)
+    // ============================================
 
-        if (Element.getElementById(sId)) {
-            return Element.getElementById(sId);
-        }
-
-        // ✅ Get fragment name from FilterBar ID to use correct model path
-        const sFilterBarId = oFilterBar.getId();
-        let sFragmentName = "Employees"; // Default
-        if (sFilterBarId.includes("customerFilterBar")) {
-            sFragmentName = "Customers";
-        } else if (sFilterBarId.includes("projectFilterBar")) {
-            sFragmentName = "Projects";
-        } else if (sFilterBarId.includes("opportunityFilterBar")) {
-            sFragmentName = "Opportunities";
-        } else if (sFilterBarId.includes("employeeFilterBar")) {
-            sFragmentName = "Employees";
-        }
+    /**
+     * Override addItem to provide custom labels for Demands properties
+     * This fixes the label mismatch warning and provides better labels
+     * @param {object} oFilterBar - MDC FilterBar instance
+     * @param {string} sPropertyName - Property name
+     * @returns {Promise<object>} Promise resolving to FilterField instance
+     */
+    MasterDemandsFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
+        // Call base implementation first
+        const oFilterField = await BaseFilterBarDelegate.addItem.call(this, oFilterBar, sPropertyName);
         
-        // ✅ Determine if property is a string type for case-insensitive filtering
-        let bIsString = false;
-        try {
-            const oModel = oFilterBar.getModel("default");
-            const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
-            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-            if (oMetaModel) {
-                const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
-                const oEntityType = oMetaModel.getObject(sEntityTypePath);
-                const oProp = oEntityType && oEntityType[sPropertyName];
-                if (oProp && oProp.$Type === "Edm.String") {
-                    bIsString = true;
-                }
+        // ✅ Fix labels for Demands properties to match table headers
+        const sFragmentName = this._getFragmentName(oFilterBar.getId());
+        if (sFragmentName === "Demands") {
+            const mCustomLabels = {
+                "sapPId": "SAP PID",
+                "band": "Band",
+                "skill": "Skill",
+                "quantity": "Quantity"
+            };
+            
+            if (mCustomLabels[sPropertyName]) {
+                oFilterField.setLabel(mCustomLabels[sPropertyName]);
             }
-        } catch (e) {
-            // If metadata check fails, default to treating as string for safety
-            bIsString = true;
         }
         
-        const oFilterFieldConfig = {
-            conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
-            propertyKey: sPropertyName,
-            label: sPropertyName,
-            maxConditions: -1,
-            delegate: {
-                name: "sap/ui/mdc/field/FieldBaseDelegate",
-                payload: {}
-            }
-        };
-        
-        // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
-        if (bIsString) {
-            oFilterFieldConfig.caseSensitive = false;
-        }
-        
-        return new FilterField(sId, oFilterFieldConfig);
+        return oFilterField;
     };
 
-    GenericFilterBarDelegate.removeItem = async function (oFilterBar, oFilterField) {
-        oFilterField.destroy();
-        return true;
-    };
-
-    return GenericFilterBarDelegate;
+    return MasterDemandsFilterBarDelegate;
 });
