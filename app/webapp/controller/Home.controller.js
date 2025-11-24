@@ -1012,7 +1012,7 @@ sap.ui.define([
                         // Define default filters for each report
                         let aDefaultFields = [];
                         if (sTableId === "EmployeeBenchReport") {
-                            aDefaultFields = ["employeeName", "status", "location"];
+                            aDefaultFields = ["ohrId", "band", "skills"];
                         } else if (sTableId === "EmployeeProbableReleaseReport") {
                             aDefaultFields = ["employeeName", "currentProject", "daysToRelease"];
                         } else if (sTableId === "RevenueForecastReport") {

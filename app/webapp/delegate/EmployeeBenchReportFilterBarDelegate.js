@@ -49,8 +49,14 @@ sap.ui.define([
     };
 
     // Create FilterField dynamically
-    EmployeeBenchReportFilterBarDelegate.addItem = function (oFilterBar, sPropertyName) {
+    EmployeeBenchReportFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
         const sId = oFilterBar.getId() + "--filter--" + sPropertyName;
+        
+        // Check if filter field already exists
+        if (Element.getElementById(sId)) {
+            return Element.getElementById(sId);
+        }
+        
         const sFragmentName = "EmployeeBenchReport";
         
         let bIsString = false;

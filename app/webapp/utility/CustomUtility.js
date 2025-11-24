@@ -574,7 +574,10 @@ sap.ui.define([
                 "projectFilterBar": "Projects",
                 "projectsFilterBar": "Projects", // ✅ Support both naming conventions
                 "resFilterBar": "Res", // ✅ NEW: Employee FilterBar in Res fragment (Allocations - Employees view)
-                "allocationFilterBar": "Allocations" // ✅ NEW: Project FilterBar in Allocations fragment (Allocations - Projects view)
+                "allocationFilterBar": "Allocations", // ✅ NEW: Project FilterBar in Allocations fragment (Allocations - Projects view)
+                "employeeBenchReportFilterBar": "EmployeeBenchReportTable", // ✅ NEW: Employee Bench Report FilterBar
+                "employeeAllocationReportFilterBar": "EmployeeAllocationReportTable", // ✅ NEW: Employee Allocation Report FilterBar
+                "revenueForecastReportFilterBar": "RevenueForecastReportTable" // ✅ NEW: Revenue Forecast Report FilterBar
                 // ✅ REMOVED: "verticalsFilterBar": "Verticals"
                 // Add more mappings as needed
             };

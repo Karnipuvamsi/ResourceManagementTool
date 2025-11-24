@@ -49,8 +49,14 @@ sap.ui.define([
     };
 
     // Create FilterField dynamically
-    RevenueForecastReportFilterBarDelegate.addItem = function (oFilterBar, sPropertyName) {
+    RevenueForecastReportFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
         const sId = oFilterBar.getId() + "--filter--" + sPropertyName;
+        
+        // ✅ Check if filter field already exists
+        if (Element.getElementById(sId)) {
+            return Element.getElementById(sId);
+        }
+        
         const sFragmentName = "RevenueForecastReport";
         
         let bIsString = false;

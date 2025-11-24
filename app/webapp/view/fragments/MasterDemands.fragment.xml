@@ -118,7 +118,7 @@
                                                         <!-- COLUMNS -->
                                                         <mdc:columns>
                                                             <mdct:Column
-                                                                id="VHcolSapPID"
+                                                                id="DemandVHcolSapPID"
                                                                 header="SAP PID"
                                                                 propertyKey="sapPId"
                                                             >
@@ -126,7 +126,7 @@
                                                             </mdct:Column>
 
                                                             <mdct:Column 
-                                                                id="VHcolProjectName"
+                                                                id="DemandVHcolProjectName"
                                                                 header="Project Name" 
                                                                 propertyKey="projectName"
                                                             >

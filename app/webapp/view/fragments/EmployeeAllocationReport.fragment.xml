@@ -1,8 +1,10 @@
 <core:FragmentDefinition xmlns:core="sap.ui.core"
                          xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
                          xmlns:mdc="sap.ui.mdc"
                          xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:mdcvh="sap.ui.mdc.valuehelp"
+                         xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+                         xmlns:table="sap.ui.mdc.table"
                          xmlns:layout="sap.f">
     <layout:DynamicPage
         id="employeeAllocationReportDynamicPage"
@@ -40,51 +42,290 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- Employee Name Filter -->
+                            <!-- Employee Name Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterAllocationEmployeeName"
                                 label="Employee Name"
-                                conditions="{filterModel>/EmployeeAllocationReport/conditions/employeeName}"
+                                width="250px"
                                 propertyKey="employeeName"
+                                display="Description"
+                                editMode="Editable"
+                                valueHelp="vhEmployeeName"
                                 maxConditions="-1"
                                 required="false"
                                 caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Current Project Filter -->
+                                conditions="{filterModel>/EmployeeAllocationReport/conditions/employeeName}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhEmployeeName"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['fullName', 'ohrId'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Employee">
+                                                <mdcvc:MTable
+                                                    keyPath="fullName"
+                                                    descriptionPath="fullName">
+                                                    <Table
+                                                        id="tblEmployeeTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Employees' }">
+                                                        <columns>
+                                                            <Column><Text text="Employee Name" /></Column>
+                                                            <Column><Text text="OHR ID" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{fullName}" />
+                                                                <Text text="{ohrId}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgEmployeeVH" title="Select Employee">
+                                                <mdcvc:MDCTable keyPath="fullName" descriptionPath="fullName">
+                                                    <mdc:Table
+                                                        id="tblEmployeeVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Employees',
+                                                                searchKeys: ['fullName', 'ohrId']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="AllocVHcolEmployeeName"
+                                                                header="Employee Name"
+                                                                propertyKey="fullName"
+                                                            >
+                                                                <Text text="{fullName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column 
+                                                                id="AllocVHcolOHRId"
+                                                                header="OHR ID" 
+                                                                propertyKey="ohrId"
+                                                            >
+                                                                <Text text="{ohrId}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
+
+                            <!-- Current Project Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterAllocationCurrentProject"
                                 label="Current Project"
-                                conditions="{filterModel>/EmployeeAllocationReport/conditions/currentProject}"
+                                width="250px"
                                 propertyKey="currentProject"
+                                display="Description"
+                                editMode="Editable"
+                                valueHelp="vhCurrentProject"
                                 maxConditions="-1"
                                 required="false"
                                 caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Customer Filter -->
+                                conditions="{filterModel>/EmployeeAllocationReport/conditions/currentProject}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhCurrentProject"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['projectName', 'sapPId'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Project">
+                                                <mdcvc:MTable
+                                                    keyPath="projectName"
+                                                    descriptionPath="projectName">
+                                                    <Table
+                                                        id="tblProjectTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Projects' }">
+                                                        <columns>
+                                                            <Column><Text text="Project Name" /></Column>
+                                                            <Column><Text text="SAP PID" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{projectName}" />
+                                                                <Text text="{sapPId}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgProjectVH" title="Select Project">
+                                                <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                                                    <mdc:Table
+                                                        id="tblProjectVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Projects',
+                                                                searchKeys: ['projectName', 'sapPId']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="AllocVHcolProjectName"
+                                                                header="Project Name"
+                                                                propertyKey="projectName"
+                                                            >
+                                                                <Text text="{projectName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column 
+                                                                id="AllocVHcolSapPID"
+                                                                header="SAP PID" 
+                                                                propertyKey="sapPId"
+                                                            >
+                                                                <Text text="{sapPId}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
+
+                            <!-- Customer Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterAllocationCustomer"
                                 label="Customer"
-                                conditions="{filterModel>/EmployeeAllocationReport/conditions/customer}"
+                                width="250px"
                                 propertyKey="customer"
+                                display="Description"
+                                editMode="Editable"
+                                valueHelp="vhCustomer"
                                 maxConditions="-1"
                                 required="false"
                                 caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                conditions="{filterModel>/EmployeeAllocationReport/conditions/customer}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhCustomer"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['customerName', 'vertical'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Customer">
+                                                <mdcvc:MTable
+                                                    keyPath="customerName"
+                                                    descriptionPath="customerName">
+                                                    <Table
+                                                        id="tblCustomerTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Customers' }">
+                                                        <columns>
+                                                            <Column><Text text="Customer Name" /></Column>
+                                                            <Column><Text text="Vertical" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{customerName}" />
+                                                                <Text text="{vertical}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgCustomerVH" title="Select Customer">
+                                                <mdcvc:MDCTable keyPath="customerName" descriptionPath="customerName">
+                                                    <mdc:Table
+                                                        id="tblCustomerVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Customers',
+                                                                searchKeys: ['customerName', 'vertical']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="AllocVHcolCustomerName"
+                                                                header="Customer Name"
+                                                                propertyKey="customerName"
+                                                            >
+                                                                <Text text="{customerName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column 
+                                                                id="AllocVHcolVertical"
+                                                                header="Vertical" 
+                                                                propertyKey="vertical"
+                                                            >
+                                                                <Text text="{vertical}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
                         </mdc:filterItems>
                     </mdc:FilterBar>
                 </VBox>

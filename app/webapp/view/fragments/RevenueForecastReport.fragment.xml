@@ -1,8 +1,10 @@
 <core:FragmentDefinition xmlns:core="sap.ui.core"
                          xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
                          xmlns:mdc="sap.ui.mdc"
                          xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:mdcvh="sap.ui.mdc.valuehelp"
+                         xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+                         xmlns:table="sap.ui.mdc.table"
                          xmlns:layout="sap.f">
     <layout:DynamicPage
         id="revenueForecastReportDynamicPage"
@@ -40,36 +42,196 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- Project Name Filter -->
+                            <!-- Project Name Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterRevenueForecastProjectName"
                                 label="Project Name"
-                                conditions="{filterModel>/RevenueForecastReport/conditions/projectName}"
+                                width="250px"
                                 propertyKey="projectName"
+                                display="Description"
+                                editMode="Editable"
+                                valueHelp="vhProjectName"
                                 maxConditions="-1"
                                 required="false"
                                 caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
-                            <!-- Customer Filter -->
+                                conditions="{filterModel>/RevenueForecastReport/conditions/projectName}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhProjectName"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['projectName', 'sapPId'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Project">
+                                                <mdcvc:MTable
+                                                    keyPath="projectName"
+                                                    descriptionPath="projectName">
+                                                    <Table
+                                                        id="tblProjectTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Projects' }">
+                                                        <columns>
+                                                            <Column><Text text="Project Name" /></Column>
+                                                            <Column><Text text="SAP PID" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{projectName}" />
+                                                                <Text text="{sapPId}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgProjectVH" title="Select Project">
+                                                <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                                                    <mdc:Table
+                                                        id="tblProjectVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/RevenueForecastReportTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Projects',
+                                                                searchKeys: ['projectName', 'sapPId']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="RevenueVHcolProjectName"
+                                                                header="Project Name"
+                                                                propertyKey="projectName"
+                                                            >
+                                                                <Text text="{projectName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column 
+                                                                id="RevenueVHcolSapPID"
+                                                                header="SAP PID" 
+                                                                propertyKey="sapPId"
+                                                            >
+                                                                <Text text="{sapPId}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
+
+                            <!-- Customer Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterRevenueForecastCustomer"
                                 label="Customer"
-                                conditions="{filterModel>/RevenueForecastReport/conditions/customer}"
+                                width="250px"
                                 propertyKey="customer"
+                                display="Description"
+                                editMode="Editable"
+                                valueHelp="vhCustomer"
                                 maxConditions="-1"
                                 required="false"
                                 caseSensitive="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                conditions="{filterModel>/RevenueForecastReport/conditions/customer}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhCustomer"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['customerName', 'vertical'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Customer">
+                                                <mdcvc:MTable
+                                                    keyPath="customerName"
+                                                    descriptionPath="customerName">
+                                                    <Table
+                                                        id="tblCustomerTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Customers' }">
+                                                        <columns>
+                                                            <Column><Text text="Customer Name" /></Column>
+                                                            <Column><Text text="Vertical" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{customerName}" />
+                                                                <Text text="{vertical}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgCustomerVH" title="Select Customer">
+                                                <mdcvc:MDCTable keyPath="customerName" descriptionPath="customerName">
+                                                    <mdc:Table
+                                                        id="tblCustomerVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/RevenueForecastReportTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Customers',
+                                                                searchKeys: ['customerName', 'vertical']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="RevenueVHcolCustomerName"
+                                                                header="Customer Name"
+                                                                propertyKey="customerName"
+                                                            >
+                                                                <Text text="{customerName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column 
+                                                                id="RevenueVHcolVertical"
+                                                                header="Vertical" 
+                                                                propertyKey="vertical"
+                                                            >
+                                                                <Text text="{vertical}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
+
                             <!-- Status Filter -->
                             <mdc:FilterField
                                 id="filterRevenueForecastStatus"

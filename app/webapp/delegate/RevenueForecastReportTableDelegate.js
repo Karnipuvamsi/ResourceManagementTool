@@ -54,11 +54,19 @@ sap.ui.define([
 
         const oModel = oTable.getModel();
         if (!oModel) {
+            console.warn("RevenueForecastReportTableDelegate: No model found on table");
             return Promise.resolve([]);
         }
 
         const oMetaModel = oModel.getMetaModel();
-        const sCollectionPath = "RevenueForecastReport";
+        if (!oMetaModel) {
+            console.warn("RevenueForecastReportTableDelegate: No meta model found");
+            return Promise.resolve([]);
+        }
+
+        // ✅ Get collection path from payload (supports value help contexts: Projects, Customers)
+        const sPath = oTable.getPayload()?.collectionPath || "RevenueForecastReport";
+        const sCollectionPath = sPath.replace(/^\//, "");
 
         return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
@@ -92,9 +100,11 @@ sap.ui.define([
                     }
                 });
 
+                console.log("RevenueForecastReportTableDelegate: Fetched", aProperties.length, "properties for", sCollectionPath);
                 return aProperties;
             })
             .catch(function (oError) {
+                console.error("RevenueForecastReportTableDelegate: Error fetching properties for", sCollectionPath, oError);
                 return [];
             });
     };
@@ -102,14 +112,61 @@ sap.ui.define([
     RevenueForecastReportTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         ODataTableDelegate.updateBindingInfo.apply(this, arguments);
 
-        oBindingInfo.path = "/RevenueForecastReport";
+        const sPath = oTable.getPayload()?.collectionPath || "RevenueForecastReport";
+        const sCollectionPath = sPath.replace(/^\//, "");
+        
+        oBindingInfo.path = "/" + sCollectionPath;
         oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
             $count: true
         });
+
+        // ✅ Handle value help search filtering (similar to CustomersTableDelegate)
+        // Get search text from the value help content
+        let sSearch = "";
+        try {
+            const oVH = oTable.getParent() && oTable.getParent().getParent && oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+            const aContent = oVH && oVH.getContent && oVH.getContent();
+            const oDialogContent = aContent && aContent[0];
+            sSearch = oDialogContent && oDialogContent.getSearch && oDialogContent.getSearch();
+        } catch (e) {
+            // Ignore errors
+        }
+
+        // ✅ Apply search filters if search text exists and table is in value help context (Projects or Customers)
+        // This must happen BEFORE filter processing to ensure search works in value help dialogs
+        if (sSearch && (sCollectionPath === "Projects" || sCollectionPath === "Customers")) {
+            // Get search keys from payload
+            const aSearchKeys = oTable.getPayload()?.searchKeys || [];
+            
+            if (aSearchKeys.length > 0) {
+                // Create case-insensitive search filters (similar to CustomersTableDelegate pattern)
+                const aSearchFilters = aSearchKeys.map((sKey) => {
+                    return new sap.ui.model.Filter({
+                        path: sKey,
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sSearch,
+                        caseSensitive: false
+                    });
+                });
+
+                // ✅ CRITICAL: Replace filters array directly (like CustomersTableDelegate) for value help context
+                // This ensures search works properly in value help dialogs and Go button works
+                oBindingInfo.filters = [
+                    new sap.ui.model.Filter({
+                        filters: aSearchFilters,
+                        and: false
+                    })
+                ];
+
+                console.log("✅ RevenueForecastReport ValueHelp search filter applied:", sSearch, "on keys:", aSearchKeys);
+                // ✅ Early return to prevent filter processing from interfering with value help search
+                return;
+            }
+        }
         
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
-        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
-            const sCollectionPath = "RevenueForecastReport";
+        // Only process filters for the main RevenueForecastReport table, not value help tables
+        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters) && sCollectionPath === "RevenueForecastReport") {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
             const fnMakeCaseInsensitive = (aFilters) => {
