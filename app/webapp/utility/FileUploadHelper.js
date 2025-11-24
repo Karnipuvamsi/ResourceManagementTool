@@ -140,7 +140,7 @@ sap.ui.define([
 
                         if (sHeaderDates.includes(sHeader)) {
                             
-                            if (sHeader === "") {
+                            if (aRow[iIndex]?.trim() === "") {
                                 oRecord[sHeader] = null;
                             } else {
                                 

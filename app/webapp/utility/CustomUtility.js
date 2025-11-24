@@ -48,7 +48,7 @@ sap.ui.define([
 
             const oBinding = oMessageModel.bindList("/");
 
-            console.log("oBinding",oBinding);
+            // console.log("oBinding",oBinding);
             
             oBinding.attachChange(() => {
                 this.updateMessageButtonIcon(this);
