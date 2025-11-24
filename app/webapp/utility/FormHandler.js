@@ -603,6 +603,12 @@ sap.ui.define([
                 this.getView().setModel(oCustomerModel, "customerModel");
             }
 
+            // ⬅️ Explicitly lift the default 100-item cap for list bindings on this model
+            if (typeof oCustomerModel.setSizeLimit === "function") {
+                oCustomerModel.setSizeLimit(5000); // adjust as needed (e.g., 2000, 10000)
+            }
+
+
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 // No selection - clear form for new entry
                 const oCustomerIdInput = this.byId("inputCustomerId");
@@ -710,6 +716,8 @@ sap.ui.define([
                         filters: [
                             new sap.ui.model.Filter("country_id", "EQ", nCountryIdForFilter)
                         ],
+                        length:1000,
+
                         template: new sap.ui.core.ListItem({
                             key: "{default>id}",
                             text: "{default>name}"
@@ -781,6 +789,8 @@ sap.ui.define([
                                             new sap.ui.model.Filter("state_id", "EQ", stateId),
                                             new sap.ui.model.Filter("country_id", "EQ", countryId)
                                         ],
+                                       length:1000,
+
                                         template: new sap.ui.core.ListItem({
                                             key: "{default>id}",
                                             text: "{default>name}"

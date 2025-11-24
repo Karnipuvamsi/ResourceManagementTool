@@ -1222,6 +1222,7 @@ sap.ui.define([
                 const oFormModel = this.getView().getModel(sModelName);
                 if (oFormModel) {
                     oFormModel.setData({});
+                    oFormModel.setSizeLimit(10000);
                 }
             });
 
@@ -9160,6 +9161,7 @@ sap.ui.define([
                     filters: [
                         new sap.ui.model.Filter("country_id", "EQ", Number(countryId))
                     ],
+                    length:1000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
@@ -9217,6 +9219,7 @@ sap.ui.define([
                         new sap.ui.model.Filter("state_id", "EQ", stateId),
                         new sap.ui.model.Filter("country_id", "EQ", countryId)
                     ],
+                    length:1000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"

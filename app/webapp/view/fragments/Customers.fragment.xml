@@ -340,9 +340,11 @@
                                 selectionChange="onCountryChange"
                                 width="100%"
                                 showClearIcon="true"
+                                
                                 items="{
                                     path: 'default>/CustomerCountries',
-                                    sorter: { path: 'name' }
+                                    sorter: [{ path: 'name' }],
+                                     length: 300
                                 }"
                             >
                                 <core:ListItem key="{default>id}" text="{default>name}" />
@@ -356,6 +358,14 @@
                                 width="100%"
                                 showClearIcon="true"
                                 enabled="false"
+                                  items="{
+                                    path: 'default>/CustomerStates',
+                                    sorter: [{ path: 'name' }],
+                                    length:2000
+                                     
+                                }"
+                                
+
                             >
                                 <core:ListItem key="" text="Select State..." />
                             </ComboBox>
@@ -368,6 +378,11 @@
                                 width="100%"
                                 showClearIcon="true"
                                 enabled="false"
+                                 items="{
+                                    path: 'default>/CustomerCities',
+                                    sorter: [{ path: 'name' }],
+                                    length:50000
+                                }"
                             >
                                 <core:ListItem key="" text="Select City..." />
                             </ComboBox>
