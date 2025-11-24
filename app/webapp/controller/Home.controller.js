@@ -467,7 +467,7 @@ sap.ui.define([
                             }
                         });
                         oProjectsPage.removeAllContent();
-            
+
                     }
                 }
 
@@ -2871,7 +2871,7 @@ sap.ui.define([
             // ✅ CRITICAL: Use correct entity name "Allocations"
             const oBinding = oModel.bindList("/Allocations", null, [], [], {
                 $$groupId: "changesGroup",
-                 $$updateGroupId: "changesGroup"
+                $$updateGroupId: "changesGroup"
             });
 
             // ✅ Create all allocations in the batch
@@ -4317,6 +4317,7 @@ sap.ui.define([
                     // Create filters if query exists
                     if (sQuery && sQuery.trim() !== "") {
                         const sQueryTrimmed = sQuery.trim();
+                        const isNumericQuery = /^\d+$/.test(sQueryTrimmed);
 
                         // Case-insensitive Contains filters using caseSensitive: false
                         const aFilters = [];
@@ -4335,19 +4336,26 @@ sap.ui.define([
                             caseSensitive: false
                         }));
 
-                        aFilters.push(new sap.ui.model.Filter({
-                            path: "country",
-                            operator: sap.ui.model.FilterOperator.Contains,
-                            value1: sQueryTrimmed,
-                            caseSensitive: false
-                        }));
+                        // aFilters.push(new sap.ui.model.Filter({
+                        //     path: "custCountryId",
+                        //     operator: sap.ui.model.FilterOperator.Contains,
+                        //     value1: sQueryTrimmed,
+                        //     caseSensitive: false
+                        // }));
 
-                        aFilters.push(new sap.ui.model.Filter({
-                            path: "state",
-                            operator: sap.ui.model.FilterOperator.Contains,
-                            value1: sQueryTrimmed,
-                            caseSensitive: false
-                        }));
+                        // aFilters.push(new sap.ui.model.Filter({
+                        //     path: "custStateId",
+                        //     operator: sap.ui.model.FilterOperator.Contains,
+                        //     value1: sQueryTrimmed,
+                        //     caseSensitive: false
+                        // }));
+
+                        //  aFilters.push(new sap.ui.model.Filter({
+                        //     path: "custCityId",
+                        //     operator: sap.ui.model.FilterOperator.Contains,
+                        //     value1: sQueryTrimmed,
+                        //     caseSensitive: false
+                        // }));
 
                         aFilters.push(new sap.ui.model.Filter({
                             path: "vertical",
@@ -4355,6 +4363,30 @@ sap.ui.define([
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
+
+
+                        // Numeric fields - use EQ only if query is numeric
+                        if (isNumericQuery) {
+                            const iVal = parseInt(sQueryTrimmed, 10);
+                            aFilters.push(new sap.ui.model.Filter({
+                                path: "custCountryId",
+                                operator: sap.ui.model.FilterOperator.EQ,
+                                value1: iVal
+                            }));
+
+                            aFilters.push(new sap.ui.model.Filter({
+                                path: "custStateId",
+                                operator: sap.ui.model.FilterOperator.EQ,
+                                value1: iVal
+                            }));
+
+                            aFilters.push(new sap.ui.model.Filter({
+                                path: "custCityId",
+                                operator: sap.ui.model.FilterOperator.EQ,
+                                value1: iVal
+                            }));
+                        }
+
 
                         // Combine with OR logic (search matches any field)
                         const oCombinedFilter = new sap.ui.model.Filter({
@@ -4391,6 +4423,7 @@ sap.ui.define([
                 }, 200);
             }
         },
+
 
         // ✅ NEW: Search function for Employee table
         onEmployeeSearch: function (oEvent) {
@@ -7247,7 +7280,7 @@ sap.ui.define([
             this.byId("inputLWD_emp")?.setValue("");
             this.byId("inputStatus_emp")?.setSelectedKey("");
             this.byId("inputUnit_emp")?.setSelectedKey("");
-            
+
 
             // Deselect any selected row
             const oTable = this.byId("Employees");
