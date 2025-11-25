@@ -116,16 +116,16 @@
                             text="Employee Bench Report"
                             icon="sap-icon://group"
                         />
-                        <tnt:NavigationListItem
+                        <!-- <tnt:NavigationListItem
                             key="employeeProbableReleaseReport"
                             text="Employee Probable Release Report"
                             icon="sap-icon://calendar"
-                        />
-                        <tnt:NavigationListItem
+                        /> -->
+                        <!-- <tnt:NavigationListItem
                             key="revenueForecastReport"
                             text="Revenue Forecast Report"
                             icon="sap-icon://money-bills"
-                        />
+                        /> -->
                         <tnt:NavigationListItem
                             key="employeeAllocationReport"
                             text="Employee Allocation Report"
@@ -136,11 +136,11 @@
                             text="Employee Skill Report"
                             icon="sap-icon://competencies"
                         />
-                        <tnt:NavigationListItem
+                        <!-- <tnt:NavigationListItem
                             key="projectsNearingCompletionReport"
                             text="Projects Nearing Completion Report"
                             icon="sap-icon://complete"
-                        />
+                        /> -->
                     </tnt:NavigationListGroup>
                 </tnt:NavigationList>
             </tnt:SideNavigation>

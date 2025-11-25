@@ -4,18 +4,18 @@ sap.ui.define([
     "sap/ui/core/Element"
 ], function (FilterBarDelegate, FilterField, Element) {
     "use strict";
-
+ 
     const EmployeeBenchReportFilterBarDelegate = Object.assign({}, FilterBarDelegate);
-
+ 
     EmployeeBenchReportFilterBarDelegate.fetchProperties = async function (oFilterBar) {
         const oModel = oFilterBar.getModel("default") || oFilterBar.getModel();
         const sEntitySet = "EmployeeBenchReport";
         const oMetaModel = oModel.getMetaModel();
-
+ 
         await oMetaModel.requestObject("/");
         const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
         const oEntityType = oMetaModel.getObject(sEntityTypePath);
-
+ 
         const typeMap = {
             "Edm.String": "sap.ui.model.odata.type.String",
             "Edm.Int32": "sap.ui.model.odata.type.Int32",
@@ -26,12 +26,12 @@ sap.ui.define([
             "Edm.Double": "sap.ui.model.odata.type.Double",
             "Edm.Guid": "sap.ui.model.odata.type.Guid"
         };
-
+ 
         const aProperties = [];
-
+ 
         for (const sKey in oEntityType) {
             if (sKey.startsWith("$")) continue;
-
+ 
             const oProperty = oEntityType[sKey];
             if (oProperty.$kind === "Property") {
                 const sType = oProperty.$Type || "Edm.String";
@@ -44,15 +44,21 @@ sap.ui.define([
                 });
             }
         }
-
+ 
         return aProperties;
     };
-
+ 
     // Create FilterField dynamically
-    EmployeeBenchReportFilterBarDelegate.addItem = function (oFilterBar, sPropertyName) {
+    EmployeeBenchReportFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
         const sId = oFilterBar.getId() + "--filter--" + sPropertyName;
+       
+        // Check if filter field already exists
+        if (Element.getElementById(sId)) {
+            return Element.getElementById(sId);
+        }
+       
         const sFragmentName = "EmployeeBenchReport";
-        
+       
         let bIsString = false;
         try {
             const oModel = oFilterBar.getModel("default") || oFilterBar.getModel();
@@ -69,7 +75,7 @@ sap.ui.define([
         } catch (e) {
             bIsString = true;
         }
-        
+       
         const oFilterFieldConfig = {
             conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
@@ -81,19 +87,19 @@ sap.ui.define([
                 payload: {}
             }
         };
-        
+       
         if (bIsString) {
             oFilterFieldConfig.caseSensitive = false;
         }
-        
+       
         return new FilterField(sId, oFilterFieldConfig);
     };
-
+ 
     EmployeeBenchReportFilterBarDelegate.removeItem = async function (oFilterBar, oFilterField) {
         oFilterField.destroy();
         return true;
     };
-
+ 
     return EmployeeBenchReportFilterBarDelegate;
 });
-
+ 

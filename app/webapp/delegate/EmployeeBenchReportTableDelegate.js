@@ -11,13 +11,16 @@ sap.ui.define([
     "sap/ui/core/Item"
 ], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
     "use strict";
-
+ 
     const EmployeeBenchReportTableDelegate = Object.assign({}, ODataTableDelegate);
-
+ 
+    // ✅ Property cache to prevent concurrent metadata requests
+    EmployeeBenchReportTableDelegate._mPropertyCache = {};
+ 
     EmployeeBenchReportTableDelegate.getSupportedP13nModes = function () {
         return ["Column", "Sort", "Filter", "Group"];
     };
-
+ 
     // Format property labels
     EmployeeBenchReportTableDelegate._formatPropertyLabel = function(sPropertyName) {
         // Custom header mapping for Employee Bench Report
@@ -33,11 +36,11 @@ sap.ui.define([
             "status": "Status",
             "daysOnBench": "Days On Bench"
         };
-
+ 
         if (mCustomHeaders[sPropertyName]) {
             return mCustomHeaders[sPropertyName];
         }
-
+ 
         // Smart fallback formatting
         return sPropertyName
             .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
@@ -46,35 +49,54 @@ sap.ui.define([
             .replace(/^./, str => str.toUpperCase())
             .trim();
     };
-
+ 
     EmployeeBenchReportTableDelegate.fetchProperties = function (oTable) {
-
+ 
         const oModel = oTable.getModel();
         if (!oModel) {
+            console.warn("EmployeeBenchReportTableDelegate: No model found on table");
             return Promise.resolve([]);
         }
-
+ 
         const oMetaModel = oModel.getMetaModel();
-        const sCollectionPath = "EmployeeBenchReport";
-
-        return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
+        if (!oMetaModel) {
+            console.warn("EmployeeBenchReportTableDelegate: No meta model found");
+            return Promise.resolve([]);
+        }
+ 
+        // ✅ Get collection path from payload (supports value help contexts: Employees)
+        const sPath = oTable.getPayload()?.collectionPath || "EmployeeBenchReport";
+        const sCollectionPath = sPath.replace(/^\//, "");
+ 
+        // ✅ CRITICAL: Check cache first - if properties are already fetched, return cached promise
+        if (EmployeeBenchReportTableDelegate._mPropertyCache[sCollectionPath]) {
+            return EmployeeBenchReportTableDelegate._mPropertyCache[sCollectionPath];
+        }
+ 
+        // ✅ CRITICAL: Create the promise first
+        const oPropertiesPromise = oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
             })
             .then(function (oEntityType) {
+                if (!oEntityType) {
+                    console.error("EmployeeBenchReportTableDelegate: Entity type not found for", sCollectionPath);
+                    return [];
+                }
+ 
                 const aProperties = [];
-
+ 
                 Object.keys(oEntityType).forEach(function (sPropertyName) {
                     if (sPropertyName.startsWith("$")) {
                         return;
                     }
-
+ 
                     const oProperty = oEntityType[sPropertyName];
-
+ 
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
                         const sType = oProperty.$Type || "Edm.String";
                         const sLabel = EmployeeBenchReportTableDelegate._formatPropertyLabel(sPropertyName);
-
+ 
                         aProperties.push({
                             name: sPropertyName,
                             path: sPropertyName,
@@ -88,25 +110,83 @@ sap.ui.define([
                         });
                     }
                 });
-
+ 
+                console.log("EmployeeBenchReportTableDelegate: Fetched", aProperties.length, "properties for", sCollectionPath);
                 return aProperties;
             })
             .catch(function (oError) {
+                console.error("EmployeeBenchReportTableDelegate: Error fetching properties for", sCollectionPath, oError);
+                // ✅ Remove from cache on error so it can be retried
+                delete EmployeeBenchReportTableDelegate._mPropertyCache[sCollectionPath];
+                // ✅ Return empty array instead of failing completely
                 return [];
             });
+ 
+        // ✅ CRITICAL: Cache the promise IMMEDIATELY to prevent race conditions
+        // This ensures concurrent requests share the same promise
+        EmployeeBenchReportTableDelegate._mPropertyCache[sCollectionPath] = oPropertiesPromise;
+       
+        return oPropertiesPromise;
     };
-
+ 
     EmployeeBenchReportTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         ODataTableDelegate.updateBindingInfo.apply(this, arguments);
-
-        oBindingInfo.path = "/EmployeeBenchReport";
+ 
+        const sPath = oTable.getPayload()?.collectionPath || "EmployeeBenchReport";
+        const sCollectionPath = sPath.replace(/^\//, "");
+       
+        oBindingInfo.path = "/" + sCollectionPath;
         oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
             $count: true
         });
-        
+ 
+        // ✅ Handle value help search filtering (similar to CustomersTableDelegate)
+        // Get search text from the value help content
+        let sSearch = "";
+        try {
+            const oVH = oTable.getParent() && oTable.getParent().getParent && oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+            const aContent = oVH && oVH.getContent && oVH.getContent();
+            const oDialogContent = aContent && aContent[0];
+            sSearch = oDialogContent && oDialogContent.getSearch && oDialogContent.getSearch();
+        } catch (e) {
+            // Ignore errors
+        }
+ 
+        // ✅ Apply search filters if search text exists and table is in value help context (Employees)
+        // This must happen BEFORE filter processing to ensure search works in value help dialogs
+        if (sSearch && sCollectionPath === "Employees") {
+            // Get search keys from payload
+            const aSearchKeys = oTable.getPayload()?.searchKeys || [];
+           
+            if (aSearchKeys.length > 0) {
+                // Create case-insensitive search filters (similar to CustomersTableDelegate pattern)
+                const aSearchFilters = aSearchKeys.map((sKey) => {
+                    return new sap.ui.model.Filter({
+                        path: sKey,
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sSearch,
+                        caseSensitive: false
+                    });
+                });
+ 
+                // ✅ CRITICAL: Replace filters array directly (like CustomersTableDelegate) for value help context
+                // This ensures search works properly in value help dialogs and Go button works
+                oBindingInfo.filters = [
+                    new sap.ui.model.Filter({
+                        filters: aSearchFilters,
+                        and: false
+                    })
+                ];
+ 
+                console.log("✅ EmployeeBenchReport ValueHelp search filter applied:", sSearch, "on keys:", aSearchKeys);
+                // ✅ Early return to prevent filter processing from interfering with value help search
+                return;
+            }
+        }
+       
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
-        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
-            const sCollectionPath = "EmployeeBenchReport";
+        // Only process filters for the main EmployeeBenchReport table, not value help tables
+        if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters) && sCollectionPath === "EmployeeBenchReport") {
             const oModel = oTable.getModel();
             const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
             const fnMakeCaseInsensitive = (aFilters) => {
@@ -227,20 +307,20 @@ sap.ui.define([
             oBindingInfo.filters = oOptimizedFilter || null;
         }
     };
-
+ 
     EmployeeBenchReportTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
             });
-
+ 
             if (!oProperty) {
                 return Promise.reject("Property not found: " + sPropertyName);
             }
-
+ 
             // Format label using the helper function
             const sLabel = EmployeeBenchReportTableDelegate._formatPropertyLabel(sPropertyName);
-
+ 
             return new Promise(function (resolve) {
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const oField = new Field({
@@ -248,7 +328,7 @@ sap.ui.define([
                         tooltip: sLabel,
                         editMode: "Display"
                     });
-
+ 
                     const oColumn = new Column({
                         id: oTable.getId() + "--col-" + sPropertyName,
                         dataProperty: sPropertyName,
@@ -256,27 +336,27 @@ sap.ui.define([
                         header: sLabel,
                         template: oField
                     });
-
+ 
                     resolve(oColumn);
                 });
             });
         });
     };
-
+ 
     EmployeeBenchReportTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
         if (oColumn) {
             oColumn.destroy();
         }
         return Promise.resolve(true);
     };
-
+ 
     EmployeeBenchReportTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
                 var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
                 var mPropertyBag = vArg3;
-
+ 
                 const sName =
                     (typeof vProperty === "string" && vProperty) ||
                     (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
@@ -285,7 +365,7 @@ sap.ui.define([
                 if (!sName) {
                     return Promise.reject("Invalid property for filter item");
                 }
-
+ 
                 let sDataType = "sap.ui.model.odata.type.String";
                 try {
                     const oModel = oTable.getModel();
@@ -308,7 +388,7 @@ sap.ui.define([
                         sDataType = mTypeMap[sEdmType] || sDataType;
                     }
                 } catch (e) { /* ignore */ }
-
+ 
                 return Promise.resolve(new FilterField({
                     label: sName,
                     propertyKey: sName,
@@ -318,7 +398,6 @@ sap.ui.define([
             }
         };
     };
-
+ 
     return EmployeeBenchReportTableDelegate;
 });
-
