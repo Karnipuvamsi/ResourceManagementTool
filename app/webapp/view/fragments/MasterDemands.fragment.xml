@@ -3,6 +3,9 @@
                          xmlns:f="sap.ui.layout.form"
                          xmlns:mdc="sap.ui.mdc"
                          xmlns:mdct="sap.ui.mdc.table"
+                         xmlns:mdcvh="sap.ui.mdc.valuehelp"
+                         xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+                         xmlns:table="sap.ui.mdc.table"
                          xmlns:layout="sap.f">
     <layout:DynamicPage
         id="masterDemandsDynamicPage"
@@ -10,7 +13,7 @@
         preserveHeaderStateOnScroll="false"
         headerExpanded="true"
         toggleHeaderOnTitleClick="false">
-        
+       
         <!-- Optional Page Title -->
         <layout:title>
             <layout:DynamicPageTitle>
@@ -19,7 +22,7 @@
                 </layout:heading>
             </layout:DynamicPageTitle>
         </layout:title>
-        
+       
         <!-- ========== FILTERBAR ========== -->
         <layout:header>
             <layout:DynamicPageHeader pinnable="false">
@@ -40,28 +43,111 @@
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
-                            <!-- Full Name Filter -->
+                            <!-- SAP PID Filter with Value Help -->
                             <mdc:FilterField
                                 id="filterSapPID"
                                 label="SAP PID"
-                                conditions="{filterModel>/Demands/conditions/sapPId}"
+                                width="250px"
                                 propertyKey="sapPId"
+                                display="Value"
+                                editMode="Editable"
+                                valueHelp="vhSapPID"
                                 maxConditions="-1"
                                 required="false"
-                                width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                conditions="{filterModel>/Demands/conditions/sapPId}"
+                            >
+                                <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhSapPID"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['sapPId', 'projectName'] }
+                                        }"
+                                    >
+                                        <!-- TYPEAHEAD -->
+                                        <mdc:typeahead>
+                                            <mdcvh:Popover title="Select Project">
+                                                <mdcvc:MTable
+                                                    keyPath="sapPId"
+                                                    descriptionPath="projectName">
+                                                    <Table
+                                                        id="tblProjectTypeahead"
+                                                        width="22rem"
+                                                        mode="MultiSelect"
+                                                        items="{ path: '/Projects' }">
+                                                        <columns>
+                                                            <Column><Text text="SAP PID" /></Column>
+                                                            <Column><Text text="Project Name" /></Column>
+                                                        </columns>
+                                                        <items>
+                                                            <ColumnListItem>
+                                                                <Text text="{sapPId}" />
+                                                                <Text text="{projectName}" />
+                                                            </ColumnListItem>
+                                                        </items>
+                                                    </Table>
+                                                </mdcvc:MTable>
+                                            </mdcvh:Popover>
+                                        </mdc:typeahead>
+ 
+                                        <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgProjectVH" title="Select Project">
+                                                <mdcvc:MDCTable keyPath="sapPId" descriptionPath="sapPId">
+                                                    <!-- DIALOG TABLE -->
+                                                    <mdc:Table
+                                                        id="tblProjectVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                        delegate="{
+                                                            name: 'glassboard/delegate/MasterDemandsTableDelegate',
+                                                            payload: {
+                                                                collectionPath: 'Projects',
+                                                                searchKeys: ['sapPId', 'projectName']
+                                                            }
+                                                        }"
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+ 
+                                                        <!-- COLUMNS -->
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="DemandVHcolSapPID"
+                                                                header="SAP PID"
+                                                                propertyKey="sapPId"
+                                                            >
+                                                                <Text text="{sapPId}" />
+                                                            </mdct:Column>
+ 
+                                                            <mdct:Column
+                                                                id="DemandVHcolProjectName"
+                                                                header="Project Name"
+                                                                propertyKey="projectName"
+                                                            >
+                                                                <Text text="{projectName}" />
+                                                            </mdct:Column>
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
                             <!-- Status Filter -->
-                            
+                           
                         </mdc:filterItems>
                     </mdc:FilterBar>
                 </VBox>
             </layout:DynamicPageHeader>
         </layout:header>
-        
+       
         <!-- ========== MAIN CONTENT ========== -->
         <layout:content>
             <VBox class="sapUiSmallMargin">
@@ -96,15 +182,15 @@
                             threshold="25"
                             enableExport="true"
                             enableAutoColumnWidth="false"
-                            filter="employeeFilterBar"
-                            filterConditions="{filterModel>/Employees/conditions}"
+                            filter="masterDemandsFilterBar"
+                            filterConditions="{filterModel>/Demands/conditions}"
                             selectionChange="onSelectionChange"
                             type="ResponsiveTable">
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>
                             <mdc:actions>
-                                <SegmentedButton 
+                                <SegmentedButton
                                     selectedKey="less"
                                     selectionChange="onToggleRowDetail"
                                     tooltip="Toggle Row Details">
@@ -126,10 +212,10 @@
                         </mdc:Table>
                     </ScrollContainer>
                 </Panel>
-                
+               
                 <!-- ===== SPACE BETWEEN TABLE AND FORM ===== -->
                 <HBox width="100%" class="extraSpace"><ToolbarSpacer /></HBox>
-                
+               
                 <!-- ===== FORM PANEL ===== -->
                 <Panel headerText="Demand Details" class="sapUiResponsiveMargin" expandable="false">
                       <headerToolbar>
@@ -159,9 +245,9 @@
                                     <Label text="Demand ID" />
                                     <Input id="inputDemandId" value="{demandModel>/demandId}" width="100%" enabled="false" visible="false"/>
                                     <Label text="Skills" />
-                                    <MultiComboBox 
-                                        id="inputSkills" 
-                                        width="100%" 
+                                    <MultiComboBox
+                                        id="inputSkills"
+                                        width="100%"
                                         placeholder="Select skills"
                                         selectionChange="onSkillsSelectionChange"
                                         items="{
@@ -187,10 +273,10 @@
                                             <core:Item key="Subcon" text="Subcon" />
                                         </items>
                                     </Select>
-                                    
+                                   
                                 </f:SimpleForm>
                             </VBox>
-                            
+                           
                             <!-- Right Column (7 fields) -->
                             <VBox width="50%" class="sapUiSmallMarginBegin">
                                 <f:SimpleForm
@@ -205,9 +291,9 @@
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
                                       <Label text="Project" />
-                                    <Input 
-                                        id="inputProject" 
-                                        value="{demandModel>/sapPId}" 
+                                    <Input
+                                        id="inputProject"
+                                        value="{demandModel>/sapPId}"
                                         width="100%"
                                         placeholder="Select Project"
                                         showValueHelp="true"
@@ -225,11 +311,13 @@
                                 </f:SimpleForm>
                             </VBox>
                         </HBox>
-                        
-                  
+                       
+                 
                     </VBox>
                 </Panel>                  
             </VBox>
         </layout:content>
     </layout:DynamicPage>
 </core:FragmentDefinition>
+ 
+ 
