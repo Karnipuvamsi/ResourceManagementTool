@@ -61,7 +61,8 @@ module.exports = cds.service.impl(async function() {
                 skills: emp.skills,
                 daysOnBench: emp.daysOnBench,
                 supervisor: emp.supervisorOHR,
-                email: emp.email
+                email: emp.email,
+                unit:emp.unit
             })),
             summary: {
                 benchByBand: Object.keys(benchByBand).map(band => ({

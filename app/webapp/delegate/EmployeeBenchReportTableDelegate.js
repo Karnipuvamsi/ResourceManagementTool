@@ -34,7 +34,7 @@ sap.ui.define([
             "supervisorOHR": "Supervisor OHR",
             "email": "Email",
             "status": "Status",
-            "daysOnBench": "Days On Bench"
+            "daysOnBench": "Bench Age"
         };
  
         if (mCustomHeaders[sPropertyName]) {

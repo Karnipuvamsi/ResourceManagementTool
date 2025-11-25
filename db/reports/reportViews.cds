@@ -18,12 +18,6 @@ select from db.Employee as e {
     key e.ohrId,
         e.fullName as employeeName,
         e.band,
-        e.employeeType,
-        e.location,
-        e.skills,
-        e.supervisorOHR,
-        e.mailid as email,
-        e.status,
         // Calculate days on bench
         cast(
             case 
@@ -36,7 +30,15 @@ select from db.Employee as e {
                 else 0
             end
             as Integer
-        ) as daysOnBench
+        ) as daysOnBench,
+        e.unit,
+        e.employeeType,
+        e.location,
+        e.skills,
+        e.supervisorOHR,
+        e.mailid as email,
+        e.status,
+
 }
 where e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated');
 
