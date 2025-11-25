@@ -1,16 +1,20 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition  
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="employeeSkillReportDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="false"
         headerExpanded="true"
         toggleHeaderOnTitleClick="false">
-        
+       
         <layout:title>
             <layout:DynamicPageTitle>
                 <layout:heading>
@@ -18,7 +22,7 @@
                 </layout:heading>
             </layout:DynamicPageTitle>
         </layout:title>
-        
+       
         <layout:header>
             <layout:DynamicPageHeader pinnable="false">
                 <VBox class="sapUiTinyMargin">
@@ -33,9 +37,6 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
-                        variantBackreference="employeeSkillReportFilterBar"
                         filterConditions="{filterModel>/EmployeeSkillReport/conditions}"
                         p13nMode="Item,Value">
                         <!-- Static filter items - Default filters -->
@@ -48,13 +49,67 @@
                                 propertyKey="skillName"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
+                                display="Description"
                                 width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                editMode="Editable"
+                                valueHelp="vhSkill"
+                               
+                            >
+                             <mdc:dependents>
+                                    <mdc:ValueHelp
+                                        id="vhSkill"
+                                        delegate="{
+                                            name: 'glassboard/delegate/SearchValueHelpDelegate',
+                                            payload: { searchKeys: ['skillName', 'category'] }
+                                        }"
+                                    >
+                                    <!-- DIALOG -->
+                                        <mdc:dialog>
+                                            <mdcvh:Dialog id="dlgSkill" title="Select Skill ">
+                                                <mdcvc:MDCTable keyPath="skillName" descriptionPath="skillName">
+                                                    <mdc:Table
+                                                        id="tbSkillVH"
+                                                        autoBindOnInit="true"
+                                                        width="100%"
+                                                        selectionMode="Multi"
+                                                        p13nMode="Column,Sort"
+                                                        enableAutoColumnWidth="true"
+                                                        threshold="200"
+                                                          delegate='{
+                                "name": "glassboard/delegate/EmployeeSkillReportTableDelegate",
+                                "payload": {
+                                    "collectionPath": "EmployeeSkillReport"
+                                }
+                            }'
+ 
+                                                    >
+                                                        <mdc:type>
+                                                            <table:GridTableType rowCountMode="Auto" />
+                                                        </mdc:type>
+                                                        <mdc:columns>
+                                                            <mdct:Column
+                                                                id="BenchVHSkill"
+                                                                header="Skill"
+                                                                propertyKey="skillName"
+                                                            >
+                                                                <Text text="{skillName}" />
+                                                            </mdct:Column>
+                                                            <mdct:Column
+                                                                id="BenchVHCat"
+                                                                header="Category"
+                                                                propertyKey="category"
+                                                            >
+                                                                <Text text="{category}" />
+                                                            </mdct:Column>
+                                                           
+                                                        </mdc:columns>
+                                                    </mdc:Table>
+                                                </mdcvc:MDCTable>
+                                            </mdcvh:Dialog>
+                                        </mdc:dialog>
+                                    </mdc:ValueHelp>
+                                </mdc:dependents>
+                            </mdc:FilterField>
                             <!-- Category Filter -->
                             <mdc:FilterField
                                 id="filterSkillReportCategory"
@@ -75,7 +130,7 @@
                 </VBox>
             </layout:DynamicPageHeader>
         </layout:header>
-        
+       
         <layout:content>
             <VBox class="sapUiSmallMargin">
                 <Panel class="sapUiResponsiveMargin" expandable="false">
@@ -101,12 +156,12 @@
                             enableAutoColumnWidth="false"
                             filter="employeeSkillReportFilterBar"
                             filterConditions="{filterModel>/EmployeeSkillReport/conditions}">
-                            
+                           
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>
                             <mdc:actions>
-                                <SegmentedButton 
+                                <SegmentedButton
                                     selectedKey="less"
                                     selectionChange="onToggleRowDetail"
                                     tooltip="Toggle Row Details">
@@ -123,4 +178,3 @@
         </layout:content>
     </layout:DynamicPage>
 </core:FragmentDefinition>
-

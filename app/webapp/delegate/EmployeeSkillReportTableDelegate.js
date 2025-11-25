@@ -11,13 +11,13 @@ sap.ui.define([
     "sap/ui/core/Item"
 ], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
     "use strict";
-
+ 
     const EmployeeSkillReportTableDelegate = Object.assign({}, ODataTableDelegate);
-
+ 
     EmployeeSkillReportTableDelegate.getSupportedP13nModes = function () {
         return ["Column", "Sort", "Filter", "Group"];
     };
-
+ 
     // Format property labels
     EmployeeSkillReportTableDelegate._formatPropertyLabel = function(sPropertyName) {
         // Custom header mapping for Employee Skill Report
@@ -29,11 +29,11 @@ sap.ui.define([
             "availableEmployees": "Available Employees",
             "allocatedEmployees": "Allocated Employees"
         };
-
+ 
         if (mCustomHeaders[sPropertyName]) {
             return mCustomHeaders[sPropertyName];
         }
-
+ 
         // Smart fallback formatting
         return sPropertyName
             .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
@@ -42,35 +42,35 @@ sap.ui.define([
             .replace(/^./, str => str.toUpperCase())
             .trim();
     };
-
+ 
     EmployeeSkillReportTableDelegate.fetchProperties = function (oTable) {
-
+ 
         const oModel = oTable.getModel();
         if (!oModel) {
             return Promise.resolve([]);
         }
-
+ 
         const oMetaModel = oModel.getMetaModel();
         const sCollectionPath = "EmployeeSkillReport";
-
+ 
         return oMetaModel.requestObject(`/${sCollectionPath}/$Type`)
             .then(function (sEntityTypePath) {
                 return oMetaModel.requestObject(`/${sEntityTypePath}/`);
             })
             .then(function (oEntityType) {
                 const aProperties = [];
-
+ 
                 Object.keys(oEntityType).forEach(function (sPropertyName) {
                     if (sPropertyName.startsWith("$")) {
                         return;
                     }
-
+ 
                     const oProperty = oEntityType[sPropertyName];
-
+ 
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
                         const sType = oProperty.$Type || "Edm.String";
                         const sLabel = EmployeeSkillReportTableDelegate._formatPropertyLabel(sPropertyName);
-
+ 
                         aProperties.push({
                             name: sPropertyName,
                             path: sPropertyName,
@@ -84,22 +84,22 @@ sap.ui.define([
                         });
                     }
                 });
-
+ 
                 return aProperties;
             })
             .catch(function (oError) {
                 return [];
             });
     };
-
+ 
     EmployeeSkillReportTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         ODataTableDelegate.updateBindingInfo.apply(this, arguments);
-
+ 
         oBindingInfo.path = "/EmployeeSkillReport";
         oBindingInfo.parameters = Object.assign(oBindingInfo.parameters || {}, {
             $count: true
         });
-        
+       
         // ✅ Process filters: group by field, combine same field with OR, different fields with AND
         if (oBindingInfo.filters && Array.isArray(oBindingInfo.filters)) {
             const sCollectionPath = "EmployeeSkillReport";
@@ -222,21 +222,63 @@ sap.ui.define([
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
         }
-    };
-
+ 
+           // get search text from the value help content
+    let sSearch = "";
+    try {
+        const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+        const aContent = oVH && oVH.getContent && oVH.getContent();
+        const oDialogContent = aContent && aContent[0];
+        sSearch = oDialogContent && oDialogContent.getSearch && oDialogContent.getSearch();
+    } catch (e) {}
+ 
+    // fallback to FilterBar if needed
+    if (!sSearch) {
+        const oFilterBar = sap.ui.getCore().byId("vhSkill");
+        if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
+    }
+ 
+    // nothing typed → don't apply search
+    if (!sSearch) return;
+ 
+    // CASE-SENSITIVE FILTERS
+    oBindingInfo.filters = [
+        new sap.ui.model.Filter({
+            filters: [
+                new sap.ui.model.Filter({
+                    path: "skillName",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "category",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ],
+            and: false
+        })
+    ];
+ 
+    console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
+};
+   
+ 
     EmployeeSkillReportTableDelegate.addItem = function (oTable, sPropertyName, mPropertyBag) {
         return this.fetchProperties(oTable).then(function (aProperties) {
             const oProperty = aProperties.find(function (p) {
                 return p.name === sPropertyName || p.path === sPropertyName;
             });
-
+ 
             if (!oProperty) {
                 return Promise.reject("Property not found: " + sPropertyName);
             }
-
+ 
             // Format label using the helper function
             const sLabel = EmployeeSkillReportTableDelegate._formatPropertyLabel(sPropertyName);
-
+ 
             return new Promise(function (resolve) {
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const oField = new Field({
@@ -244,7 +286,7 @@ sap.ui.define([
                         tooltip: sLabel,
                         editMode: "Display"
                     });
-
+ 
                     const oColumn = new Column({
                         id: oTable.getId() + "--col-" + sPropertyName,
                         dataProperty: sPropertyName,
@@ -252,27 +294,27 @@ sap.ui.define([
                         header: sLabel,
                         template: oField
                     });
-
+ 
                     resolve(oColumn);
                 });
             });
         });
     };
-
+ 
     EmployeeSkillReportTableDelegate.removeItem = function (oTable, oColumn, mPropertyBag) {
         if (oColumn) {
             oColumn.destroy();
         }
         return Promise.resolve(true);
     };
-
+ 
     EmployeeSkillReportTableDelegate.getFilterDelegate = function () {
         return {
             addItem: function (vArg1, vArg2, vArg3) {
                 var oTable = (vArg1 && typeof vArg1.isA === "function" && vArg1.isA("sap.ui.mdc.Table")) ? vArg1 : vArg2;
                 var vProperty = (oTable === vArg1) ? vArg2 : vArg1;
                 var mPropertyBag = vArg3;
-
+ 
                 const sName =
                     (typeof vProperty === "string" && vProperty) ||
                     (vProperty && (vProperty.name || vProperty.path || vProperty.key)) ||
@@ -281,7 +323,7 @@ sap.ui.define([
                 if (!sName) {
                     return Promise.reject("Invalid property for filter item");
                 }
-
+ 
                 let sDataType = "sap.ui.model.odata.type.String";
                 try {
                     const oModel = oTable.getModel();
@@ -304,7 +346,7 @@ sap.ui.define([
                         sDataType = mTypeMap[sEdmType] || sDataType;
                     }
                 } catch (e) { /* ignore */ }
-
+ 
                 return Promise.resolve(new FilterField({
                     label: sName,
                     propertyKey: sName,
@@ -314,7 +356,12 @@ sap.ui.define([
             }
         };
     };
-
+ 
+ 
+ 
+ 
     return EmployeeSkillReportTableDelegate;
 });
-
+ 
+ 
+ 
