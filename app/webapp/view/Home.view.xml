@@ -163,7 +163,7 @@
                                 <Text id="_IDGenText10" text="{homeCounts>/allocatedCount}" class="myCardValue"/>
                             </VBox>
                             <VBox id="_IDGenVBox510" class="totalHeadC Card">
-                                <Text id="_IDGenText59" text="Bench Count" class="myCardTitle"/>
+                                <Link id="_IDGenText59" text="Bench Count" class="myCardTitle" press="onBenchTilePress"/>
                                 <Text id="_IDGenText150" text="{homeCounts>/benchCount}" class="myCardValue"/>
                             </VBox>
                         </HBox>

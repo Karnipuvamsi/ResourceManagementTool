@@ -346,7 +346,8 @@ module.exports = cds.service.impl(async function () {
                 
                 // Get current percentage from field (default to 0 if null/undefined)
                 const iCurrentTotal = oEmployee.empallocpercentage || 0;
-                const iNewTotal = iCurrentTotal + iNewPercentage;
+                // const iNewTotal = iCurrentTotal + iNewPercentage;
+                const iNewTotal = parseInt(iCurrentTotal) + parseInt(iNewPercentage);
                 
                 
                 if (iNewTotal > 100) {

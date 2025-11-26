@@ -9161,7 +9161,7 @@ sap.ui.define([
                     filters: [
                         new sap.ui.model.Filter("country_id", "EQ", Number(countryId))
                     ],
-                    length:1000,
+                    length: 1000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
@@ -9219,7 +9219,7 @@ sap.ui.define([
                         new sap.ui.model.Filter("state_id", "EQ", stateId),
                         new sap.ui.model.Filter("country_id", "EQ", countryId)
                     ],
-                    length:1000,
+                    length: 1000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
@@ -9410,6 +9410,24 @@ sap.ui.define([
                 return "0%";
             }
             return iValue + "%";
+        },
+        onBenchTilePress: function () {
+
+            sap.m.MessageToast.show("Bench Tile Clicked!");
+            console.log("Bench Tile");
+
+            // Navigate to Bench Report Page
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+            // Load the Bench Report Fragment into the Bench Report Page
+            let oLogButton = this.byId("uploadLogButton"); // Optional button
+            this._loadReportFragment(
+                "employeeBenchReportPage",    // Target Page ID
+                "EmployeeBenchReport",        // Fragment Name
+                "EmployeeBenchReport",        // Table ID prefix (your function adds 'Table')
+                oLogButton
+            );
         }
 
     });
