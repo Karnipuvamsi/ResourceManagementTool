@@ -102,7 +102,7 @@
                                                         selectionMode="Multi"
                                                         p13nMode="Column,Sort"
                                                         enableAutoColumnWidth="true"
-                                                        threshold="200"
+                                                        threshold="20"
                                                         delegate="{
                                                             name: 'glassboard/delegate/MasterDemandsTableDelegate',
                                                             payload: {

@@ -118,7 +118,7 @@
                                     selectionMode="Multi"
                                     p13nMode="Column,Sort"
                                     enableAutoColumnWidth="true"
-                                    threshold="200"
+                                    threshold="20"
                                     filter="customerFilterBar"
                                     filterConditions="{filterModel>/Customers/conditions}"
                                     delegate="{
@@ -194,7 +194,7 @@
                             selectionMode="Multi"
                             p13nMode="Column,Sort"
                             enableAutoColumnWidth="true"
-                            threshold="200"
+                            threshold="20"
                             filter="customerFilterBar"
                             filterConditions="{filterModel>/Customers/conditions}"
                             delegate="{
@@ -272,7 +272,7 @@
                         }
                     }'
                     showRowCount="true"
-                    threshold="1000"
+                    threshold="20"
                     enableExport="true"
                     enableAutoColumnWidth="false"
                     filter="customerFilterBar"

@@ -101,7 +101,7 @@
                                                         selectionMode="Multi"
                                                         p13nMode="Column,Sort"
                                                         enableAutoColumnWidth="true"
-                                                        threshold="200"
+                                                        threshold="20"
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
@@ -196,7 +196,7 @@
                                                         selectionMode="Multi"
                                                         p13nMode="Column,Sort"
                                                         enableAutoColumnWidth="true"
-                                                        threshold="200"
+                                                        threshold="20"
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
@@ -291,7 +291,7 @@
                                                         selectionMode="Multi"
                                                         p13nMode="Column,Sort"
                                                         enableAutoColumnWidth="true"
-                                                        threshold="200"
+                                                        threshold="20"
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
@@ -352,7 +352,7 @@
                                 }
                             }'
                             showRowCount="true"
-                            threshold="1000"
+                            threshold="20"
                             enableExport="true"
                             enableAutoColumnWidth="false"
                             filter="employeeAllocationReportFilterBar"

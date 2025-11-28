@@ -74,7 +74,7 @@
                                 width="100%"
                                 p13nMode="Column,Sort"
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="employeeFilterBar"
                                 filterConditions="{filterModel>/Employees/conditions}"
                                 delegate="{
@@ -133,7 +133,7 @@
                                 width="100%"
                                  p13nMode="Column,Sort"
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="employeeFilterBar"
                                 filterConditions="{filterModel>/Employees/conditions}"
                                 delegate="{
@@ -191,7 +191,7 @@
                                 selectionMode="Multi"
                                  p13nMode="Column,Sort"
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="employeeFilterBar"
                                 filterConditions="{filterModel>/Employees/conditions}"
                                 width="100%"

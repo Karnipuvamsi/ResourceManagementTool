@@ -39,7 +39,7 @@
                         }
                     }'
                     showRowCount="true"
-                    threshold="1000"
+                    threshold="20"
                     enableExport="true"
                     enableAutoColumnWidth="false"
                     selectionChange="onSelectionChange">

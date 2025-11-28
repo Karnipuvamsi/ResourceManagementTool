@@ -72,7 +72,7 @@
                                 autoBindOnInit="true"
                                 selectionMode="Multi"
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="allocationFilterBar"
                                 filterConditions="{filterModel>/Allocations/conditions}"
                                 width="100%"
@@ -131,7 +131,7 @@
                                 selectionMode="Multi"
                                 
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="allocationFilterBar"
                                 filterConditions="{filterModel>/Allocations/conditions}"
                                 width="100%"
@@ -190,7 +190,7 @@
                                 selectionMode="Multi"
                                
                                 enableAutoColumnWidth="true"
-                                threshold="200"
+                                threshold="20"
                                 filter="allocationFilterBar"
                                 filterConditions="{filterModel>/Allocations/conditions}"
                                 width="100%"
@@ -264,7 +264,7 @@
                         }
                     }'
                     showRowCount="true"
-                    threshold="1000"
+                    threshold="20"
                     enableExport="true"
                     enableAutoColumnWidth="false"
                             filter="allocationFilterBar"
