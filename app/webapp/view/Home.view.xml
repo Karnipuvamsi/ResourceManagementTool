@@ -152,7 +152,7 @@
                 initialPage="root1"
             >
                 <pages>
-                   <Page id="root1" showHeader="false">
+                   <Page id="root1" showHeader="false" visible="true">
                         <HBox id="_IDGenHBox7" justifyContent="Start" alignItems="Start">
                             <VBox id="_IDGenVBox170" class="benchC Card">
                                 <Text id="_IDGenText95" text="Total Head Count" class="myCardTitle"/>
@@ -201,54 +201,66 @@
                     <Page
                         id="customersPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="opportunitiesPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="projectsPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="demandsPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="employeesPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <!-- ✅ REMOVED: <Page id="verticalsPage" title="Verticals" /> (Vertical is now an enum) -->
                     <Page
                         id="allocationPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <!-- <Page id="requirementsPage" title="Requirements" /> -->
                     <!-- Report Pages -->
                     <Page
                         id="employeeBenchReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="employeeProbableReleaseReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="revenueForecastReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="employeeAllocationReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="employeeSkillReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                     <Page
                         id="projectsNearingCompletionReportPage"
                         showHeader="false"
-                    />
+                    >
+                    </Page>
                 </pages>
             </NavContainer>
         </tnt:mainContents>

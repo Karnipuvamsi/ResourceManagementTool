@@ -81,7 +81,8 @@ sap.ui.define([
      * @returns {Promise<Array>} Promise resolving to array of property definitions
      */
     BaseFilterBarDelegate.fetchProperties = async function (oFilterBar) {
-        const oModel = oFilterBar.getModel("default");
+        
+        const oModel = oFilterBar.getModel("default") ;
         const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
         const oMetaModel = oModel.getMetaModel();
 

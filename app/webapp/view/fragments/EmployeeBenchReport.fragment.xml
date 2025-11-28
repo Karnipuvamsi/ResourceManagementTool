@@ -61,36 +61,10 @@
                                         id="vhOHRId"
                                         delegate="{
                                             name: 'glassboard/delegate/SearchValueHelpDelegate',
-                                            payload: { searchKeys: ['ohrId', 'fullName', 'band'] }
+                                            payload: { searchKeys: ['ohrId', 'employeeName', 'band'] }
                                         }"
                                     >
-                                        <!-- TYPEAHEAD -->
-                                        <mdc:typeahead>
-                                            <mdcvh:Popover title="Select OHR ID">
-                                                <mdcvc:MTable
-                                                    keyPath="ohrId"
-                                                    descriptionPath="ohrId">
-                                                    <Table
-                                                        id="tblOHRIdTypeahead"
-                                                        width="22rem"
-                                                        mode="MultiSelect"
-                                                        items="{ path: '/Employees' }">
-                                                        <columns>
-                                                            <Column><Text text="OHR ID" /></Column>
-                                                            <Column><Text text="Employee Name" /></Column>
-                                                            <Column><Text text="Band" /></Column>
-                                                        </columns>
-                                                        <items>
-                                                            <ColumnListItem>
-                                                                <Text text="{ohrId}" />
-                                                                <Text text="{fullName}" />
-                                                                <Text text="{band}" />
-                                                            </ColumnListItem>
-                                                        </items>
-                                                    </Table>
-                                                </mdcvc:MTable>
-                                            </mdcvh:Popover>
-                                        </mdc:typeahead>
+
  
                                         <!-- DIALOG -->
                                         <mdc:dialog>
@@ -107,8 +81,8 @@
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeBenchReportTableDelegate',
                                                             payload: {
-                                                                collectionPath: 'Employees',
-                                                                searchKeys: ['ohrId', 'fullName', 'band']
+                                                                collectionPath: 'EmployeeBenchReport',
+                                                                searchKeys: ['ohrId', 'employeeName', 'band']
                                                             }
                                                         }"
                                                     >
@@ -126,9 +100,9 @@
                                                             <mdct:Column
                                                                 id="BenchVHcolFullName"
                                                                 header="Employee Name"
-                                                                propertyKey="fullName"
+                                                                propertyKey="employeeName"
                                                             >
-                                                                <Text text="{fullName}" />
+                                                                <Text text="{employeeName}" />
                                                             </mdct:Column>
                                                             <mdct:Column
                                                                 id="BenchVHcolBand"
@@ -177,7 +151,7 @@
                                                         width="100%"
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeBenchReportTableDelegate',
-                                                            payload: { collectionPath: 'Employees', searchKeys: ['band', 'ohrId', 'skills'] }
+                                                            payload: { collectionPath: 'EmployeeBenchReport', searchKeys: ['band', 'ohrId', 'skills'] }
                                                         }"
                                                     >
                                                         <mdc:type>
@@ -233,7 +207,7 @@
                                                         width="100%"
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeBenchReportTableDelegate',
-                                                            payload: { collectionPath: 'Employees', searchKeys: ['skills', 'ohrId', 'band'] }
+                                                            payload: { collectionPath: 'EmployeeBenchReport', searchKeys: ['skills', 'ohrId', 'band'] }
                                                         }"
                                                     >
                                                         <mdc:type>

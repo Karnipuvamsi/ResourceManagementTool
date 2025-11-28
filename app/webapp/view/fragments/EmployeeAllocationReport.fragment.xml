@@ -74,7 +74,7 @@
                                                         id="tblEmployeeTypeahead"
                                                         width="22rem"
                                                         mode="MultiSelect"
-                                                        items="{ path: '/Employees' }">
+                                                        items="{ path: '/EmployeeAllocationReport' }">
                                                         <columns>
                                                             <Column><Text text="Employee Name" /></Column>
                                                             <Column><Text text="OHR ID" /></Column>
@@ -105,7 +105,7 @@
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
-                                                                collectionPath: 'Employees',
+                                                                collectionPath: 'EmployeeAllocationReport',
                                                                 searchKeys: ['fullName', 'ohrId']
                                                             }
                                                         }"
@@ -200,7 +200,7 @@
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
-                                                                collectionPath: 'Projects',
+                                                                collectionPath: 'EmployeeAllocationReport',
                                                                 searchKeys: ['projectName', 'sapPId']
                                                             }
                                                         }"
@@ -295,7 +295,7 @@
                                                         delegate="{
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
-                                                                collectionPath: 'Customers',
+                                                                collectionPath: 'EmployeeAllocationReport',
                                                                 searchKeys: ['customerName', 'vertical']
                                                             }
                                                         }"
