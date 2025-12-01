@@ -135,26 +135,26 @@ sap.ui.define([
                         } else {
                             // Metadata not ready yet, retry
                             if (nRetries < nMaxRetries) {
-                                setTimeout(fnLoadCounts, 500);
+                                setTimeout(fnLoadCounts, 300);
                             } else {
                             }
                         }
                     } catch (e) {
                         // Metadata not ready, retry
                         if (nRetries < nMaxRetries) {
-                            setTimeout(fnLoadCounts, 500);
+                            setTimeout(fnLoadCounts, 300);
                         } else {
                         }
                     }
                 } else {
                     // Model not ready yet, retry
                     if (nRetries < nMaxRetries) {
-                        setTimeout(fnLoadCounts, 500);
+                        setTimeout(fnLoadCounts, 300);
                     } else {
                     }
                 }
             };
-            setTimeout(fnLoadCounts, 1000);
+            setTimeout(fnLoadCounts, 30);
         },
 
         onSideNavButtonPress() {

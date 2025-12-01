@@ -504,9 +504,9 @@
                                     <Label text="Required Resources" />
                                     <Input id="inputRequiredResources_proj" value="{projectModel>/requiredResources}" width="100%" type="Number" />
                                     <Label text="Allocated Resources" />
-                                    <Input id="inputAllocatedResources_proj" value="{projectModel>/allocatedResources}" width="100%" type="Number" />
+                                    <Input id="inputAllocatedResources_proj" value="{projectModel>/allocatedResources}" width="100%" type="Number" enabled="false" />
                                     <Label text="To Be Allocated" />
-                                    <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" />
+                                    <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" enabled="false"/>
                                     <Label text="Start Date" />
                                     <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="End Date" />
