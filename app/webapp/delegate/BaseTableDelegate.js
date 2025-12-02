@@ -202,12 +202,42 @@ sap.ui.define([
                     if (oProperty.$kind === "Property" || !oProperty.$kind) {
                         const sType = oProperty.$Type || "Edm.String";
 
+                        // Convert OData type to UI5 type for propertyInfo to match FilterField expectations
+                        let sUI5Type = "sap.ui.model.type.String";
+                        if (sType === "Edm.Int16" || sType === "Edm.Int32" || sType === "Edm.Int64" || sType === "Edm.Decimal") {
+                            sUI5Type = "sap.ui.model.type.Integer";
+                        } else if (sType === "Edm.Boolean") {
+                            sUI5Type = "sap.ui.model.type.Boolean";
+                        } else if (sType === "Edm.Date" || sType === "Edm.DateTimeOffset") {
+                            sUI5Type = "sap.ui.model.type.Date";
+                        } else if (sType && sType.startsWith("sap.")) {
+                            sUI5Type = sType; // Already UI5 type
+                        }
+
+                        // ✅ Extract label from OData metadata annotations if available
+                        // MDC FilterBar uses labels from @Common.Label or @sap.label annotations
+                        // If not available, use property name (MDC will format it automatically)
+                        let sLabel = sPropertyName;
+                        try {
+                            // Try to get label from Common.Label annotation
+                            if (oProperty["@com.sap.vocabularies.Common.v1.Label"]) {
+                                sLabel = oProperty["@com.sap.vocabularies.Common.v1.Label"];
+                            } else if (oProperty["@Common.Label"]) {
+                                sLabel = oProperty["@Common.Label"];
+                            } else if (oProperty["@sap.label"]) {
+                                sLabel = oProperty["@sap.label"];
+                            }
+                        } catch (e) {
+                            // If annotation access fails, use property name
+                            sLabel = sPropertyName;
+                        }
+
                         // Include all necessary attributes for sorting/filtering
                         aProperties.push({
                             name: sPropertyName,
                             path: sPropertyName,
-                            label: sPropertyName,
-                            dataType: sType,
+                            label: sLabel, // Use label from metadata annotations or property name
+                            dataType: sUI5Type, // Use UI5 type format to match FilterField
                             sortable: true,
                             filterable: true,
                             groupable: true,
@@ -568,7 +598,8 @@ sap.ui.define([
                 // Check if it's an enum field
                 const oEnumConfig = oDelegate._getEnumConfig(sTableId, sPropertyName);
                 if (oEnumConfig) {
-                    return Promise.resolve(oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType));
+                    // Pass the UI5 dataType (already converted above) to _createEnumFilterField
+                    return oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType);
                 }
 
                 // Check if it's an association field
@@ -594,28 +625,33 @@ sap.ui.define([
      * @returns {object} Filter field configuration
      */
     BaseTableDelegate._createEnumFilterField = function (oTable, sPropertyName, oEnumConfig, sDataType) {
-        const oComboBox = new ComboBox({
-            showSecondaryValues: false,
-            items: oEnumConfig.values.map((sValue, iIndex) => {
-                return new Item({
-                    key: sValue,
-                    text: oEnumConfig.labels[iIndex] || sValue
-                });
-            })
-        });
+        // Get property info from fetchProperties to ensure exact match
+        return this.fetchProperties(oTable).then((aProperties) => {
+            const oPropertyInfo = aProperties.find((p) => p.name === sPropertyName || p.path === sPropertyName);
+            
+            // ✅ CRITICAL: Use propertyInfo's dataType exactly, but DON'T set label - let MDC use propertyInfo automatically
+            // propertyInfo now has UI5 types (converted in fetchProperties)
+            const sPropertyDataType = oPropertyInfo?.dataType || sDataType || "sap.ui.model.type.String";
 
-        // Format label
-        const sLabel = sPropertyName
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, function (str) { return str.toUpperCase(); })
-            .trim();
+            // Create FilterField - MDC will use propertyInfo.label automatically when propertyKey is set
+            const oFilterField = new FilterField({
+                propertyKey: sPropertyName, // MDC will use propertyInfo.label based on this
+                dataType: sPropertyDataType, // Use propertyInfo dataType exactly (now in UI5 format)
+                conditions: "{$filters>/conditions/" + sPropertyName + "}"
+                // ✅ DO NOT set label - let MDC use propertyInfo.label automatically
+            });
 
-        return new FilterField({
-            label: sLabel,
-            propertyKey: sPropertyName,
-            dataType: sDataType || "sap.ui.model.type.String",
-            conditions: "{$filters>/conditions/" + sPropertyName + "}",
-            control: oComboBox
+            // Store enum config for later use if needed
+            oFilterField.data("enumConfig", oEnumConfig);
+
+            return oFilterField;
+        }).catch(() => {
+            // Fallback if fetchProperties fails
+            return new FilterField({
+                propertyKey: sPropertyName,
+                dataType: sDataType || "sap.ui.model.type.String",
+                conditions: "{$filters>/conditions/" + sPropertyName + "}"
+            });
         });
     };
 
@@ -628,20 +664,29 @@ sap.ui.define([
      * @returns {object} Filter field configuration
      */
     BaseTableDelegate._createAssociationFilterField = function (oTable, sPropertyName, oAssocConfig, sDataType) {
-        // Format label
-        const sLabel = sPropertyName
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, function (str) { return str.toUpperCase(); })
-            .trim();
+        // Get property info from fetchProperties to ensure exact match with propertyInfo
+        return this.fetchProperties(oTable).then((aProperties) => {
+            const oPropertyInfo = aProperties.find((p) => p.name === sPropertyName || p.path === sPropertyName);
+            
+            // ✅ CRITICAL: Use propertyInfo's dataType exactly, but DON'T set label - let MDC use propertyInfo automatically
+            const sPropertyDataType = oPropertyInfo?.dataType || sDataType || "sap.ui.model.type.String";
 
-        // For associations, create a value help field
-        // This is a simplified version - specific delegates can override for more complex scenarios
-        return new FilterField({
-            label: sLabel,
-            propertyKey: sPropertyName,
-            dataType: sDataType || "sap.ui.model.type.String",
-            conditions: "{$filters>/conditions/" + sPropertyName + "}",
-            // Value help would be configured here in specific delegates
+            // For associations, create a value help field
+            // This is a simplified version - specific delegates can override for more complex scenarios
+            return new FilterField({
+                propertyKey: sPropertyName, // MDC will use propertyInfo.label based on this
+                dataType: sPropertyDataType, // Use propertyInfo dataType exactly (now in UI5 format)
+                conditions: "{$filters>/conditions/" + sPropertyName + "}",
+                // Value help would be configured here in specific delegates
+                // ✅ DO NOT set label - let MDC use propertyInfo.label automatically
+            });
+        }).catch(() => {
+            // Fallback if fetchProperties fails
+            return new FilterField({
+                propertyKey: sPropertyName,
+                dataType: sDataType || "sap.ui.model.type.String",
+                conditions: "{$filters>/conditions/" + sPropertyName + "}"
+            });
         });
     };
 
@@ -653,17 +698,26 @@ sap.ui.define([
      * @returns {object} Filter field configuration
      */
     BaseTableDelegate._createStandardFilterField = function (oTable, sPropertyName, sDataType) {
-        // Format label
-        const sLabel = sPropertyName
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, function (str) { return str.toUpperCase(); })
-            .trim();
+        // Get property info from fetchProperties to ensure exact match with propertyInfo
+        return this.fetchProperties(oTable).then((aProperties) => {
+            const oPropertyInfo = aProperties.find((p) => p.name === sPropertyName || p.path === sPropertyName);
+            
+            // ✅ CRITICAL: Use propertyInfo's dataType exactly, but DON'T set label - let MDC use propertyInfo automatically
+            const sPropertyDataType = oPropertyInfo?.dataType || sDataType || "sap.ui.model.type.String";
 
-        return new FilterField({
-            label: sLabel,
-            propertyKey: sPropertyName,
-            dataType: sDataType || "sap.ui.model.type.String",
-            conditions: "{$filters>/conditions/" + sPropertyName + "}"
+            return new FilterField({
+                propertyKey: sPropertyName, // MDC will use propertyInfo.label based on this
+                dataType: sPropertyDataType, // Use propertyInfo dataType exactly (now in UI5 format)
+                conditions: "{$filters>/conditions/" + sPropertyName + "}"
+                // ✅ DO NOT set label - let MDC use propertyInfo.label automatically
+            });
+        }).catch(() => {
+            // Fallback if fetchProperties fails
+            return new FilterField({
+                propertyKey: sPropertyName,
+                dataType: sDataType || "sap.ui.model.type.String",
+                conditions: "{$filters>/conditions/" + sPropertyName + "}"
+            });
         });
     };
 

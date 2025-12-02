@@ -1101,7 +1101,6 @@ sap.ui.define([
             } else if (sKey === "demands") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bMasterDemandsLoaded) {
-                    console.log("[MasterDemands] Fragment already loaded, skipping");
                     return;
                 }
 
@@ -1112,7 +1111,6 @@ sap.ui.define([
                 if (oMasterDemandsPage && oMasterDemandsPage.getContent) {
                     const aExistingContent = oMasterDemandsPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
-                        console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();

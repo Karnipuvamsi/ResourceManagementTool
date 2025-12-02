@@ -332,60 +332,29 @@ sap.ui.define([
                     return Promise.reject("Invalid property for filter item");
                 }
 
-                let sDataType = "sap.ui.model.type.String";
-                try {
-                    const oModel = oTable.getModel();
-                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-                    if (oMetaModel) {
-                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
-                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
-                        const sEdmType = oProp && oProp.$Type;
-                        if (sEdmType === "Edm.Int16" || sEdmType === "Edm.Int32" || sEdmType === "Edm.Int64" || sEdmType === "Edm.Decimal") {
-                            sDataType = "sap.ui.model.type.Integer";
-                        } else if (sEdmType === "Edm.Boolean") {
-                            sDataType = "sap.ui.model.type.Boolean";
-                        } else if (sEdmType === "Edm.Date" || sEdmType === "Edm.DateTimeOffset") {
-                            sDataType = "sap.ui.model.type.Date";
-                        }
-                    }
-                } catch (e) { /* ignore */ }
+                // ✅ CRITICAL: Get propertyInfo from fetchProperties to ensure exact match with PropertyInfoValidator
+                return AllocationsEmployeesTableDelegate.fetchProperties(oTable).then((aProperties) => {
+                    const oPropertyInfo = aProperties.find((p) => p.name === sName || p.path === sName);
+                    
+                    // ✅ Use propertyInfo's dataType exactly, but DON'T set label - let MDC use propertyInfo automatically
+                    // ✅ DO NOT set caseSensitive - it's not a valid property for FilterField (case sensitivity is handled in filter logic)
+                    const sPropertyDataType = oPropertyInfo?.dataType || "sap.ui.model.type.String";
 
-                // ✅ Determine if property is a string type for case-insensitive filtering
-                let bIsString = false;
-                try {
-                    const oModel = oTable.getModel();
-                    const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-                    if (oMetaModel) {
-                        const sCollectionPath = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
-                        const oProp = oMetaModel.getObject(`/${sCollectionPath}/${sName}`);
-                        const sEdmType = oProp && oProp.$Type;
-                        if (sEdmType === "Edm.String") {
-                            bIsString = true;
-                        }
-                    }
-                } catch (e) {
-                    // If metadata check fails, check dataType
-                    if (sDataType === "sap.ui.model.type.String") {
-                        bIsString = true;
-                    }
-                }
-                
-                const oFilterFieldConfig = {
-                    label: String(sName)
-                        .replace(/([A-Z])/g, ' $1')
-                        .replace(/^./, function (str) { return str.toUpperCase(); })
-                        .trim(),
-                    propertyKey: sName,
-                    conditions: "{$filters>/conditions/" + sName + "}",
-                    dataType: sDataType
-                };
-                
-                // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
-                if (bIsString) {
-                    oFilterFieldConfig.caseSensitive = false;
-                }
-                
-                return Promise.resolve(new FilterField(oFilterFieldConfig));
+                    return new FilterField({
+                        propertyKey: sName, // MDC will use propertyInfo.label based on this
+                        conditions: "{$filters>/conditions/" + sName + "}",
+                        dataType: sPropertyDataType // Use propertyInfo dataType exactly (now in UI5 format)
+                        // ✅ DO NOT set label - let MDC use propertyInfo.label automatically
+                        // ✅ DO NOT set caseSensitive - not a valid FilterField property
+                    });
+                }).catch(() => {
+                    // Fallback if fetchProperties fails
+                    return new FilterField({
+                        propertyKey: sName,
+                        conditions: "{$filters>/conditions/" + sName + "}",
+                        dataType: "sap.ui.model.type.String"
+                    });
+                });
             }
         };
     };
