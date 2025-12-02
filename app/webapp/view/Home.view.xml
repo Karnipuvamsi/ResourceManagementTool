@@ -29,7 +29,7 @@
                             </layoutData>
                         </Button>
                         <Image
-                            src="test-resources/sap/tnt/images/SAP_Logo.png"
+                            src="https://sapui5.hana.ondemand.com/1.141.1/test-resources/sap/tnt/images/SAP_Logo.png"
                             decorative="false"
                             press="onLogoPressed"
                             tooltip="SAP Logo"

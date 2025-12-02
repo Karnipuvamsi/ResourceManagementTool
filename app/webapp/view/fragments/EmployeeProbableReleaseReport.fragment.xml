@@ -33,8 +33,6 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
                         variantBackreference="employeeProbableReleaseReportFilterBar"
                         filterConditions="{filterModel>/EmployeeProbableReleaseReport/conditions}"
                         p13nMode="Item,Value">
@@ -48,7 +46,6 @@
                                 propertyKey="employeeName"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -63,7 +60,6 @@
                                 propertyKey="currentProject"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",

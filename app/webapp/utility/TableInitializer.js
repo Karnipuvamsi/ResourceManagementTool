@@ -24,6 +24,14 @@ sap.ui.define([
             }
 
             return oTable.initialized().then(() => {
+                // ✅ CRITICAL: Wait additional time to ensure personalization API is fully ready
+                // Reduced delay to show columns faster
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve();
+                    }, 100);
+                });
+            }).then(() => {
                 const oDelegate = oTable.getControlDelegate();
 
                 return oDelegate.fetchProperties(oTable)
@@ -38,7 +46,7 @@ sap.ui.define([
                                             resolve([]);
                                         }
                                     }).catch(() => resolve([]));
-                                }, 500);
+                                }, 300);
                             });
                         }
 
@@ -50,7 +58,72 @@ sap.ui.define([
                             }));
 
                         const oExternalState = { items: aItems };
-                        return StateUtil.applyExternalState(oTable, oExternalState);
+                        const sTableIdForCheck = oTable.getId() || sTableId || "";
+                        const bSkipStateApplication = false; // Can be set to true for problematic tables
+                        
+                        // ✅ CRITICAL: Apply column state IMMEDIATELY to show columns right away
+                        // This prevents the "no visible columns" message
+                        if (!bSkipStateApplication) {
+                            try {
+                                if (StateUtil && typeof StateUtil.applyExternalState === 'function') {
+                                    if (oTable && oTable.getId) {
+                                        // Try to apply state immediately (non-blocking)
+                                        try {
+                                            const oApplyPromise = StateUtil.applyExternalState(oTable, oExternalState);
+                                            if (oApplyPromise && typeof oApplyPromise.then === 'function') {
+                                                // Don't wait for this - let it complete in background
+                                                oApplyPromise.catch((oError) => {
+                                                    const sErrorMsg = oError && (oError.message || String(oError)) || '';
+                                                    if (!sErrorMsg.includes("waitForInit") && !sErrorMsg.includes("is not a function") && !sErrorMsg.includes("Cannot read properties")) {
+                                                        console.warn(`[TableInitializer] Could not apply external state for ${sTableIdForCheck}:`, sErrorMsg);
+                                                    }
+                                                });
+                                            }
+                                        } catch (oSyncError) {
+                                            // Synchronous error - API not ready, will retry below
+                                            const sErrorMsg = oSyncError && (oSyncError.message || String(oSyncError)) || '';
+                                            if (!sErrorMsg.includes("waitForInit") && !sErrorMsg.includes("is not a function")) {
+                                                console.warn(`[TableInitializer] Personalization API not ready for ${sTableIdForCheck}, will retry`);
+                                            }
+                                        }
+                                    }
+                                }
+                            } catch (oError) {
+                                // Ignore errors on first attempt - will retry below
+                            }
+                        }
+                        
+                        // ✅ Return immediately so table can show columns
+                        // Apply personalization state in background (non-blocking)
+                        if (!bSkipStateApplication) {
+                            // Retry with delay in background for personalization API readiness
+                            setTimeout(() => {
+                                try {
+                                    if (StateUtil && typeof StateUtil.applyExternalState === 'function') {
+                                        if (oTable && oTable.getId) {
+                                            try {
+                                                const oApplyPromise = StateUtil.applyExternalState(oTable, oExternalState);
+                                                if (oApplyPromise && typeof oApplyPromise.then === 'function') {
+                                                    oApplyPromise.catch((oError) => {
+                                                        const sErrorMsg = oError && (oError.message || String(oError)) || '';
+                                                        if (!sErrorMsg.includes("waitForInit") && !sErrorMsg.includes("is not a function") && !sErrorMsg.includes("Cannot read properties")) {
+                                                            console.warn(`[TableInitializer] Could not apply external state (retry) for ${sTableIdForCheck}:`, sErrorMsg);
+                                                        }
+                                                    });
+                                                }
+                                            } catch (oSyncError) {
+                                                // Ignore - already tried
+                                            }
+                                        }
+                                    }
+                                } catch (oError) {
+                                    // Ignore background retry errors
+                                }
+                            }, 1000); // Retry after 1 second in background
+                        }
+                        
+                        // ✅ Resolve immediately so table shows columns right away
+                        return Promise.resolve();
                     })
                     .then(() => {
                         const sTableId = oTable.getId() || "";

@@ -827,7 +827,8 @@ sap.ui.define([
                 template: new Item({
                     key: "{" + oAssocConfig.keyField + "}",
                     text: "{" + oAssocConfig.displayField + "}"
-                })
+                }),
+                templateShareable: false
             },
             editable: this._createEditableBinding(sTableId),
             showSecondaryValues: true,

@@ -118,7 +118,6 @@
                                 propertyKey="category"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",

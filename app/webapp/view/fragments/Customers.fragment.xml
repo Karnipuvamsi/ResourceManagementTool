@@ -277,8 +277,7 @@
                     enableAutoColumnWidth="false"
                     filter="customerFilterBar"
                             filterConditions="{filterModel>/Customers/conditions}"
-                    selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                    selectionChange="onSelectionChange">
                             <mdc:type>
                                 <table:ResponsiveTableType />
                             </mdc:type>

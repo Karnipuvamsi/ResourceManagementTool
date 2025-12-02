@@ -466,8 +466,7 @@
                             enableAutoColumnWidth="false"
                             filter="opportunityFilterBar"
                             filterConditions="{filterModel>/Opportunities/conditions}"
-                            selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            selectionChange="onSelectionChange">
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

@@ -184,8 +184,7 @@
                             enableAutoColumnWidth="false"
                             filter="masterDemandsFilterBar"
                             filterConditions="{filterModel>/Demands/conditions}"
-                            selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            selectionChange="onSelectionChange">
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

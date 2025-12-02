@@ -519,10 +519,18 @@ sap.ui.define([
                         }, 2000);
                     }
 
-                    // Initialize table-specific functionality
-                    this.initializeTable("Projects");
-                    // Reset segmented button to "less" state for this fragment
-                    this._resetSegmentedButtonForFragment("Projects");
+                    // ✅ CRITICAL: Wait for table to be fully available before initializing
+                    setTimeout(() => {
+                        const oProjectsTable = this.byId("Projects");
+                        if (oProjectsTable) {
+                            // Initialize table-specific functionality
+                            this.initializeTable("Projects").catch((oError) => {
+                                console.warn("[Projects] Error initializing table:", oError);
+                            });
+                            // Reset segmented button to "less" state for this fragment
+                            this._resetSegmentedButtonForFragment("Projects");
+                        }
+                    }, 300);
 
                     // ✅ Initialize Project ID field and form
                     setTimeout(() => {
@@ -1156,10 +1164,18 @@ sap.ui.define([
                         }, 2000);
                     }
 
-                    // Initialize table-specific functionality
-                    this.initializeTable("MasterDemands");
-                    // Reset segmented button to "less" state for this fragment
-                    this._resetSegmentedButtonForFragment("MasterDemands");
+                    // ✅ CRITICAL: Wait for table to be fully available before initializing
+                    setTimeout(() => {
+                        const oMasterDemandsTable = this.byId("MasterDemands");
+                        if (oMasterDemandsTable) {
+                            // Initialize table-specific functionality
+                            this.initializeTable("MasterDemands").catch((oError) => {
+                                console.warn("[MasterDemands] Error initializing table:", oError);
+                            });
+                            // Reset segmented button to "less" state for this fragment
+                            this._resetSegmentedButtonForFragment("MasterDemands");
+                        }
+                    }, 300);
 
                     // ✅ Initialize Opportunity ID field and form
                     setTimeout(() => {
@@ -4493,8 +4509,8 @@ sap.ui.define([
                     if (!sNextId || sNextId === "C-0001") {
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
-                            // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Customers", null, [], {
+                            // ✅ FIXED: Use OData V4 bindList with correct parameters: (path, context, filters, sorters, parameters)
+                            const oBinding = oModel.bindList("/Customers", null, [], [], {
                                 "$orderby": "SAPcustId desc",
                                 "$top": "1"
                             });
@@ -6274,7 +6290,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Opportunities", null, [], {
+                            const oBinding = oModel.bindList("/Opportunities", null, [], [], {
                                 "$orderby": "sapOpportunityId desc",
                                 "$top": "1"
                             });
@@ -6667,7 +6683,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Projects", null, [], {
+                            const oBinding = oModel.bindList("/Projects", null, [], [], {
                                 "$orderby": "sapPId desc",
                                 "$top": "1"
                             });
@@ -7901,7 +7917,7 @@ sap.ui.define([
                                 }
                             };
 
-                            // ✅ Apply state directly (don't check existing state)
+                            // ✅ Apply state directly with error handling (don't check existing state)
                             StateUtil.applyExternalState(oFilterBar, oNewState).then(() => {
 
                                 // ✅ Also ensure FilterFields are actually visible via setVisible - try multiple times

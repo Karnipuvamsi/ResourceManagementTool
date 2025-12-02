@@ -21,9 +21,6 @@ sap.ui.define([
 
     // ✅ Custom header mappings for Employee Allocation Report
     EmployeeAllocationReportTableDelegate._getCustomHeaders = function (sTableId) {
-
-        console.log("EmployeeAllocationReport", sTableId);
-
         if (sTableId === "EmployeeAllocationReport") {
             return {
                 "employeeId": "Employee ID",
@@ -93,10 +90,6 @@ sap.ui.define([
             and: false
         })
     ];
-
-    console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
-
-
     };
 
     return EmployeeAllocationReportTableDelegate;

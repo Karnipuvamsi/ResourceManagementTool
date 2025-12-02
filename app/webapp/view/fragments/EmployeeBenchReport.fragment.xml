@@ -35,8 +35,6 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
                         variantBackreference="employeeBenchReportFilterBar"
                         filterConditions="{filterModel>/EmployeeBenchReport/conditions}"
                         p13nMode="Item,Value">
@@ -53,7 +51,6 @@
                                 valueHelp="vhOHRId"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
                                 conditions="{filterModel>/EmployeeBenchReport/conditions/ohrId}"
                             >
                                 <mdc:dependents>

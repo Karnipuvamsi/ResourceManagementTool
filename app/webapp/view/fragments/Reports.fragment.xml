@@ -97,8 +97,7 @@
                                 showRowCount="true"
                                 threshold="20"
                                 enableExport="true"
-                                enableAutoColumnWidth="false"
-                                type="ResponsiveTable">
+                                enableAutoColumnWidth="false">
                                 <mdc:type>
                                     <mdct:ResponsiveTableType/>
                                 </mdc:type>

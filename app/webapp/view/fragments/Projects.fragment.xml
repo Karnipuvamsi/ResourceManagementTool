@@ -318,8 +318,7 @@
                             enableAutoColumnWidth="false"
                             filter="projectFilterBar"
                             filterConditions="{filterModel>/Projects/conditions}"
-                            selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            selectionChange="onSelectionChange">
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

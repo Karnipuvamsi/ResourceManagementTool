@@ -264,8 +264,7 @@
                             enableAutoColumnWidth="false"
                             filter="employeeFilterBar"
                             filterConditions="{filterModel>/Employees/conditions}"
-                            selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            selectionChange="onSelectionChange">
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>
