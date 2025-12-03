@@ -106,7 +106,7 @@
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
                                                                 collectionPath: 'EmployeeAllocationReport',
-                                                                searchKeys: ['fullName', 'ohrId']
+                                                                searchKeys: ['employeeName', 'ohrId']
                                                             }
                                                         }"
                                                     >
@@ -345,6 +345,7 @@
                             width="100%"
                             p13nMode="Column,Sort,Filter,Group"
                             selectionMode="None"
+                            type="Table"
                             delegate='{
                                 "name": "glassboard/delegate/EmployeeAllocationReportTableDelegate",
                                 "payload": {
@@ -358,9 +359,7 @@
                             filter="employeeAllocationReportFilterBar"
                             filterConditions="{filterModel>/EmployeeAllocationReport/conditions}">
                            
-                            <mdc:type>
-                                <mdct:ResponsiveTableType />
-                            </mdc:type>
+                         
                             <mdc:actions>
                                 <SegmentedButton
                                     selectedKey="less"

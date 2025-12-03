@@ -153,48 +153,54 @@
             >
                 <pages>
                    <Page id="root1" showHeader="false" visible="true">
-                        <HBox id="_IDGenHBox7" justifyContent="Start" alignItems="Start">
-                            <VBox id="_IDGenVBox170" class="benchC Card">
-                                <Text id="_IDGenText95" text="Total Head Count" class="myCardTitle"/>
-                                <Text id="_IDGenText160" text="{homeCounts>/totalHeadCount}" class="myCardValue"/>
-                            </VBox>
-                            <VBox id="_IDGenVBox10" class="allocatedC Card">
-                                <Text id="_IDGenText9" text="Allocated Count" class="myCardTitle"/>
-                                <Text id="_IDGenText10" text="{homeCounts>/allocatedCount}" class="myCardValue"/>
-                            </VBox>
-                            <VBox id="_IDGenVBox510" class="totalHeadC Card">
-                                <Link id="_IDGenText59" text="Bench Count" class="myCardTitle" press="onBenchTilePress"/>
-                                <Text id="_IDGenText150" text="{homeCounts>/benchCount}" class="myCardValue"/>
-                            </VBox>
-                        </HBox>
-                        <HBox justifyContent="Start" alignItems="Start">
-                            <VBox class="unallocatedBenchC Card">
-                                <Text text="Pre Allocated" class="myCardTitle" />
-                                <Text text="{homeCounts>/preAllocatedCount}" class="myCardValue" />
-                            </VBox>
-                            <VBox class="unproductiveBenchC Card">
-                                <Text text="Unproductive Bench" class="myCardTitle" />
-                                <Text text="{homeCounts>/unproductiveBenchCount}" class="myCardValue" />
-                            </VBox>
-                            <VBox class="netBenchC Card">
-                                <Text text="Inactive Bench" class="myCardTitle"/>
-                                <Text text="{homeCounts>/onLeaveCount}" class="myCardValue" />
-                            </VBox>
-                        </HBox>
-                        <HBox justifyContent="Start" alignItems="Start">
-                            <VBox class="demandsC Card">
-                                <Text text="Demands Count" class="myCardTitle" />
-                                <Text text="120" class="myCardValue" />
-                            </VBox>
-                            <VBox class="yetToJoinC Card">
-                                <Text text="Yet To Join" class="myCardTitle" />
-                                <Text text="40" class="myCardValue" />
-                            </VBox>
-                            <VBox class="projectsEndingC Card">
-                                <Text text="Projects Ending (In 2 Weeks)" class="myCardTitle"/>
-                                <Text text="5" class="myCardValue" />
-                            </VBox>
-                        </HBox>
+                        <!-- First Row -->
+<HBox id="_homeTile1" justifyContent="Start" alignItems="Start">
+    <VBox id="totalHeadVBox" class="benchC Card clickable">
+        <Text id="totalHeadTitle" text="Total Head Count" class="myCardTitle"/>
+        <Text id="totalHeadValue" text="{homeCounts>/totalHeadCount}" class="myCardValue"/>
+    </VBox>
+    <VBox id="allocatedVBox" class="allocatedC Card clickable">
+        <Text id="allocatedTitle" text="Allocated Count" class="myCardTitle"/>
+        <Text id="allocatedValue" text="{homeCounts>/allocatedCount}" class="myCardValue"/>
+    </VBox>
+    <VBox id="benchVBox" class="totalHeadC Card clickable">
+        <Text id="benchTitle" text="Bench Count" class="myCardTitle"/>
+        <Text id="benchValue" text="{homeCounts>/benchCount}" class="myCardValue"/>
+    </VBox>
+</HBox>
+ 
+<!-- Second Row -->
+<HBox id="_homeTile2" justifyContent="Start" alignItems="Start">
+    <VBox id="unallocatedBenchVBox" class="unallocatedBenchC Card clickable">
+        <Text id="unallocatedBenchTitle" text="Pre Allocated" class="myCardTitle"/>
+        <Text id="unallocatedBenchValue" text="{homeCounts>/preAllocatedCount}" class="myCardValue"/>
+    </VBox>
+    <VBox id="unproductiveBenchVBox" class="unproductiveBenchC Card clickable">
+        <Text id="unproductiveBenchTitle" text="Unproductive Bench" class="myCardTitle"/>
+        <Text id="unproductiveBenchValue" text="{homeCounts>/unproductiveBenchCount}" class="myCardValue"/>
+    </VBox>
+    <VBox id="netBenchVBox" class="netBenchC Card clickable">
+        <Text id="netBenchTitle" text="Inactive Bench" class="myCardTitle"/>
+        <Text id="netBenchValue" text="{homeCounts>/onLeaveCount}" class="myCardValue"/>
+    </VBox>
+</HBox>
+ 
+<!-- Third Row -->
+<HBox id="_homeTile3" justifyContent="Start" alignItems="Start">
+    <VBox id="demandsVBox" class="demandsC Card clickable">
+        <Text id="demandsTitle" text="Demands Count" class="myCardTitle"/>
+        <Text id="demandsValue" text="120" class="myCardValue"/>
+    </VBox>
+    <VBox id="yetToJoinVBox" class="yetToJoinC Card clickable">
+        <Text id="yetToJoinTitle" text="Yet To Join" class="myCardTitle"/>
+        <Text id="yetToJoinValue" text="40" class="myCardValue"/>
+    </VBox>
+    <VBox id="projectsEndingVBox" class="projectsEndingC Card clickable">
+        <Text id="projectsEndingTitle" text="Projects Ending (In 2 Weeks)" class="myCardTitle"/>
+        <Text id="projectsEndingValue" text="5" class="myCardValue"/>
+    </VBox>
+</HBox>
+ 
                     </Page>
  
 

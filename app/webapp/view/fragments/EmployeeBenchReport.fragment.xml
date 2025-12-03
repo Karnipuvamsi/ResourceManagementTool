@@ -250,6 +250,7 @@
                             width="100%"
                             p13nMode="Column,Sort,Filter,Group"
                             selectionMode="None"
+                            type="Table"                                             
                             delegate='{
                                 "name": "glassboard/delegate/EmployeeBenchReportTableDelegate",
                                 "payload": {
@@ -263,9 +264,7 @@
                             filter="employeeBenchReportFilterBar"
                             filterConditions="{filterModel>/EmployeeBenchReport/conditions}">
                            
-                            <mdc:type>
-                                <mdct:ResponsiveTableType />
-                            </mdc:type>
+                           
                             <mdc:actions>
                                 <SegmentedButton
                                     selectedKey="less"

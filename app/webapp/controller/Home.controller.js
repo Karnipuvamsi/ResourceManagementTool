@@ -21,6 +21,16 @@ sap.ui.define([
                 this.getView().setModel(oComponentModel, "default"); // named "default"
             }
 
+            this.byId("totalHeadVBox").attachBrowserEvent("click", this.onTotalHeadPress.bind(this));
+            this.byId("allocatedVBox").attachBrowserEvent("click", this.onAllocatedPress.bind(this));
+            this.byId("benchVBox").attachBrowserEvent("click", this.onBenchPress.bind(this));
+            this.byId("unallocatedBenchVBox").attachBrowserEvent("click", this.onUnallocatedBenchPress.bind(this));
+            this.byId("unproductiveBenchVBox").attachBrowserEvent("click", this.onUnproductiveBenchPress.bind(this));
+            this.byId("netBenchVBox").attachBrowserEvent("click", this.onNetBenchPress.bind(this));
+            this.byId("demandsVBox").attachBrowserEvent("click", this.onDemandsPress.bind(this));
+            this.byId("yetToJoinVBox").attachBrowserEvent("click", this.onYetToJoinPress.bind(this));
+            this.byId("projectsEndingVBox").attachBrowserEvent("click", this.onProjectsEndingPress.bind(this));
+
             // ✅ Set the filter model with isolated conditions per fragment
             const oFilterModel = new sap.ui.model.json.JSONModel({
                 Customers: { conditions: {}, items: [] },
@@ -574,9 +584,9 @@ sap.ui.define([
                 }.bind(this));
             } else if (sKey === "employeeBenchReport") {
 
-               
+
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
-                 // Check if already loaded to prevent duplicate IDs
+                // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeBenchReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
                     const oTable = this.byId("EmployeeBenchReportTable");
@@ -613,7 +623,7 @@ sap.ui.define([
 
                     const oTable = this.byId("EmployeeBenchReportTable");
                     // Ensure table starts with show-less state
-    
+
                     oTable.addStyleClass("show-less");
 
                     if (oLogButton) {
@@ -641,10 +651,10 @@ sap.ui.define([
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band","skills"]);
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band","skills"]);
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
@@ -710,7 +720,7 @@ sap.ui.define([
 
                     const oTable = this.byId("EmployeeAllocationReportTable");
                     // Ensure table starts with show-less state
-    
+
                     oTable.addStyleClass("show-less");
 
                     if (oLogButton) {
@@ -740,10 +750,10 @@ sap.ui.define([
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject","customer"]);
+                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject","customer"]);
+                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 2000);
                     }
 
@@ -768,7 +778,7 @@ sap.ui.define([
                 }.bind(this));
             } else if (sKey === "employeeSkillReport") {
                 // this._loadReportFragment(sPageId, "EmployeeSkillReport", "EmployeeSkillReport", oLogButton);
-                 // Check if already loaded to prevent duplicate IDs
+                // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeSkillReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
                     const oTable = this.byId("EmployeeSkillReportTable");
@@ -805,7 +815,7 @@ sap.ui.define([
 
                     const oTable = this.byId("EmployeeSkillReportTable");
                     // Ensure table starts with show-less state
-    
+
                     oTable.addStyleClass("show-less");
 
                     if (oLogButton) {
@@ -9695,7 +9705,527 @@ sap.ui.define([
                 return "0%";
             }
             return iValue + "%";
+        },
+        onTotalHeadPress: function () {
+            sap.m.MessageToast.show("Total Head Count clicked");
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeesPage"));
+
+            const oEmployeesPage = this.getView().byId("employeesPage");
+
+            this._bEmployeesLoaded = false;
+
+            oEmployeesPage.destroyContent();
+
+
+            // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.Employees",
+                controller: this
+            }).then(function (oFragment) {
+                oEmployeesPage.addContent(oFragment);
+                const oTable = this.byId("Employees");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+                // Ensure table starts with show-less state
+                oTable.removeStyleClass("show-more");
+                oTable.addStyleClass("show-less");
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+                // ✅ Set default filters for Employees FilterBar
+                const oEmployeeFilterBar = this.byId("employeeFilterBar");
+                if (oEmployeeFilterBar) {
+                    oEmployeeFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oEmployeeFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oEmployeeFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
+                    }, 2000);
+                }
+
+                // Initialize table-specific functionality
+                this.initializeTable("Employees");
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("Employees");
+
+                // ✅ Populate Country dropdown when Employees fragment loads
+                // Use multiple timeouts to ensure fragment is fully rendered
+                setTimeout(() => {
+                    this._populateCountryDropdown();
+                }, 500);
+                setTimeout(() => {
+                    this._populateCountryDropdown();
+                }, 1000);
+                setTimeout(() => {
+                    this._populateCountryDropdown();
+                }, 2000);
+
+                // ✅ Initialize Employee form (no ID preview needed - manual OHR ID entry)
+                setTimeout(() => {
+                    oTable.initialized().then(() => {
+                        setTimeout(() => {
+                            const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+                            if (aSelectedContexts.length === 0) {
+                                // No selection - initialize form for create mode
+                                this._onEmpDialogData([]);
+                            }
+                        }, 300);
+                    }).catch(() => {
+                        setTimeout(() => {
+                            this._onEmpDialogData([]);
+                        }, 500);
+                    });
+                }, 300);
+            }.bind(this));
+        },
+
+        onAllocatedPress: function () {
+            sap.m.MessageToast.show("Allocated Count clicked");
+            var oLogButton = this.byId("uploadLogButton");
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeAllocationReportPage"));
+
+
+            this._bEmployeeAllocationReportLoaded = false;
+            const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
+            oCustomersPage.destroyContent();
+
+            // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.EmployeeAllocationReport",
+                controller: this
+            }).then(function (oFragment) {
+                oCustomersPage.addContent(oFragment);
+
+                const oTable = this.byId("EmployeeAllocationReportTable");
+                // Ensure table starts with show-less state
+
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+                // ✅ Populate Country dropdown when Customers fragment loads
+                this._populateCountryDropdown();
+
+                // ✅ Set default filters for Customers FilterBar
+                const oFilterBar = this.byId("employeeAllocationReportFilterBar");
+                if (oFilterBar) {
+                    oFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                    }, 2000);
+                }
+
+                // Initialize table-specific functionality
+                this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                    // ✅ Trigger initial data load by firing FilterBar search event
+                    // This ensures table binds even when there are no filter conditions
+                    setTimeout(() => {
+                        if (oFilterBar) {
+                            // Fire search event to trigger table binding
+                            oFilterBar.fireSearch();
+                        } else if (oTable && typeof oTable.rebind === "function") {
+                            // Fallback: rebind table directly if FilterBar not available
+                            oTable.rebind();
+                        }
+                    }, 1000);
+                });
+
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("EmployeeAllocationReport");
+
+            }.bind(this));
+        },
+
+        onBenchPress: function () {
+            sap.m.MessageToast.show("Bench Count clicked");
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+            const oBenchPage = this.byId("employeeBenchReportPage");
+            this._bEmployeeBenchReportTableLoaded = false;
+            oBenchPage.destroyContent();
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.EmployeeBenchReport",
+                controller: this
+            }).then(function (oFragment) {
+                oBenchPage.addContent(oFragment);
+
+                const oTable = this.byId("EmployeeBenchReportTable");
+                // Ensure table starts with show-less state
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+
+                // ✅ Set default filters for Customers FilterBar
+                const oFilterBar = this.byId("employeeBenchReportFilterBar");
+                if (oFilterBar) {
+                    oFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 2000);
+                }
+
+                // Initialize table-specific functionality
+                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    // ✅ Trigger initial data load by firing FilterBar search event
+                    // This ensures table binds even when there are no filter conditions
+                    setTimeout(() => {
+                        if (oFilterBar) {
+                            // Fire search event to trigger table binding
+                            oFilterBar.fireSearch();
+                        } else if (oTable && typeof oTable.rebind === "function") {
+                            // Fallback: rebind table directly if FilterBar not available
+                            oTable.rebind();
+                        }
+                    }, 1000);
+                });
+
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+            }.bind(this));
+
+        },
+
+        onUnallocatedBenchPress: function () {
+            sap.m.MessageToast.show("Pre Allocated clicked");
+        },
+
+        onUnproductiveBenchPress: function () {
+            sap.m.MessageToast.show("Unproductive Bench clicked");
+
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+            const oBenchPage = this.byId("employeeBenchReportPage");
+            this._bEmployeeBenchReportTableLoaded = false;
+            oBenchPage.destroyContent();
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.EmployeeBenchReport",
+                controller: this
+            }).then(function (oFragment) {
+                oBenchPage.addContent(oFragment);
+
+                const oTable = this.byId("EmployeeBenchReportTable");
+                // Ensure table starts with show-less state
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+
+                // ✅ Set default filters for Customers FilterBar
+                const oFilterBar = this.byId("employeeBenchReportFilterBar");
+                if (oFilterBar) {
+                    oFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 2000);
+                }
+
+               
+
+                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+
+                    // Wait until MDC Table's inner table is ready
+                    oMdcTable._oTableReady.promise.then(() => {
+                        const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
+
+                        // Attach event when rows are updated (binding is ready)
+                        oInnerTable.attachEventOnce("_rowsUpdated", () => {
+                            const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
+                            if (oBinding) {
+                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
+                                oBinding.filter([oFilter]);
+                            }
+                        });
+                    });
+                });
+
+
+
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+            }.bind(this));
+
+
+
+        },
+
+        onNetBenchPress: function () {
+            sap.m.MessageToast.show("Inactive Bench clicked");
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+            const oBenchPage = this.byId("employeeBenchReportPage");
+            this._bEmployeeBenchReportTableLoaded = false;
+            oBenchPage.destroyContent();
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.EmployeeBenchReport",
+                controller: this
+            }).then(function (oFragment) {
+                oBenchPage.addContent(oFragment);
+
+                const oTable = this.byId("EmployeeBenchReportTable");
+                // Ensure table starts with show-less state
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+
+                // ✅ Set default filters for Customers FilterBar
+                const oFilterBar = this.byId("employeeBenchReportFilterBar");
+                if (oFilterBar) {
+                    oFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                    }, 2000);
+                }
+
+               
+
+                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+
+                    // Wait until MDC Table's inner table is ready
+                    oMdcTable._oTableReady.promise.then(() => {
+                        const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
+
+                        // Attach event when rows are updated (binding is ready)
+                        oInnerTable.attachEventOnce("_rowsUpdated", () => {
+                            const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
+                            if (oBinding) {
+                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Inactive Bench");
+                                oBinding.filter([oFilter]);
+                            }
+                        });
+                    });
+                });
+
+
+
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+            }.bind(this));
+
+        },
+
+        onDemandsPress: function () {
+            sap.m.MessageToast.show("Demands Count clicked");
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("demandsPage"));
+
+
+            const oMasterDemandsPage = this.byId("demandsPage");
+            this._bMasterDemandsLoaded = false;
+            oMasterDemandsPage.destroyContent();
+
+
+
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.MasterDemands",
+                controller: this
+            }).then(function (oFragment) {
+                oMasterDemandsPage.addContent(oFragment);
+
+                const oTable = this.byId("MasterDemands");
+                // Ensure table starts with show-less state
+                oTable.removeStyleClass("show-more");
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+                // ✅ Set default filters for Opportunities FilterBar
+                const oMasterDemandsFilterBar = this.byId("masterDemandsFilterBar");
+                if (oMasterDemandsFilterBar) {
+                    oMasterDemandsFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oMasterDemandsFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oMasterDemandsFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+                    }, 2000);
+                }
+
+                // Initialize table-specific functionality
+                this.initializeTable("MasterDemands");
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("MasterDemands");
+
+                // ✅ Initialize Opportunity ID field and form
+                setTimeout(() => {
+                    oTable.initialized().then(() => {
+                        setTimeout(() => {
+                            this._initializeOpportunityIdField();
+                            const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+                            if (aSelectedContexts.length === 0) {
+                                this._onOppDialogData([]);
+                            }
+                        }, 500);
+                    }).catch(() => {
+                        setTimeout(() => {
+                            this._initializeOpportunityIdField();
+                        }, 1000);
+                    });
+                }, 300);
+            }.bind(this));
+
+        },
+
+        onYetToJoinPress: function () {
+            sap.m.MessageToast.show("Yet To Join clicked");
+        },
+
+        onProjectsEndingPress: function () {
+            sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
         }
+
 
     });
 });

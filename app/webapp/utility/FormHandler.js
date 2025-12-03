@@ -234,7 +234,7 @@ sap.ui.define([
             if (sSapPId && oSapPIdInput) {
                 // First check association (same pattern as Customer, Opportunity, GPM)
                 if (oObj.to_Project && oObj.to_Project.projectName) {
-                    oSapPIdInput.setValue(oObj.to_Project.projectNameName);
+                    oSapPIdInput.setValue(oObj.to_Project.projectName);
                     oSapPIdInput.data("selectedId", sSapPId);
                 } else {
                     // Load async if association not available
