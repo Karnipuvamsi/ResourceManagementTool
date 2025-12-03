@@ -132,7 +132,8 @@ sap.ui.define([
 
                 for (let i = 1; i < aLines.length; i++) {
                     if (!aLines[i].trim()) continue;
-                    const aRow = aLines[i].split(",");
+                    // const aRow = aLines[i].split(",");
+                      const aRow = aLines[i].split(/,(?=(?:[^"]*"[^"]*")*[^"]*$)/);
 
                     const oRecord = {};
                     aHeaders.forEach((sHeader, iIndex) => {
@@ -153,7 +154,9 @@ sap.ui.define([
 
 
                         } else {
-                            oRecord[sHeader] = aRow[iIndex]?.trim();
+                            // oRecord[sHeader] = aRow[iIndex]?.trim();
+                               oRecord[sHeader] = aRow[iIndex]?.replace(/^"|"$/g,'').trim();
+ 
                         }
 
 
