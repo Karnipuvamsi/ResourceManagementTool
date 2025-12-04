@@ -980,128 +980,138 @@ sap.ui.define([
                 }.bind(this));
             } else if (sKey === "overview") {
                 // Check if already loaded to prevent duplicate IDs
-                if (this._bAllocationsLoaded) {
-                    return;
-                }
+                // if (this._bAllocationsLoaded) {
+                //     return;
+                // }
 
-                this._bAllocationsLoaded = true;
-                const oAllocationPage = this.getView().byId(sPageId);
+                // this._bAllocationsLoaded = true;
+                // const oAllocationPage = this.getView().byId(sPageId);
 
-                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oAllocationPage && oAllocationPage.getContent) {
-                    const aExistingContent = oAllocationPage.getContent();
-                    if (aExistingContent && aExistingContent.length > 0) {
-                        aExistingContent.forEach((oContent) => {
-                            if (oContent && oContent.destroy) {
-                                oContent.destroy();
-                            }
-                        });
-                        oAllocationPage.removeAllContent();
-                    }
-                }
+                // // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                // if (oAllocationPage && oAllocationPage.getContent) {
+                //     const aExistingContent = oAllocationPage.getContent();
+                //     if (aExistingContent && aExistingContent.length > 0) {
+                //         aExistingContent.forEach((oContent) => {
+                //             if (oContent && oContent.destroy) {
+                //                 oContent.destroy();
+                //             }
+                //         });
+                //         oAllocationPage.removeAllContent();
+                //     }
+                // }
 
-                // ✅ DEFAULT: Load Employees view (Res fragment) first instead of Projects
+                // // ✅ DEFAULT: Load Employees view (Res fragment) first instead of Projects
+                // Fragment.load({
+                //     id: this.getView().getId(),
+                //     name: "glassboard.view.fragments.Res",
+                //     controller: this
+                // }).then(function (oFragment) {
+                //     oAllocationPage.addContent(oFragment);
+                //     const oTable = this.byId("Res");
+
+                //     if (oLogButton) {
+                //         oLogButton.setVisible(false);
+                //     }
+                //     // Ensure table starts with show-less state
+                //     oTable.removeStyleClass("show-more");
+                //     oTable.addStyleClass("show-less");
+
+                //     // Ensure the table has the correct model
+                //     const oModel = this.getOwnerComponent().getModel();
+                //     if (oModel) {
+                //         oTable.setModel(oModel);
+                //     }
+
+                //     // ✅ Set default filters for Res FilterBar (Employees view in Allocations)
+                //     const oResFilterBar = this.byId("resFilterBar");
+                //     if (oResFilterBar) {
+                //         oResFilterBar.setModel(oModel, "default");
+                //         const oFilterModel = this.getView().getModel("filterModel");
+                //         const oFiltersModel = this.getView().getModel("$filters");
+                //         if (oFilterModel) {
+                //             oResFilterBar.setModel(oFilterModel, "filterModel");
+                //         }
+                //         if (oFiltersModel) {
+                //             oResFilterBar.setModel(oFiltersModel, "$filters");
+                //         }
+                //         // ✅ Set defaults with multiple retries
+                //         setTimeout(() => {
+                //             this._setDefaultFilterFields(oResFilterBar, ["ohrId", "band", "skills"]);
+                //         }, 1000);
+                //         setTimeout(() => {
+                //             this._setDefaultFilterFields(oResFilterBar, ["ohrId", "band", "skills"]);
+                //         }, 2000);
+                //     }
+
+                //     // Initialize table-specific functionality
+                //     this.initializeTable("Res").then(() => {
+                //         // ✅ NEW: Apply allocation filter to Res table after initialization (empallocpercentage < 95 and status != "Resigned")
+                //         // Use multiple retries to ensure binding is ready
+                //         const fnApplyAllocationFilter = () => {
+                //             const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
+                //             if (oResBinding) {
+                //                 const oAllocationFilter = this._getAllocationFilter();
+                //                 oResBinding.filter([oAllocationFilter]);
+
+                //                 // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
+                //                 oResBinding.attachDataReceived(() => {
+                //                     const oCurrentFilters = oResBinding.getFilters();
+                //                     // Check if allocation filter is already applied
+                //                     const bHasAllocationFilter = oCurrentFilters && oCurrentFilters.some(f => {
+                //                         if (f.getFilters && f.getFilters().length === 2) {
+                //                             const aSubFilters = f.getFilters();
+                //                             return aSubFilters.some(sf =>
+                //                                 sf.getPath() === "empallocpercentage" && sf.getOperator() === "LT" && sf.getValue1() === 95
+                //                             ) && aSubFilters.some(sf =>
+                //                                 sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
+                //                             );
+                //                         }
+                //                         return false;
+                //                     });
+                //                     if (!bHasAllocationFilter) {
+                //                         const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
+                //                         aFilters.push(oAllocationFilter);
+                //                         oResBinding.filter(aFilters);
+                //                     }
+                //                 });
+
+                //                 return true;
+                //             }
+                //             return false;
+                //         };
+
+                //         // Try immediately
+                //         if (!fnApplyAllocationFilter()) {
+                //             // Retry after short delay
+                //             setTimeout(() => {
+                //                 if (!fnApplyAllocationFilter()) {
+                //                     // Final retry
+                //                     setTimeout(fnApplyAllocationFilter, 500);
+                //                 }
+                //             }, 300);
+                //         }
+                //     });
+                //     // Reset segmented button to "less" state for this fragment
+                //     this._resetSegmentedButtonForFragment("Res");
+
+                //     // Ensure dropdown is set to "employees"
+                //     const oSelect = this.byId("resViewSelect");
+                //     if (oSelect) {
+                //         oSelect.setSelectedKey("employees");
+                //     }
+                // }.bind(this));
+
+                const oMasterDemandsPage = this.getView().byId(sPageId);
                 Fragment.load({
-                    id: this.getView().getId(),
-                    name: "glassboard.view.fragments.Res",
-                    controller: this
+                   id: this.getView().getId(),
+                   name: "glassboard.view.fragments.AllocateN",
+                   controller: this
                 }).then(function (oFragment) {
-                    oAllocationPage.addContent(oFragment);
-                    const oTable = this.byId("Res");
-
-                    if (oLogButton) {
-                        oLogButton.setVisible(false);
-                    }
-                    // Ensure table starts with show-less state
-                    oTable.removeStyleClass("show-more");
-                    oTable.addStyleClass("show-less");
-
-                    // Ensure the table has the correct model
-                    const oModel = this.getOwnerComponent().getModel();
-                    if (oModel) {
-                        oTable.setModel(oModel);
-                    }
-
-                    // ✅ Set default filters for Res FilterBar (Employees view in Allocations)
-                    const oResFilterBar = this.byId("resFilterBar");
-                    if (oResFilterBar) {
-                        oResFilterBar.setModel(oModel, "default");
-                        const oFilterModel = this.getView().getModel("filterModel");
-                        const oFiltersModel = this.getView().getModel("$filters");
-                        if (oFilterModel) {
-                            oResFilterBar.setModel(oFilterModel, "filterModel");
-                        }
-                        if (oFiltersModel) {
-                            oResFilterBar.setModel(oFiltersModel, "$filters");
-                        }
-                        // ✅ Set defaults with multiple retries
-                        setTimeout(() => {
-                            this._setDefaultFilterFields(oResFilterBar, ["ohrId", "band", "skills"]);
-                        }, 1000);
-                        setTimeout(() => {
-                            this._setDefaultFilterFields(oResFilterBar, ["ohrId", "band", "skills"]);
-                        }, 2000);
-                    }
-
-                    // Initialize table-specific functionality
-                    this.initializeTable("Res").then(() => {
-                        // ✅ NEW: Apply allocation filter to Res table after initialization (empallocpercentage < 95 and status != "Resigned")
-                        // Use multiple retries to ensure binding is ready
-                        const fnApplyAllocationFilter = () => {
-                            const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
-                            if (oResBinding) {
-                                const oAllocationFilter = this._getAllocationFilter();
-                                oResBinding.filter([oAllocationFilter]);
-
-                                // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
-                                oResBinding.attachDataReceived(() => {
-                                    const oCurrentFilters = oResBinding.getFilters();
-                                    // Check if allocation filter is already applied
-                                    const bHasAllocationFilter = oCurrentFilters && oCurrentFilters.some(f => {
-                                        if (f.getFilters && f.getFilters().length === 2) {
-                                            const aSubFilters = f.getFilters();
-                                            return aSubFilters.some(sf =>
-                                                sf.getPath() === "empallocpercentage" && sf.getOperator() === "LT" && sf.getValue1() === 95
-                                            ) && aSubFilters.some(sf =>
-                                                sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
-                                            );
-                                        }
-                                        return false;
-                                    });
-                                    if (!bHasAllocationFilter) {
-                                        const aFilters = oCurrentFilters ? [...oCurrentFilters] : [];
-                                        aFilters.push(oAllocationFilter);
-                                        oResBinding.filter(aFilters);
-                                    }
-                                });
-
-                                return true;
-                            }
-                            return false;
-                        };
-
-                        // Try immediately
-                        if (!fnApplyAllocationFilter()) {
-                            // Retry after short delay
-                            setTimeout(() => {
-                                if (!fnApplyAllocationFilter()) {
-                                    // Final retry
-                                    setTimeout(fnApplyAllocationFilter, 500);
-                                }
-                            }, 300);
-                        }
-                    });
-                    // Reset segmented button to "less" state for this fragment
-                    this._resetSegmentedButtonForFragment("Res");
-
-                    // Ensure dropdown is set to "employees"
-                    const oSelect = this.byId("resViewSelect");
-                    if (oSelect) {
-                        oSelect.setSelectedKey("employees");
-                    }
+                    oMasterDemandsPage.addContent(oFragment);
                 }.bind(this));
+
             } else if (sKey === "demands") {
-                // Check if already loaded to prevent duplicate IDs
+                //Check if already loaded to prevent duplicate IDs
                 if (this._bMasterDemandsLoaded) {
                     console.log("[MasterDemands] Fragment already loaded, skipping");
                     return;
@@ -1188,9 +1198,12 @@ sap.ui.define([
                         });
                     }, 300);
                 }.bind(this));
-            }
+
+                
+     
+ }
             // ✅ REMOVED: Verticals fragment loading (Vertical is now an enum, not an entity)
-        },
+},
         // Reset all tables to "show-less" state
         _resetAllTablesToShowLess: function () {
             const aTableIds = [
@@ -8826,7 +8839,7 @@ sap.ui.define([
             }
 
             // ✅ Display only ID (not name) for association fields
-            oDialog._oInputField.setValue(oCustomer.SAPcustId || "");
+            oDialog._oInputField.setValue(oCustomer.customerName || "");
             oDialog._oInputField.data("selectedId", oCustomer.SAPcustId);
 
             // Also update/create the model with the ID (for backend submission)
@@ -9970,6 +9983,8 @@ sap.ui.define([
             sap.m.MessageToast.show("Unproductive Bench clicked");
 
 
+            
+
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -10022,27 +10037,20 @@ sap.ui.define([
                     }, 2000);
                 }
 
-               
-
+                // Initialize table-specific functionality
                 this.initializeTable("EmployeeBenchReportTable").then(() => {
-                    const oMdcTable = this.byId("EmployeeBenchReportTable");
-
-                    // Wait until MDC Table's inner table is ready
-                    oMdcTable._oTableReady.promise.then(() => {
-                        const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
-
-                        // Attach event when rows are updated (binding is ready)
-                        oInnerTable.attachEventOnce("_rowsUpdated", () => {
-                            const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
-                            if (oBinding) {
-                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
-                                oBinding.filter([oFilter]);
-                            }
-                        });
-                    });
+                    // ✅ Trigger initial data load by firing FilterBar search event
+                    // This ensures table binds even when there are no filter conditions
+                    setTimeout(() => {
+                        if (oFilterBar) {
+                            // Fire search event to trigger table binding
+                            oFilterBar.fireSearch();
+                        } else if (oTable && typeof oTable.rebind === "function") {
+                            // Fallback: rebind table directly if FilterBar not available
+                            oTable.rebind();
+                        }
+                    }, 1000);
                 });
-
-
 
                 // Reset segmented button to "less" state for this fragment
                 this._resetSegmentedButtonForFragment("EmployeeBenchReport");
@@ -10055,7 +10063,7 @@ sap.ui.define([
 
         onNetBenchPress: function () {
             sap.m.MessageToast.show("Inactive Bench clicked");
-            var oLogButton = this.byId("uploadLogButton");
+           var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeBenchReportPage"));
@@ -10107,15 +10115,16 @@ sap.ui.define([
                     }, 2000);
                 }
 
-               
-
+                // Initialize table-specific functionality
                 this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    // ✅ Trigger initial data load by firing FilterBar search event
+                    // This ensures table binds even when there are no filter conditions
                     const oMdcTable = this.byId("EmployeeBenchReportTable");
-
+ 
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
                         const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
-
+ 
                         // Attach event when rows are updated (binding is ready)
                         oInnerTable.attachEventOnce("_rowsUpdated", () => {
                             const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
@@ -10125,9 +10134,16 @@ sap.ui.define([
                             }
                         });
                     });
+                    setTimeout(() => {
+                        if (oFilterBar) {
+                            // Fire search event to trigger table binding
+                            oFilterBar.fireSearch();
+                        } else if (oTable && typeof oTable.rebind === "function") {
+                            // Fallback: rebind table directly if FilterBar not available
+                            oTable.rebind();
+                        }
+                    }, 1000);
                 });
-
-
 
                 // Reset segmented button to "less" state for this fragment
                 this._resetSegmentedButtonForFragment("EmployeeBenchReport");

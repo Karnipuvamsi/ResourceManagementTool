@@ -168,6 +168,7 @@ entity Project {
         gpm                : String;
         projectType        : ProjectTypeEnum;
         oppId              : String;
+        
         segment            : Segment;
         vertical           : Vertical;
         subVertical        : SubVertical;
@@ -285,20 +286,24 @@ entity EmployeeProjectAllocation {
 entity Employee {
     key ohrId              : String;
         fullName           : String;
+        city               : String;
+        band               : EmployeeBandEnum;
+        supervisorOHR      : String;
+        status             : EmployeeStatusEnum;
         mailid             : String;
         gender             : GenderEnum;
         employeeType       : EmployeeTypeEnum;
         unit               : Unit;
         doj                : Date;
-        band               : EmployeeBandEnum;
+        
         role               : String;
         location           : String;
-        supervisorOHR      : String;
+      
         skills             : String; // Simple string field - stores comma-separated skill names
         country            : String; // ✅ NEW: Employee country with value help
-        city               : String;
+       
         lwd                : Date ;
-        status             : EmployeeStatusEnum;
+        
         empallocpercentage : Integer64;
 
         // Self-referential associations (Supervisor-Subordinate hierarchy)

@@ -1,0 +1,128 @@
+
+<core:FragmentDefinition
+  xmlns="sap.m"
+  xmlns:core="sap.ui.core"
+  xmlns:f="sap.ui.layout.form"
+  xmlns:l="sap.ui.layout">
+
+  <!-- Container to hold the form and allow padding -->
+  <VBox class="sapUiResponsivePadding--content sapUiResponsivePadding--header sapUiResponsivePadding--footer">
+
+    <!-- Actions Toolbar -->
+    <Toolbar design="Transparent" class="sapUiSmallMarginBottom">
+      <Title text="Resource Allocation" level="H3"/>
+      
+    </Toolbar>
+
+    <!-- SimpleForm replacing the Dialog content -->
+    <f:SimpleForm
+      id="allocateForm"
+      editable="true"
+      layout="ResponsiveGridLayout"
+      labelSpanXL="3" labelSpanL="3" labelSpanM="3" labelSpanS="12"
+      adjustLabelSpan="false"
+      emptySpanXL="0" emptySpanL="0" emptySpanM="0" emptySpanS="0"
+      columnsXL="2" columnsL="2" columnsM="1" singleContainerFullSize="false"
+      class="sapUiNoContentPadding">
+
+
+       <!-- Customer -->
+      <Label text="Customer" labelFor="Resinput_Customer"/>
+      <Input
+        id="Resinput_Customer"
+        width="100%"
+        placeholder="Select Customer"
+        showValueHelp="true"
+        valueHelpRequest="onCustomerValueHelpRequest"
+        enabled="true">
+        <layoutData>
+          <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+        </layoutData>
+      </Input>
+
+
+
+      <!-- Project -->
+      <Label text="Project" labelFor="Resinput_proj"/>
+      <Input
+        id="Resinput_proj"
+        width="100%"
+        placeholder="Select project"
+        showValueHelp="true"
+        valueHelpRequest="onProjectValueHelpRequest"
+        enabled="true">
+        <layoutData>
+          <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+        </layoutData>
+      </Input>
+
+       <!-- Employee -->
+      <Label text="Employee" labelFor="Resinput_emp"/>
+      <Input
+        id="Resinput_emp"
+        width="100%"
+        placeholder="Select Employee"
+        showValueHelp="true"
+        valueHelpRequest="onEmployeeValueHelpRequest"
+        enabled="true">
+        <layoutData>
+          <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
+        </layoutData>
+      </Input>
+
+
+     
+      <!-- From -->
+      <Label text="From" labelFor="startDate"/>
+      <DatePicker id="startDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
+
+      <!-- To -->
+      <Label text="To" labelFor="endDate"/>
+      <DatePicker id="endDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
+
+      <!-- Allocation % -->
+      <Label text="Allocation %" labelFor="allocationPercentage_allocate"/>
+      <Input
+        id="allocationPercentage_allocate"
+        type="Number"
+        value="100"
+        placeholder="0-100"
+        width="100%"/>
+
+    
+
+    <VBox >
+         <Button text="Allocate" type="Emphasized" press="onAllocateConfirm"/>
+    </VBox>
+     
+    
+
+      <!-- Selected Employees Allocation Panel -->
+      <Label text="" visible="false"/>
+      <Panel
+        id="selectedEmployeesAllocationPanel"
+        headerText="Selected Employees' Current Allocations"
+        expandable="true"
+        expanded="false"
+        class="sapUiSmallMarginTop">
+        <VBox id="selectedEmployeesAllocationVBox" class="sapUiSmallMargin">
+          <Text text="Select employees from the table first" />
+        </VBox>
+      </Panel>
+
+      <!-- Project Employees Panel -->
+      <Label text="" visible="false"/>
+      <Panel
+        id="projectEmployeesPanel"
+        headerText="Employees Allocated to Selected Project"
+        expandable="true"
+        expanded="false"
+        class="sapUiSmallMarginTop">
+        <VBox id="projectEmployeesVBox" class="sapUiSmallMargin">
+          <Text text="Select a project to see allocated employees" />
+        </VBox>
+      </Panel>
+
+    </f:SimpleForm>
+  </VBox>
+</core:FragmentDefinition>

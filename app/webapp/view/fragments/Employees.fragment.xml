@@ -12,8 +12,8 @@
         id="employeeDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="false"
-        headerExpanded="true"
-        toggleHeaderOnTitleClick="false">
+        headerExpanded="false"
+        toggleHeaderOnTitleClick="true">
         
         <!-- Optional Page Title -->
         <layout:title>

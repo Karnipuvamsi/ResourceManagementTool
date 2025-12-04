@@ -87,11 +87,11 @@
                             text="Projects"
                             icon="sap-icon://business-objects-experience"
                         />
-                        <tnt:NavigationListItem
+                        <!-- <tnt:NavigationListItem
                             key="demands"
                             text="Demands"
                             icon="sap-icon://business-objects-experience"
-                        />
+                        /> -->
                         <!-- <tnt:NavigationListItem key="sapid" text="SAP ID" icon="sap-icon://key" /> -->
                         <tnt:NavigationListItem
                             key="employees"
@@ -104,7 +104,7 @@
                     <tnt:NavigationListGroup text="Allocations">
                         <tnt:NavigationListItem
                             key="overview"
-                            text="Allocations Overview"
+                            text="Allocations"
                             icon="sap-icon://overview-chart"
                         />
                         <!-- <tnt:NavigationListItem key="requirements" text="Resource Requirements" icon="sap-icon://business-objects-experience" /> -->
