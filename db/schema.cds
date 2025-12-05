@@ -302,7 +302,7 @@ entity EmployeeNewAllocation {
         to_Customer           : Association to one Customer
                                    on to_Customer.SAPcustId = $self.customerId;
 }
-
+ 
 entity Employee {
     key ohrId              : String;
         fullName           : String;

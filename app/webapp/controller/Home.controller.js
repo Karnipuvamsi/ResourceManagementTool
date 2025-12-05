@@ -10538,8 +10538,6 @@ sap.ui.define([
             });
             const oCreatedContext = oListBinding.create(oPayload);
             console.log(oCreatedContext, "*******oCreatedContext");
-
-            // Optional: listen to the result of the POST
             oCreatedContext.created()
                 .then((oFinalContext) => {
                     console.log(oFinalContext, "oFinalContext");
@@ -10549,11 +10547,10 @@ sap.ui.define([
                     // Access created object: oFinalContext.getObject()
                 })
                 .catch((err) => {
-                    MessageBox.error("Create failed: " + err.message);
+                    MessageToast.show("Create failed: " + err.message);
                 });
-
-            // Trigger the batch for the update group
             oModel.submitBatch("changesGroup");
+
 
             this._onCustomerChangeCancel();
 

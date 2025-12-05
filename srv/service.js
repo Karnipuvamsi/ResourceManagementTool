@@ -1831,6 +1831,114 @@ module.exports = cds.service.impl(async function () {
     //     }
     // });
 
+    /*
+    ********************************************************************
+
+               NEW ALLOCATIONS SCREEN VALIDATION
+
+     *********************************************************************
+    */
+
+    function dateToNumber(d) { return new Date(d).getTime(); }
+
+    // Simple overlap check
+    function overlaps(aStart, aEnd, bStart, bEnd) {
+        return !(dateToNumber(aEnd) < dateToNumber(bStart) || dateToNumber(aStart) > dateToNumber(bEnd));
+    }
+
+    // Build sweep-line to compute max cumulative percentage within new range
+    function maxCumulativeWithNew(existing, newAlloc) {
+        const points = []; // { t, delta }
+        const ns = newAlloc.startDate, ne = newAlloc.endDate;
+
+        // Only consider overlaps with newAlloc range
+        for (const r of existing) {
+            const s = new Date(r.startDate), e = new Date(r.endDate);
+            if (overlaps(ns, ne, s, e)) {
+                // Effective overlap segment = [max(s, ns), min(e, ne)]
+                const start = new Date(Math.max(dateToNumber(s), dateToNumber(ns)));
+                const end = new Date(Math.min(dateToNumber(e), dateToNumber(ne)));
+                points.push({ t: start.getTime(), delta: r.allocationPercentage });
+                // Use end + 1ms to mark segment closing for discrete dates; for Date-only you can use +1 day
+                points.push({ t: end.getTime() + 1, delta: -r.allocationPercentage });
+            }
+        }
+
+        // Add the candidate allocation segment
+        points.push({ t: new Date(ns).getTime(), delta: newAlloc.allocationPercentage });
+        points.push({ t: new Date(ne).getTime() + 1, delta: -newAlloc.allocationPercentage });
+
+        // Sort by time, then by delta to close segments before opening at same timestamp
+        points.sort((a, b) => (a.t - b.t) || (a.delta - b.delta));
+
+        let running = 0;
+        let peak = 0;
+        for (const p of points) {
+            running += p.delta;
+            if (running > peak) peak = running;
+        }
+        return peak;
+    }
+
+
+    // UPDATE (same check if dates or percentage change)
+    this.before('UPDATE', newAllocations, async (req) => {
+        const { employeeId, startDate, endDate, allocationPercentage, allocationId } = req.data;
+
+        const tx = cds.tx(req);
+        const existing = await tx.run(
+            SELECT.from(newAllocations)
+                .columns('allocationId', 'startDate', 'endDate', 'allocationPercentage')
+                .where({
+                    employeeId,
+                    endDate: { '>=': startDate },
+                    startDate: { '<=': endDate }
+                })
+        );
+
+        // Remove the record being updated from the list (if present)
+        const filtered = existing.filter(r => r.allocationId !== allocationId);
+
+        const peak = maxCumulativeWithNew(filtered, { startDate, endDate, allocationPercentage });
+        console.log(peak);
+
+        if (peak > 100) {
+            return req.reject(409, `Allocation exceeds 100% after update. Peak would be ${peak}%.`);
+        }
+    });
+
+    // CREATE
+    this.before('CREATE', newAllocations, async (req) => {
+        const { employeeId, startDate, endDate, allocationPercentage } = req.data;
+        // Basic guards
+        if (allocationPercentage < 0 || allocationPercentage > 100) {
+            return req.reject(400, 'Allocation percentage must be between 0 and 100');
+        }
+        if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) {
+            return req.reject(400, 'Invalid date range: startDate must be <= endDate');
+        }
+
+        // Transactional read to avoid race conditions
+        const tx = cds.tx(req);
+        // Fetch overlapping allocations for same employee (excluding current allocationId if any)
+        const existing = await tx.run(
+            SELECT.from(newAllocations)
+                .columns('allocationId', 'startDate', 'endDate', 'allocationPercentage')
+                .where({
+                    employeeId,
+                    // overlap condition: existing.endDate >= startDate AND existing.startDate <= endDate
+                    endDate: { '>=': startDate },
+                    startDate: { '<=': endDate }
+                })
+        );
+
+        const peak = maxCumulativeWithNew(existing, { startDate, endDate, allocationPercentage });
+
+        if (peak > 100) {
+            return req.reject(409, `Allocation exceeds 100%. Peak cumulative allocation in the selected time frame would be ${peak}%.`);
+        }
+    });
+
     this.on('CREATE', newAllocations, async (req) => {
         const payload = req.data; // can be an object or an array of objects
         try {
@@ -1862,9 +1970,5 @@ module.exports = cds.service.impl(async function () {
             return req.error(500, 'Failed to insert allocation(s)');
         }
     });
-
-
-
-
 
 });
