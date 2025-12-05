@@ -28,7 +28,7 @@
                                 />
                             </layoutData>
                         </Button>
-                        <Image
+                        <!--<Image
                             src="test-resources/sap/tnt/images/SAP_Logo.png"
                             decorative="false"
                             press="onLogoPressed"
@@ -41,7 +41,7 @@
                                     priority="NeverOverflow"
                                 />
                             </layoutData>
-                        </Image>
+                        </Image>-->
                         <Text
                             text="Resource Management Tool"
                             class="sapUiH2"

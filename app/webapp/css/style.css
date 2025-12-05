@@ -152,3 +152,72 @@ h4{ padding-left:0px !important;}
 
 .clickable {cursor: pointer;transition: transform 0.2s ease, box-shadow 0.2s ease;}
 .clickable:hover { transform: scale(1.03); box-shadow: 0 6px 12px rgba(0,0,0,0.3);}
+
+
+/* Remove any native appearance/outline on the button element */
+#container-glassboard---Home--sideNavigationToggleButton {
+  appearance: none;
+  -webkit-appearance: none;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+/* Remove focus outline on the button itself */
+#container-glassboard---Home--sideNavigationToggleButton:focus,
+#container-glassboard---Home--sideNavigationToggleButton:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Kill UI5 inner hover/active/focus visuals on the inner span */
+#container-glassboard---Home--sideNavigationToggleButton-inner {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* On hover: no tint/no ring */
+#container-glassboard---Home--sideNavigationToggleButton-inner.sapMBtnHoverable:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* On pressed/active: no tint/no ring */
+#container-glassboard---Home--sideNavigationToggleButton-inner:active,
+#container-glassboard---Home--sideNavigationToggleButton.sapMBtn:active
+  #container-glassboard---Home--sideNavigationToggleButton-inner {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* On focus: UI5 often uses focus-visible; disable it */
+#container-glassboard---Home--sideNavigationToggleButton-inner:focus,
+#container-glassboard---Home--sideNavigationToggleButton-inner:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Some UI5 themes draw rings via ::before/::after; neutralize them */
+#container-glassboard---Home--sideNavigationToggleButton-inner::before,
+#container-glassboard---Home--sideNavigationToggleButton-inner::after {
+  content: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Ensure the icon itself doesn't introduce a ring */
+#container-glassboard---Home--sideNavigationToggleButton-img {
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Optional: if any parent focus style bleeds in */
+#container-glassboard---Home--sideNavigationToggleButton .sapMFocusable:focus,
+#container-glassboard---Home--sideNavigationToggleButton .sapMFocusable:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
