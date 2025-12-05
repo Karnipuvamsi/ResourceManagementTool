@@ -4,8 +4,9 @@ sap.ui.define([
     "sap/ui/mdc/p13n/StateUtil",
     "sap/m/MessageToast",
     "glassboard/utility/CustomUtility",
-    "glassboard/delegate/BaseTableDelegate"
-], (Controller, Fragment, StateUtil, MessageToast, CustomUtility, BaseTableDelegate) => {
+    "glassboard/delegate/BaseTableDelegate",
+    "sap/m/MessageBox"
+], (Controller, Fragment, StateUtil, MessageToast, CustomUtility, BaseTableDelegate, MessageBox) => {
     "use strict";
 
     return Controller.extend("glassboard.controller.Home", {
@@ -1101,13 +1102,23 @@ sap.ui.define([
                 //     }
                 // }.bind(this));
 
-                const oMasterDemandsPage = this.getView().byId(sPageId);
+                const oNewAllocationsPage = this.getView().byId(sPageId);
                 Fragment.load({
-                   id: this.getView().getId(),
-                   name: "glassboard.view.fragments.AllocateN",
-                   controller: this
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.AllocateN",
+                    controller: this
                 }).then(function (oFragment) {
-                    oMasterDemandsPage.addContent(oFragment);
+
+                    // ✅ Add model setting here
+                    const oVM = new sap.ui.model.json.JSONModel({
+                        projAllowed: false,
+                        empAllowed: false,
+                        datesAllowed: false,
+                        allocAllowed: false,
+                        allocateBtnAllowed: false
+                    });
+                    this.getView().setModel(oVM, "vm");
+                    oNewAllocationsPage.addContent(oFragment);
                 }.bind(this));
 
             } else if (sKey === "demands") {
@@ -1199,11 +1210,11 @@ sap.ui.define([
                     }, 300);
                 }.bind(this));
 
-                
-     
- }
+
+
+            }
             // ✅ REMOVED: Verticals fragment loading (Vertical is now an enum, not an entity)
-},
+        },
         // Reset all tables to "show-less" state
         _resetAllTablesToShowLess: function () {
             const aTableIds = [
@@ -8373,11 +8384,14 @@ sap.ui.define([
                 if (oDialogContent) {
                     const aItems = oDialogContent.getItems();
                     const oTable = aItems.find(item => item.getId && item.getId().includes("customerValueHelpTable"));
-                    if (oTable && oTable.clearSelection) {
-                        oTable.clearSelection();
+                    if (oTable) {
+                        oTable.removeSelections();
                     }
                 }
                 oDialog.close();
+                this._onCustomerChangeCancel();
+
+
             }
         },
 
@@ -8405,12 +8419,14 @@ sap.ui.define([
                 if (oDialogContent) {
                     const aItems = oDialogContent.getItems();
                     const oTable = aItems.find(item => item.getId && item.getId().includes("employeeValueHelpTable"));
-                    if (oTable && oTable.clearSelection) {
-                        oTable.clearSelection();
+                    if (oTable) {
+                        oTable.removeSelections();
                     }
                 }
                 oDialog.close();
             }
+
+            this._onEmployeeChangeCancel();
         },
 
         // ✅ Value Help Dialog: GPM cancel handler (reuses Employee dialog)
@@ -8591,6 +8607,7 @@ sap.ui.define([
                 oTable.clearSelection();
             }
             oDialog.close();
+            this._onProjectChange();
         },
 
         // ✅ Value Help Dialog: Project cancel handler
@@ -8601,12 +8618,15 @@ sap.ui.define([
                 if (oDialogContent) {
                     const aItems = oDialogContent.getItems();
                     const oTable = aItems.find(item => item.getId && item.getId().includes("projectValueHelpTable"));
-                    if (oTable && oTable.clearSelection) {
-                        oTable.clearSelection();
+                    if (oTable) {
+                        // oTable.clearSelection();
+                        oTable.removeSelections();
                     }
                 }
                 oDialog.close();
             }
+            // this.byId("Resinput_proj").setEnabled(false);
+            this._onProjectChangeCancel();
         },
 
         // ✅ Value Help Dialog: Demand request handler
@@ -8930,6 +8950,10 @@ sap.ui.define([
                     }
                 }
             }
+            // ✅ After setting the customer value:
+            this._onCustomerChange();
+
+
         },
 
         // ✅ Value Help Dialog: Opportunity selection handler
@@ -9233,6 +9257,7 @@ sap.ui.define([
                     }
                 }
             }
+            this._onEmployeeChange();
         },
 
         // ✅ Value Help Dialog: Search handlers
@@ -9983,7 +10008,7 @@ sap.ui.define([
             sap.m.MessageToast.show("Unproductive Bench clicked");
 
 
-            
+
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -10063,7 +10088,7 @@ sap.ui.define([
 
         onNetBenchPress: function () {
             sap.m.MessageToast.show("Inactive Bench clicked");
-           var oLogButton = this.byId("uploadLogButton");
+            var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeBenchReportPage"));
@@ -10120,11 +10145,11 @@ sap.ui.define([
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     const oMdcTable = this.byId("EmployeeBenchReportTable");
- 
+
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
                         const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
- 
+
                         // Attach event when rows are updated (binding is ready)
                         oInnerTable.attachEventOnce("_rowsUpdated", () => {
                             const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
@@ -10240,7 +10265,301 @@ sap.ui.define([
 
         onProjectsEndingPress: function () {
             sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
+        },
+        // onCustomerChange: function () {
+
+
+        // }
+        _onCustomerChange: function () {
+            this.byId("Resinput_proj").setEnabled(true);
+        },
+        _onCustomerChangeCancel: function () {
+            // const oTable = aItems.find(item => item.getId && item.getId().includes("customerValueHelpTable"));
+            // if (oTable) {
+            //     oTable.removeSelections();
+            // }
+            this.byId("Resinput_Customer").setValue("");
+            this.byId("Resinput_proj").setEnabled(false);
+            this._onProjectChangeCancel();
+
+
+        },
+        // _onProjectChange: function () {
+        //     this.byId("Resinput_emp").setEnabled(true);
+        // },
+
+        _onProjectChange: async function () {
+            // Enable Employee input (your existing logic)
+            this.byId("Resinput_emp").setEnabled(true);
+
+            // Get selected projectId from input
+            const projId = this.byId("Resinput_proj").getValue();
+            if (!projId) return;
+
+            const oModel = this.getView().getModel();
+            const oPanel = this.byId("projectEmployeesPanel");
+            const oVBox = this.byId("projectEmployeesVBox");
+
+            if (!oModel || !oPanel || !oVBox) return;
+
+            // Expand panel and clear previous content
+            oPanel.setExpanded(true);
+            oVBox.removeAllItems();
+
+            try {
+                // Bind to newAllocations entity set
+                const oListBinding = oModel.bindList("/newAllocations", null, null, null, {
+                    $expand: "to_Employee" // optional if exposed in projection
+                });
+
+                // Filter allocations for this project
+                const Filter = sap.ui.model.Filter;
+                oListBinding.filter([new Filter("projectId", sap.ui.model.FilterOperator.EQ, projId)]);
+
+                // Fetch contexts and objects
+                const aContexts = await oListBinding.requestContexts(0, 100);
+                const aAllocations = await Promise.all(aContexts.map(ctx => ctx.requestObject()));
+                // Clear busy
+                oVBox.removeAllItems();
+                if (!aAllocations.length) {
+                    oVBox.addItem(new sap.m.Text({ text: "No employees allocated to this project." }));
+                    return;
+                }
+
+                // Create a simple table for employees
+                const oTable = new sap.m.Table({
+                    columns: [
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee ID" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) })
+                    ]
+                });
+
+                const formatDate = d => d ? d : "N/A";
+
+                aAllocations.forEach(alloc => {
+                    oTable.addItem(new sap.m.ColumnListItem({
+                        cells: [
+                            new sap.m.Text({ text: alloc.employeeId }),
+                            new sap.m.Text({ text: alloc.to_Employee?.fullName || "N/A" }),
+                            new sap.m.Text({ text: String(alloc.allocationPercentage) }),
+                            new sap.m.Text({ text: formatDate(alloc.startDate) }),
+                            new sap.m.Text({ text: formatDate(alloc.endDate) })
+                        ]
+                    }));
+                });
+
+                oVBox.addItem(oTable);
+
+            } catch (err) {
+                oVBox.addItem(new sap.m.Text({ text: "Error loading employees: " + err.message }));
+            }
+        },
+        _onProjectChangeCancel: async function () {
+            this._onEmployeeChangeCancel();
+            this.byId("Resinput_proj").setValue("");
+            this.byId("Resinput_emp").setValue("");
+            this.byId("Resinput_emp").setEnabled(false);
+            // this.byId("startDate").setEnabled(false);
+            // this.byId("endDate").setEnabled(false);
+            // this.byId("allocationPercentage_allocate").setEnabled(false);
+            // this.byId("newallocate").setEnabled(false);
+            // //clear all other fields
+            // // this.byId("Resinput_Customer").setValue("");
+            // this.byId("Resinput_proj").setValue("");
+
+            // this.byId("startDate").setDateValue(null);
+            // // this.byId("endDate").setValue("");
+            // this.byId("endDate").setDateValue(null);
+            // this.byId("allocationPercentage_allocate").setValue("");
+
+            const oPanel = this.byId("projectEmployeesPanel");
+            const oVBox = this.byId("projectEmployeesVBox");
+
+            if (oPanel && oVBox) {
+                oPanel.setExpanded(false); // collapse the panel
+                oVBox.removeAllItems();    // remove previous allocations
+                oVBox.addItem(new sap.m.Text({ text: "Select a project to see allocated employees" })); // restore default message
+            }
+
+
+        },
+        _onEmployeeChange: async function () {
+            this.byId("startDate").setEnabled(true);
+            this.byId("endDate").setEnabled(true);
+            this.byId("allocationPercentage_allocate").setEnabled(true);
+            this.byId("newallocate").setEnabled(true);
+
+            // --- NEW: load allocations for the selected employee and render in the panel ---
+
+            const empId = this.byId("Resinput_emp").getValue(); // Employee ohrId (mapped to employeeId)
+            const oModel = this.getView().getModel();
+            const oPanel = this.byId("selectedEmployeesAllocationPanel");
+            const oVBox = this.byId("selectedEmployeesAllocationVBox");
+
+            if (!empId || !oModel || !oPanel || !oVBox) return;
+
+            // Open panel and clear previous
+            oPanel.setExpanded(true);
+            oVBox.removeAllItems();
+            // oVBox.addItem(new sap.m.BusyIndicator({ size: "Medium" })); // optional
+
+            try {
+                // Bind to the projection entity set
+                const oListBinding = oModel.bindList("/newAllocations", undefined, undefined, undefined, {
+                    // Keep only if your service projection exposes these associations
+                    $expand: "to_Project,to_Customer"
+                });
+
+                // Filter allocations for this employee
+                const Filter = sap.ui.model.Filter;
+                oListBinding.filter([
+                    new Filter("employeeId", sap.ui.model.FilterOperator.EQ, empId)
+                ]);
+
+                // Read contexts -> objects
+                const aContexts = await oListBinding.requestContexts(0, 200);
+                const aAllocations = await Promise.all(aContexts.map(ctx => ctx.requestObject()));
+
+                // Clear busy
+                oVBox.removeAllItems();
+
+                if (!aAllocations.length) {
+                    oVBox.addItem(new sap.m.Text({
+                        text: "No allocation record.",
+                        design: "Italic"
+                    }));
+                    return;
+                }
+
+                // Helper to display OData V4 Date ('YYYY-MM-DD')
+                const formatDate = (d) => {
+                    if (!d) return "N/A";
+                    const dt = new Date(d);
+                    return new Intl.DateTimeFormat("en-US", {
+                        year: "numeric", month: "short", day: "numeric"
+                    }).format(dt);
+                };
+
+                // Build a compact table to show allocations
+                const oTable = new sap.m.Table({
+                    inset: false,
+                    columns: [
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Customer" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
+                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                    ]
+                });
+
+                aAllocations.forEach(alloc => {
+                    const projectId = alloc.projectId;
+                    const projectName = alloc.to_Project?.projectName || "N/A";
+                    const customer = alloc.to_Customer?.name || alloc.customerId || "N/A";
+                    const startDate = formatDate(alloc.startDate);
+                    const endDate = formatDate(alloc.endDate);
+                    const percent = alloc.allocationPercentage ?? "N/A";
+
+                    oTable.addItem(new sap.m.ColumnListItem({
+                        cells: [
+                            new sap.m.Text({ text: projectId }),
+                            new sap.m.Text({ text: projectName }),
+                            new sap.m.Text({ text: customer }),
+                            new sap.m.Text({ text: startDate }),
+                            new sap.m.Text({ text: endDate }),
+                            new sap.m.Text({ text: String(percent) })
+                        ]
+                    }));
+                });
+
+                oVBox.addItem(new sap.m.Panel({
+                    content: [oTable]
+                }).addStyleClass("sapUiSmallMarginBottom"));
+
+            } catch (err) {
+                oVBox.removeAllItems();
+                console.error("Failed to load allocations:", err);
+                oVBox.addItem(new sap.m.Text({
+                    text: "Error loading allocation details: " + (err.message || "Unknown error")
+                }));
+            }
+
+
+
+        },
+        _onEmployeeChangeCancel: function () {
+            // Disable form fields
+            this.byId("startDate").setEnabled(false);
+            this.byId("endDate").setEnabled(false);
+            this.byId("allocationPercentage_allocate").setEnabled(false);
+            this.byId("newallocate").setEnabled(false);
+
+            // Clear form values
+            this.byId("Resinput_emp").setValue("");
+            this.byId("startDate").setDateValue(null);
+            this.byId("endDate").setDateValue(null);
+            this.byId("allocationPercentage_allocate").setValue("");
+
+            // ✅ Clear allocations panel content
+            const oPanel = this.byId("selectedEmployeesAllocationPanel");
+            const oVBox = this.byId("selectedEmployeesAllocationVBox");
+
+            if (oPanel && oVBox) {
+                oPanel.setExpanded(false); // collapse the panel
+                oVBox.removeAllItems();    // remove previous allocations
+                oVBox.addItem(new sap.m.Text({ text: "Select employees from the table first" })); // restore default message
+            }
+        },
+        onAllocateConfirmNew: async function () {
+
+            // Build payload directly from inputs
+            const oPayload = {
+                employeeId: this.byId("Resinput_emp").data("selectedId"),
+                projectId: this.byId("Resinput_proj").data("selectedId"),
+                customerId: this.byId("Resinput_Customer").data("selectedId"),
+                startDate: this.byId("startDate").getValue(),   // yyyy-MM-dd
+                endDate: this.byId("endDate").getValue(),       // yyyy-MM-dd
+                allocationDate: new Date().toISOString().slice(0, 10), // today
+                allocationPercentage: parseInt(this.byId("allocationPercentage_allocate").getValue(), 10)
+            };
+
+
+            // OData V4 create
+            const oModel = this.getView().getModel();
+            const sPath = "/newAllocations";
+            // Bind to the entity set you want to create into
+            const oListBinding = oModel.bindList(sPath, undefined, undefined, undefined, {
+                // Ensure creates go into the same update group you configured
+                $$updateGroupId: "changesGroup"
+            });
+            const oCreatedContext = oListBinding.create(oPayload);
+            console.log(oCreatedContext, "*******oCreatedContext");
+
+            // Optional: listen to the result of the POST
+            oCreatedContext.created()
+                .then((oFinalContext) => {
+                    console.log(oFinalContext, "oFinalContext");
+                    // console.log(oFinalContext.getObject(),"response");
+
+                    sap.m.MessageToast.show("Allocation created!");
+                    // Access created object: oFinalContext.getObject()
+                })
+                .catch((err) => {
+                    MessageBox.error("Create failed: " + err.message);
+                });
+
+            // Trigger the batch for the update group
+            oModel.submitBatch("changesGroup");
+
+            this._onCustomerChangeCancel();
+
         }
+
+
 
 
     });

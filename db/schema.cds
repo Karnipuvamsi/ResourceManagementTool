@@ -283,6 +283,26 @@ entity EmployeeProjectAllocation {
                                    on to_Demand.demandId = $self.demandId;
 }
 
+entity EmployeeNewAllocation {
+    key allocationId         : UUID;
+        employeeId           : String;
+        projectId            : String;
+        customerId           : String;
+        // Note: For existing allocations without demandId, will be set to first demand of project
+        startDate            : Date; // ✅ Allocation start date (defaults to project start, but can be modified for employees joining mid-project)
+        endDate              : Date; // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
+        allocationDate       : Date; // ✅ Date when allocation was created
+        allocationPercentage : Integer; // ✅ NEW: Percentage of employee time allocated (0-100), default 100
+        // status               : AllocationStatusEnum;
+
+        to_Employee          : Association to one Employee
+                                   on to_Employee.ohrId = $self.employeeId;
+        to_Project           : Association to one Project
+                                   on to_Project.sapPId = $self.projectId;
+        to_Customer           : Association to one Customer
+                                   on to_Customer.SAPcustId = $self.customerId;
+}
+
 entity Employee {
     key ohrId              : String;
         fullName           : String;

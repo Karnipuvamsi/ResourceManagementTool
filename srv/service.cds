@@ -21,6 +21,7 @@ service MyService {
 
   // Employee-Project Allocations
   entity Allocations                     as projection on db.EmployeeProjectAllocation;
+  entity newAllocations                  as projection on db.EmployeeNewAllocation;  
 
   // ============================================
   // REPORT ENTITIES (from ReportService)

@@ -50,7 +50,7 @@
         placeholder="Select project"
         showValueHelp="true"
         valueHelpRequest="onProjectValueHelpRequest"
-        enabled="true">
+        enabled="false">
         <layoutData>
           <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
         </layoutData>
@@ -64,7 +64,7 @@
         placeholder="Select Employee"
         showValueHelp="true"
         valueHelpRequest="onEmployeeValueHelpRequest"
-        enabled="true">
+        enabled="false">
         <layoutData>
           <f:ColumnElementData cellsSmall="12" cellsLarge="12" />
         </layoutData>
@@ -74,11 +74,11 @@
      
       <!-- From -->
       <Label text="From" labelFor="startDate"/>
-      <DatePicker id="startDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
+      <DatePicker id="startDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="false" editable="true" />
 
       <!-- To -->
       <Label text="To" labelFor="endDate"/>
-      <DatePicker id="endDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="true" editable="true"/>
+      <DatePicker id="endDate" valueFormat="yyyy-MM-dd" displayFormat="long" enabled="false" editable="true"/>
 
       <!-- Allocation % -->
       <Label text="Allocation %" labelFor="allocationPercentage_allocate"/>
@@ -87,12 +87,13 @@
         type="Number"
         value="100"
         placeholder="0-100"
-        width="100%"/>
+        width="100%"
+        enabled="false"/>
 
     
 
     <VBox >
-         <Button text="Allocate" type="Emphasized" press="onAllocateConfirm"/>
+         <Button text="Allocate" type="Emphasized" press="onAllocateConfirmNew" enabled="false" id="newallocate"/>
     </VBox>
      
     
