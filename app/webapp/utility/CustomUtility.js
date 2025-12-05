@@ -530,8 +530,8 @@ sap.ui.define([
             // Detect which table is currently visible - includes main tables and report tables
             const aTableIds = [
                 "Opportunities", "Employees", "Customers", "Projects", "SAPIdStatuses", "Res", "Allocations",
-                "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
-                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable",
+                "EmployeeBenchReport", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
+                "EmployeeAllocationReport", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable",
                 "MasterDemands"
             ];
             aTableIds.forEach((sTableId) => {

@@ -36,8 +36,11 @@ sap.ui.define([
      * @param {string} sFilterBarId - FilterBar ID
      * @returns {string} Fragment name
      */
-    BaseFilterBarDelegate._getFragmentName = function(sFilterBarId) {
+    BaseFilterBarDelegate._getFragmentName = function (sFilterBarId) {
         // Map FilterBar IDs to fragment names
+
+        console.log("sFilterBarId in BaseFilterBarDelegate ", sFilterBarId);
+        
         if (sFilterBarId.includes("customerFilterBar")) {
             return "Customers";
         } else if (sFilterBarId.includes("projectFilterBar")) {
@@ -50,7 +53,14 @@ sap.ui.define([
             return "Resources";
         } else if (sFilterBarId.includes("allocationFilterBar")) {
             return "Allocations";
+        } else if (sFilterBarId.includes("employeeAllocationReportFilterBar")) {
+            return "EmployeeAllocationReport";
+        } else if (sFilterBarId.includes("employeeBenchReportFilterBar")) {
+            return "EmployeeBenchReport";
+        } else if (sFilterBarId.includes("employeeSkillReportFilterBar")) {
+            return "EmployeeSkillReport";
         }
+
         // Default fallback
         return "Customers";
     };
@@ -60,7 +70,7 @@ sap.ui.define([
      * @param {string} sEntitySet - Entity set name
      * @returns {Array<string>} Array of property names to exclude
      */
-    BaseFilterBarDelegate._getExcludedProperties = function(sEntitySet) {
+    BaseFilterBarDelegate._getExcludedProperties = function (sEntitySet) {
         // Default: exclude CustomerID
         if (sEntitySet === "Customers") {
             return ["CustomerID"];
@@ -81,8 +91,8 @@ sap.ui.define([
      * @returns {Promise<Array>} Promise resolving to array of property definitions
      */
     BaseFilterBarDelegate.fetchProperties = async function (oFilterBar) {
-        
-        const oModel = oFilterBar.getModel("default") ;
+
+        const oModel = oFilterBar.getModel("default");
         const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
         const oMetaModel = oModel.getMetaModel();
 
@@ -151,7 +161,7 @@ sap.ui.define([
         // Get fragment name from FilterBar ID
         const sFilterBarId = oFilterBar.getId();
         const sFragmentName = this._getFragmentName(sFilterBarId);
-        
+
         // Determine if property is a string type for case-insensitive filtering
         let bIsString = false;
         try {
@@ -170,7 +180,7 @@ sap.ui.define([
             // If metadata check fails, default to treating as string for safety
             bIsString = true;
         }
-        
+
         const oFilterFieldConfig = {
             conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
@@ -182,12 +192,12 @@ sap.ui.define([
                 payload: {}
             }
         };
-        
+
         // Set caseSensitive: false for string fields to make filters case-insensitive
         if (bIsString) {
             oFilterFieldConfig.caseSensitive = false;
         }
-        
+
         return new FilterField(sId, oFilterFieldConfig);
     };
 

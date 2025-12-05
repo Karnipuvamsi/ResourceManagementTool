@@ -337,7 +337,7 @@
                 <Panel class="sapUiResponsiveMargin" expandable="false">
                     <ScrollContainer height="600px" vertical="true" horizontal="false">
                         <mdc:Table
-                            id="EmployeeAllocationReportTable"
+                            id="EmployeeAllocationReport"
                             header="Employee Allocation Report"
                             class="verticalsTable rowDetailToggleTable"
                             autoBindOnInit="true"
