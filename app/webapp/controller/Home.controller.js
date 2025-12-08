@@ -8483,10 +8483,7 @@ sap.ui.define([
 
             const aFilters = [];
 
-            // Apply opportunity filter if available (from Res fragment)
-            if (this._sResOppFilter) {
-                aFilters.push(new sap.ui.model.Filter("oppId", sap.ui.model.FilterOperator.EQ, this._sResOppFilter));
-            }
+           
 
             // Apply search filter
             if (sQuery && sQuery.trim() !== "") {

@@ -23,10 +23,13 @@
                     growingThreshold="50"
                     growingScrollToLoad="true">
                     <columns>
-                        <Column width="30%">
-                            <Text text="Project ID" />
+                        <Column width="20%">
+                            <Text text="Internal PID "/>
                         </Column>
-                        <Column width="70%">
+                        <Column width="20%">
+                            <Text text="Actual PID" />
+                        </Column>
+                        <Column width="60%">
                             <Text text="Project Name" />
                         </Column>
                     </columns>
@@ -34,6 +37,7 @@
                         <ColumnListItem>
                             <cells>
                                 <Text text="{sapPId}" />
+                                 <Text text="{sfdcPId}" />
                                 <Text text="{projectName}" />
                             </cells>
                         </ColumnListItem>

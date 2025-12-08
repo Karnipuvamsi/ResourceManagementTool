@@ -62,7 +62,7 @@
                                         }"
                 >
                     <!-- TYPEAHEAD -->
-                    <mdc:typeahead>
+        <!-- <mdc:typeahead>
                              <mdcvh:Popover title="Select Customer">
                                                 <mdcvc:MTable
                                                     keyPath="customerName"
@@ -89,7 +89,7 @@
                                                     </Table>
                                                 </mdcvc:MTable>
                                             </mdcvh:Popover>
-                                        </mdc:typeahead>
+        </mdc:typeahead> -->
 
                     <!-- DIALOG -->
                     <mdc:dialog>
