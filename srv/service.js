@@ -2263,7 +2263,7 @@ module.exports = cds.service.impl(async function () {
             // ✅ Update employee status (if needed - e.g., from Bench to Allocated)
             if (sEmployeeId) {
                 console.log('🔄 Updating employee status for:', sEmployeeId);
-                await this._updateEmployeeStatus(sEmployeeId);
+                await this._updateEmployeeStatusForNewAllocations(sEmployeeId);
             }
 
             console.log('✅ Successfully updated all related entities after allocation creation');
@@ -2272,6 +2272,118 @@ module.exports = cds.service.impl(async function () {
             // Don't throw - log error but don't fail the allocation creation
         }
     });
+
+    // ✅ NEW: Helper function to update employee status based on newAllocations
+    // This determines employee status (Allocated/PreAllocated/Bench) based on active newAllocations
+    // Uses the same logic as _updateEmployeeStatus but only considers newAllocations entity
+    this._updateEmployeeStatusForNewAllocations = async function (sEmployeeId) {
+        try {
+            const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+            if (!oEmployee) {
+                return;
+            }
+
+            // ✅ Don't change status if employee is Resigned
+            if (oEmployee.status === 'Resigned') {
+                return;
+            }
+
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            // ✅ Get all newAllocations for this employee
+            const aNewAllocations = await SELECT.from(newAllocations)
+                .where({ employeeId: sEmployeeId });
+
+            // Filter newAllocations to only those active today (startDate <= today <= endDate)
+            const aActiveNewAllocations = [];
+            if (aNewAllocations && aNewAllocations.length > 0) {
+                for (const oNewAlloc of aNewAllocations) {
+                    if (!oNewAlloc.startDate || !oNewAlloc.endDate) {
+                        continue; // Skip allocations without dates
+                    }
+
+                    const oStart = new Date(oNewAlloc.startDate);
+                    const oEnd = new Date(oNewAlloc.endDate);
+                    oStart.setHours(0, 0, 0, 0);
+                    oEnd.setHours(0, 0, 0, 0);
+
+                    // ✅ Only count if allocation is active TODAY: startDate <= today <= endDate
+                    if (oStart <= oToday && oToday <= oEnd) {
+                        aActiveNewAllocations.push(oNewAlloc);
+                    }
+                }
+            }
+
+            // ✅ If no active allocations, revert to Bench
+            if (!aActiveNewAllocations || aActiveNewAllocations.length === 0) {
+                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
+                    // Default to UnproductiveBench if not already on bench
+                    await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
+                }
+                return;
+            }
+
+            // ✅ Employee has active allocations - determine status based on all of them
+            let sFinalStatus = null;
+            let bHasAllocated = false; // Track if any allocation qualifies for "Allocated"
+            let bHasPreAllocated = false; // Track if any allocation qualifies for "PreAllocated"
+
+            for (const oAllocation of aActiveNewAllocations) {
+                const sProjectId = oAllocation.projectId;
+                if (!sProjectId) continue;
+
+                // Get project details
+                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                if (!oProject) continue;
+
+                const bHasSfdcPId = oProject.sfdcPId && oProject.sfdcPId.trim() !== "";
+
+                // Check project start date
+                const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+                if (oProjectStartDate) {
+                    oProjectStartDate.setHours(0, 0, 0, 0);
+                }
+                const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+
+                // Check allocation start date
+                const oAllocationStartDate = oAllocation.startDate ? new Date(oAllocation.startDate) : null;
+                if (oAllocationStartDate) {
+                    oAllocationStartDate.setHours(0, 0, 0, 0);
+                }
+                const bAllocationStarted = oAllocationStartDate && oToday >= oAllocationStartDate;
+
+                // ✅ Both dates must have arrived for status to apply
+                if (bAllocationStarted && bProjectStarted) {
+                    if (bHasSfdcPId) {
+                        bHasAllocated = true; // "Allocated" takes precedence
+                    } else {
+                        bHasPreAllocated = true;
+                    }
+                }
+            }
+
+            // ✅ Determine final status (Allocated > PreAllocated)
+            if (bHasAllocated) {
+                sFinalStatus = 'Allocated';
+            } else if (bHasPreAllocated) {
+                sFinalStatus = 'PreAllocated';
+            } else {
+                // ✅ Employee has active allocations but none have started yet
+                // Keep current status (don't change to Bench yet)
+                return;
+            }
+
+            // Update employee status if different
+            if (sFinalStatus && oEmployee.status !== sFinalStatus) {
+                await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sFinalStatus });
+                console.log(`✅ Updated employee ${sEmployeeId} status to ${sFinalStatus} based on newAllocations`);
+            }
+        } catch (oError) {
+            console.error(`❌ Error in _updateEmployeeStatusForNewAllocations for ${sEmployeeId}:`, oError.message);
+            throw oError;
+        }
+    };
 
     // ✅ NEW: Update allocation percentages for all employees with newAllocations
     // This recalculates empallocpercentage based on active allocations (startDate <= today <= endDate)
