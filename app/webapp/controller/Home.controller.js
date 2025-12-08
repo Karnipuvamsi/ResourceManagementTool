@@ -679,9 +679,13 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
+                 window.alert("COMING SOON")
+            }else if (sKey === "projectsNearingCompletionReport") {
+                 window.alert("COMING SOON")
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
-                // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+                window.alert("COMING SOON")
+                this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
             } else if (sKey === "employeeAllocationReport") {
                 // this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
