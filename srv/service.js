@@ -1244,6 +1244,7 @@ module.exports = cds.service.impl(async function () {
     // - allocatedResources = count of ACTIVE allocations only
     // - toBeAllocated = requiredResources - allocatedResources
     // Note: requiredResources is NOT updated - it's a manual field
+    // Note: This function handles Allocations entity only
     this._updateProjectResourceCounts = async function (sProjectId) {
         try {
             // Get project details
@@ -1255,15 +1256,12 @@ module.exports = cds.service.impl(async function () {
             // ✅ Get requiredResources from project (manual field - don't calculate from demands)
             const iRequiredResources = oProject.requiredResources || 0;
 
-            // ✅ Count ONLY ACTIVE allocations for this project
+            // ✅ Count ONLY ACTIVE allocations for this project (from Allocations entity)
             const aAllocations = await SELECT.from(Allocations).where({ projectId: sProjectId, status: 'Active' });
             const iAllocatedResources = aAllocations ? aAllocations.length : 0;
 
             // Calculate toBeAllocated
             const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
-
-            if (aAllocations && aAllocations.length > 0) {
-            }
 
             // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
             // Don't import from cds.ql - use the service's UPDATE directly
@@ -2115,6 +2113,221 @@ module.exports = cds.service.impl(async function () {
             }
         } catch (err) {
             return req.error(500, 'Failed to insert allocation(s)');
+        }
+    });
+
+    // ✅ NEW: Helper function to update project resource counts for newAllocations entity
+    // This counts ALL allocations from newAllocations (past, present, and future - no date filtering)
+    // Updates: allocatedResources and toBeAllocated for the project
+    // Note: This is separate from _updateProjectResourceCounts which handles Allocations entity
+    // Note: Counts all allocations regardless of dates (future allocations are also counted as allocated)
+    this._updateProjectResourceCountsForNewAllocations = async function (sProjectId) {
+        try {
+            // Get project details
+            const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+            if (!oProject) {
+                return;
+            }
+
+            // ✅ Get requiredResources from project (manual field - don't calculate from demands)
+            const iRequiredResources = oProject.requiredResources || 0;
+
+            // ✅ Count ALL allocations from newAllocations entity (no date filtering - includes past, present, and future)
+            const aNewAllocations = await SELECT.from(newAllocations).where({ projectId: sProjectId });
+            const iAllocatedResources = aNewAllocations ? aNewAllocations.length : 0;
+
+            // Calculate toBeAllocated
+            const iToBeAllocated = Math.max(0, iRequiredResources - iAllocatedResources);
+
+            // ✅ CRITICAL: Use UPDATE with proper syntax (UPDATE is available in service context)
+            // Update ONLY: allocatedResources (from all newAllocations), toBeAllocated (calculated)
+            // Do NOT update requiredResources - it's a manual field
+            try {
+                const oUpdateData = {
+                    allocatedResources: iAllocatedResources,
+                    toBeAllocated: iToBeAllocated
+                };
+
+                const iUpdated = await UPDATE(Projects).where({ sapPId: sProjectId }).with(oUpdateData);
+
+                console.log(`✅ Updated project ${sProjectId} resource counts: allocatedResources=${iAllocatedResources}, toBeAllocated=${iToBeAllocated}`);
+            } catch (oUpdateError) {
+                console.error(`❌ Error updating project resource counts for ${sProjectId}:`, oUpdateError.message);
+                throw oUpdateError;
+            }
+        } catch (oError) {
+            console.error(`❌ Error in _updateProjectResourceCountsForNewAllocations for ${sProjectId}:`, oError.message);
+            throw oError;
+        }
+    };
+
+    // ✅ Helper function: Update employee allocation percentage from newAllocations
+    // Calculates current allocation percentage by summing only allocations active TODAY
+    // Active = startDate <= today <= endDate
+    this._updateEmployeeAllocationPercentage = async function (sEmployeeId) {
+        try {
+            // Get today's date (set to midnight for date comparison)
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+            const sToday = oToday.toISOString().split('T')[0]; // YYYY-MM-DD format
+
+            // Get all newAllocations for this employee
+            const aAllocations = await SELECT.from(newAllocations)
+                .where({ employeeId: sEmployeeId });
+
+            if (!aAllocations || aAllocations.length === 0) {
+                // No allocations - set to 0
+                await UPDATE(Employees)
+                    .where({ ohrId: sEmployeeId })
+                    .with({ empallocpercentage: 0 });
+                console.log(`✅ Updated employee ${sEmployeeId} allocation percentage to 0% (no allocations)`);
+                return;
+            }
+
+            // ✅ Calculate total allocation percentage - only count allocations active TODAY
+            let iTotalPercentage = 0;
+            for (const oAlloc of aAllocations) {
+                const sStartDate = oAlloc.startDate;
+                const sEndDate = oAlloc.endDate;
+                
+                if (!sStartDate || !sEndDate) {
+                    continue; // Skip allocations without dates
+                }
+
+                // Convert to Date objects for comparison
+                const oStart = new Date(sStartDate);
+                const oEnd = new Date(sEndDate);
+                oStart.setHours(0, 0, 0, 0);
+                oEnd.setHours(0, 0, 0, 0);
+
+                // ✅ Only count if allocation is active TODAY: startDate <= today <= endDate
+                if (oStart <= oToday && oToday <= oEnd) {
+                    const iPercent = oAlloc.allocationPercentage != null ? Number(oAlloc.allocationPercentage) : 0;
+                    iTotalPercentage += iPercent;
+                }
+            }
+
+            // Cap at 100% (validation should prevent this, but safety check)
+            iTotalPercentage = Math.min(iTotalPercentage, 100);
+
+            // Update employee
+            await UPDATE(Employees)
+                .where({ ohrId: sEmployeeId })
+                .with({ empallocpercentage: iTotalPercentage });
+
+            console.log(`✅ Updated employee ${sEmployeeId} allocation percentage to ${iTotalPercentage}% (active allocations as of ${sToday})`);
+        } catch (err) {
+            console.error(`❌ Error updating employee allocation percentage for ${sEmployeeId}:`, err.message);
+            throw err;
+        }
+    };
+
+    // ✅ After CREATE hook - Update related entities after allocation is created
+    this.after('CREATE', newAllocations, async (data, req) => {
+        console.log('✅ after CREATE newAllocations - Hook is being called!');
+        
+        // ✅ CRITICAL: Use data parameter (first param) - contains the created allocation
+        // req.keys is undefined, req.result is undefined - DO NOT USE THEM
+        // data parameter has: allocationId, employeeId, projectId, customerId, startDate, endDate, allocationDate, allocationPercentage
+        
+        if (!data || !data.allocationId) {
+            console.error('❌ No allocation data found in after CREATE hook');
+            return;
+        }
+
+        const sAllocationId = data.allocationId;
+        const sEmployeeId = data.employeeId;
+        const sProjectId = data.projectId;
+        const iAllocationPercentage = data.allocationPercentage != null ? Number(data.allocationPercentage) : 0;
+
+        console.log('📊 Processing allocation:', {
+            allocationId: sAllocationId,
+            employeeId: sEmployeeId,
+            projectId: sProjectId,
+            allocationPercentage: iAllocationPercentage
+        });
+
+        try {
+            // ✅ Update project resource counts (allocatedResources, toBeAllocated) for newAllocations
+            if (sProjectId) {
+                console.log('🔄 Updating project resource counts for:', sProjectId);
+                await this._updateProjectResourceCountsForNewAllocations(sProjectId);
+            }
+
+            // ✅ Update employee allocation percentage
+            if (sEmployeeId) {
+                console.log('🔄 Updating employee allocation percentage for:', sEmployeeId);
+                await this._updateEmployeeAllocationPercentage(sEmployeeId);
+            }
+
+            // ✅ Update employee status (if needed - e.g., from Bench to Allocated)
+            if (sEmployeeId) {
+                console.log('🔄 Updating employee status for:', sEmployeeId);
+                await this._updateEmployeeStatus(sEmployeeId);
+            }
+
+            console.log('✅ Successfully updated all related entities after allocation creation');
+        } catch (err) {
+            console.error('❌ Error in after CREATE newAllocations hook:', err.message);
+            // Don't throw - log error but don't fail the allocation creation
+        }
+    });
+
+    // ✅ NEW: Update allocation percentages for all employees with newAllocations
+    // This recalculates empallocpercentage based on active allocations (startDate <= today <= endDate)
+    // Should be called daily via BTP Job Scheduling service to handle date transitions (allocations starting/ending)
+    this._updateAllEmployeesAllocationPercentages = async function () {
+        try {
+            // Get all employees who have newAllocations
+            const aAllocations = await SELECT.from(newAllocations)
+                .columns('employeeId')
+                .distinct();
+
+            if (!aAllocations || aAllocations.length === 0) {
+                return { updated: 0 };
+            }
+
+            // Get unique employee IDs
+            const aEmployeeIds = [...new Set(aAllocations.map(a => a.employeeId).filter(id => id))];
+            let iUpdatedCount = 0;
+
+            // Update allocation percentage for each employee
+            for (const sEmployeeId of aEmployeeIds) {
+                try {
+                    await this._updateEmployeeAllocationPercentage(sEmployeeId);
+                    iUpdatedCount++;
+                } catch (oError) {
+                    console.error(`❌ Error updating allocation percentage for employee ${sEmployeeId}:`, oError.message);
+                    // Continue with other employees
+                }
+            }
+
+            console.log(`✅ Updated allocation percentages for ${iUpdatedCount} employees`);
+            return { updated: iUpdatedCount };
+        } catch (oError) {
+            console.error('❌ Error in _updateAllEmployeesAllocationPercentages:', oError.message);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: Standalone endpoint for BTP Job Scheduling service
+    // Call this daily to update all employee allocation percentages based on active allocations
+    // Schedule via: BTP Job Scheduling service → POST /updateAllEmployeesAllocationPercentages
+    this.on('updateAllEmployeesAllocationPercentages', async (req) => {
+        try {
+            const oResult = await this._updateAllEmployeesAllocationPercentages();
+            return {
+                success: true,
+                message: `Updated allocation percentages for ${oResult.updated} employees`,
+                employeesUpdated: oResult.updated,
+                timestamp: new Date().toISOString()
+            };
+        } catch (oError) {
+            return {
+                success: false,
+                error: oError.message,
+                timestamp: new Date().toISOString()
+            };
         }
     });
 
