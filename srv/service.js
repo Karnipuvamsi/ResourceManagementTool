@@ -1912,10 +1912,10 @@ module.exports = cds.service.impl(async function () {
         const { employeeId, startDate, endDate, allocationPercentage } = req.data;
         // Basic guards
         if (allocationPercentage < 0 || allocationPercentage > 100) {
-            return req.reject(400, 'Allocation percentage must be between 0 and 100');
+            return req.reject(422, 'Allocation percentage must be between 0 and 100');
         }
         if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) {
-            return req.reject(400, 'Invalid date range: startDate must be <= endDate');
+            return req.reject(402, 'Invalid date range: startDate must be <= endDate');
         }
 
         // Transactional read to avoid race conditions

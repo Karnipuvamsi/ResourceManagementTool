@@ -1,6 +1,6 @@
 _schema-version: 3.3.0
-ID: Backend
-version: 1.0.0
+ID: Glassboard_backend
+version: 1.0.2
 description: "A simple CAP project."
 parameters:
   enable-parallel-deployments: true
@@ -11,7 +11,7 @@ build-parameters:
         - npm ci
         - npx cds build --production
 modules:
-  - name: Backend-srv
+  - name: Glassboard_backend-srv
     type: nodejs
     path: gen/srv
     parameters:
@@ -24,18 +24,18 @@ modules:
         properties:
           srv-url: ${default-url}
     requires:
-      - name: Backend-db
+      - name: Glassboard_backend-db
 
-  - name: Backend-db-deployer
+  - name: Glassboard_backend-db-deployer
     type: hdb
     path: gen/db
     parameters:
       buildpack: nodejs_buildpack
     requires:
-      - name: Backend-db
+      - name: Glassboard_backend-db
 
 resources:
-  - name: Backend-db
+  - name: Glassboard_backend-db
     type: com.sap.xs.hdi-container
     parameters:
       service: hana
