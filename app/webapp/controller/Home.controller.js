@@ -8468,13 +8468,28 @@ if (bDuplicate) {
 
             this._oProjectValueHelpDialog._oInputField = oInput;
 
-            // Check if this is from AllocateDialog and filter by project if needed
+            // Check if this is from AllocateN fragment
             const sInputId = oInput.getId();
             const bIsAllocateDialog = sInputId && sInputId.includes("Resinput_proj");
 
-            // ✅ CRITICAL: If opened from employee level (AllocateDialog), get project from Res fragment
+            // ✅ CRITICAL: If opened from AllocateN fragment, check for customer and filter projects
             if (bIsAllocateDialog) {
-                // Try to get project ID from Res fragment if available (when opened from employee level)
+                // Get customer ID from Resinput_Customer
+                const oCustomerInput = this.byId("Resinput_Customer");
+                const sCustomerId = oCustomerInput?.data("selectedId") || this._sAllocateCustomerFilter;
+                
+                if (!sCustomerId) {
+                    sap.m.MessageToast.show("Please select a Customer first");
+                    return;
+                }
+                
+                // Store customer ID for filtering projects
+                this._sAllocateCustomerFilter = sCustomerId;
+                
+                // Clear any previous project filter
+                this._sAllocateProjectFilter = null;
+            } else {
+                // ✅ CRITICAL: If opened from employee level (AllocateDialog), get project from Res fragment
                 const sResProjectId = this.byId("Resinput_Project")?.data("selectedId");
                 if (sResProjectId) {
                     this._sAllocateProjectFilter = sResProjectId;
@@ -8482,6 +8497,13 @@ if (bDuplicate) {
             }
 
             this._oProjectValueHelpDialog.open();
+            
+            // ✅ Apply customer filter immediately when dialog opens (for AllocateN fragment)
+            if (bIsAllocateDialog && this._sAllocateCustomerFilter) {
+                setTimeout(() => {
+                    this._applyProjectCustomerFilter();
+                }, 100);
+            }
         },
 
         // ✅ Value Help Dialog: Project search handler
@@ -8501,11 +8523,54 @@ if (bDuplicate) {
 
             const aFilters = [];
 
-           
+            // ✅ CRITICAL: Apply customer filter if from AllocateN fragment
+            const oInputField = oDialog._oInputField;
+            if (oInputField) {
+                const sInputId = oInputField.getId();
+                if (sInputId && sInputId.includes("Resinput_proj") && this._sAllocateCustomerFilter) {
+                    // Filter projects by customer via Opportunity relationship
+                    // Path: Projects → to_Opportunity → customerId
+                    aFilters.push(new sap.ui.model.Filter({
+                        path: "to_Opportunity/customerId",
+                        operator: sap.ui.model.FilterOperator.EQ,
+                        value1: this._sAllocateCustomerFilter
+                    }));
+                }
+            }
 
             // Apply search filter
             if (sQuery && sQuery.trim() !== "") {
                 aFilters.push(new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+            }
+
+            oBinding.filter(aFilters.length > 0 ? aFilters : []);
+        },
+
+        // ✅ Helper function: Apply customer filter to project value help dialog
+        _applyProjectCustomerFilter: function () {
+            const oDialog = this._oProjectValueHelpDialog;
+            if (!oDialog) return;
+
+            const oDialogContent = oDialog.getContent()[0];
+            if (!oDialogContent) return;
+
+            const aItems = oDialogContent.getItems();
+            const oTable = aItems.find(item => item.getId && item.getId().includes("projectValueHelpTable"));
+
+            if (!oTable) return;
+
+            const oBinding = oTable.getBinding("items");
+            if (!oBinding) return;
+
+            const aFilters = [];
+
+            // ✅ Apply customer filter via Opportunity relationship
+            if (this._sAllocateCustomerFilter) {
+                aFilters.push(new sap.ui.model.Filter({
+                    path: "to_Opportunity/customerId",
+                    operator: sap.ui.model.FilterOperator.EQ,
+                    value1: this._sAllocateCustomerFilter
+                }));
             }
 
             oBinding.filter(aFilters.length > 0 ? aFilters : []);
@@ -8876,6 +8941,13 @@ if (bDuplicate) {
             // ✅ Display only ID (not name) for association fields
             oDialog._oInputField.setValue(oCustomer.customerName || "");
             oDialog._oInputField.data("selectedId", oCustomer.SAPcustId);
+
+            // ✅ CRITICAL: Store customer ID for project filtering (AllocateN fragment)
+            const sInputId = oDialog._oInputField.getId();
+            if (sInputId && sInputId.includes("Resinput_Customer")) {
+                // Store customer ID for filtering projects in AllocateN fragment
+                this._sAllocateCustomerFilter = oCustomer.SAPcustId;
+            }
 
             // Also update/create the model with the ID (for backend submission)
             let oModel = this.getView().getModel("opportunityModel");
@@ -10287,6 +10359,12 @@ if (bDuplicate) {
         // }
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
+            // ✅ Clear project field when customer changes (to ensure correct customer-project relationship)
+            const oProjectInput = this.byId("Resinput_proj");
+            if (oProjectInput) {
+                oProjectInput.setValue("");
+                oProjectInput.data("selectedId", null);
+            }
         },
         _onCustomerChangeCancel: function () {
             // const oTable = aItems.find(item => item.getId && item.getId().includes("customerValueHelpTable"));
@@ -10295,6 +10373,8 @@ if (bDuplicate) {
             // }
             this.byId("Resinput_Customer").setValue("");
             this.byId("Resinput_proj").setEnabled(false);
+            // ✅ Clear customer filter when customer selection is cancelled
+            this._sAllocateCustomerFilter = null;
             this._onProjectChangeCancel();
 
 
@@ -10531,15 +10611,93 @@ if (bDuplicate) {
         },
         onAllocateConfirmNew: async function () {
 
-            // Build payload directly from inputs
+            // ✅ CRITICAL: Frontend validation before submission
+            const sEmployeeId = this.byId("Resinput_emp")?.data("selectedId");
+            const sProjectId = this.byId("Resinput_proj")?.data("selectedId");
+            const sCustomerId = this.byId("Resinput_Customer")?.data("selectedId");
+            const sStartDate = this.byId("startDate")?.getValue();
+            const sEndDate = this.byId("endDate")?.getValue();
+            const sAllocationPercentage = this.byId("allocationPercentage_allocate")?.getValue();
+
+            // ✅ Validate required fields
+            if (!sEmployeeId || !sProjectId || !sCustomerId) {
+                sap.m.MessageBox.error("Please select Customer, Project, and Employee before creating allocation.", {
+                    title: "Required Fields Missing"
+                });
+                return;
+            }
+
+            // ✅ Validate allocation percentage
+            let iAllocationPercentage = 100; // default
+            if (sAllocationPercentage !== null && sAllocationPercentage !== undefined && sAllocationPercentage !== "") {
+                iAllocationPercentage = parseInt(sAllocationPercentage, 10);
+                if (isNaN(iAllocationPercentage)) {
+                    sap.m.MessageBox.error("Allocation percentage must be a valid number between 0 and 100.", {
+                        title: "Invalid Allocation Percentage"
+                    });
+                    return;
+                }
+                if (iAllocationPercentage < 0 || iAllocationPercentage > 100) {
+                    sap.m.MessageBox.error(`Allocation percentage must be between 0 and 100. Current value: ${iAllocationPercentage}`, {
+                        title: "Invalid Allocation Percentage"
+                    });
+                    return;
+                }
+            }
+
+            // ✅ Validate dates
+            if (!sStartDate || !sEndDate || sStartDate.trim() === "" || sEndDate.trim() === "") {
+                sap.m.MessageBox.error("Please select both Start Date and End Date for the allocation.", {
+                    title: "Dates Required"
+                });
+                return;
+            }
+
+            // ✅ Validate date range (startDate <= endDate)
+            const oStartDate = new Date(sStartDate);
+            const oEndDate = new Date(sEndDate);
+            if (oStartDate > oEndDate) {
+                sap.m.MessageBox.error(`Start Date (${sStartDate}) cannot be later than End Date (${sEndDate}).`, {
+                    title: "Invalid Date Range"
+                });
+                return;
+            }
+
+            // ✅ Validate dates against project dates (if stored)
+            const oStartDatePicker = this.byId("startDate");
+            const oEndDatePicker = this.byId("endDate");
+            const sProjectStartDate = oStartDatePicker?.data("projectStartDate");
+            const sProjectEndDate = oEndDatePicker?.data("projectEndDate");
+
+            if (sProjectStartDate) {
+                const oProjStart = new Date(sProjectStartDate);
+                if (oStartDate < oProjStart) {
+                    sap.m.MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate}).`, {
+                        title: "Date Validation Error"
+                    });
+                    return;
+                }
+            }
+
+            if (sProjectEndDate) {
+                const oProjEnd = new Date(sProjectEndDate);
+                if (oEndDate > oProjEnd) {
+                    sap.m.MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate}).`, {
+                        title: "Date Validation Error"
+                    });
+                    return;
+                }
+            }
+
+            // Build payload with validated values
             const oPayload = {
-                employeeId: this.byId("Resinput_emp").data("selectedId"),
-                projectId: this.byId("Resinput_proj").data("selectedId"),
-                customerId: this.byId("Resinput_Customer").data("selectedId"),
-                startDate: this.byId("startDate").getValue(),   // yyyy-MM-dd
-                endDate: this.byId("endDate").getValue(),       // yyyy-MM-dd
+                employeeId: sEmployeeId,
+                projectId: sProjectId,
+                customerId: sCustomerId,
+                startDate: sStartDate,   // yyyy-MM-dd
+                endDate: sEndDate,       // yyyy-MM-dd
                 allocationDate: new Date().toISOString().slice(0, 10), // today
-                allocationPercentage: parseInt(this.byId("allocationPercentage_allocate").getValue(), 10)
+                allocationPercentage: iAllocationPercentage
             };
 
 

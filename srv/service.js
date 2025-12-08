@@ -1909,30 +1909,165 @@ module.exports = cds.service.impl(async function () {
 
     // CREATE
     this.before('CREATE', newAllocations, async (req) => {
-        const { employeeId, startDate, endDate, allocationPercentage } = req.data;
-        // Basic guards
-        if (allocationPercentage < 0 || allocationPercentage > 100) {
-            return req.reject(422, 'Allocation percentage must be between 0 and 100');
+        const { employeeId, projectId, customerId, startDate, endDate, allocationPercentage } = req.data;
+        
+        // ✅ CRITICAL: Validate required fields early
+        if (!employeeId || !projectId || !customerId) {
+            return req.reject(400, 'employeeId, projectId, and customerId are required fields');
         }
-        if (!startDate || !endDate || new Date(startDate) > new Date(endDate)) {
-            return req.reject(402, 'Invalid date range: startDate must be <= endDate');
+        
+        // ✅ Set allocationDate to current date if not provided (schema requirement: Date field)
+        if (!req.data.allocationDate) {
+            req.data.allocationDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+        }
+        
+        // ✅ CRITICAL: Convert allocationPercentage to number (strict type conversion)
+        // Schema: Integer (0-100), default 100
+        const iAllocationPercentage = allocationPercentage != null ? Number(allocationPercentage) : 100;
+        if (isNaN(iAllocationPercentage)) {
+            return req.reject(422, 'Allocation percentage must be a valid number');
+        }
+        
+        // Store the converted value back to req.data to ensure Integer type
+        req.data.allocationPercentage = iAllocationPercentage;
+        
+        // Basic guards
+        if (iAllocationPercentage < 0 || iAllocationPercentage > 100) {
+            return req.reject(422, 'Allocation percentage must be between 0 and 100');
         }
 
         // Transactional read to avoid race conditions
         const tx = cds.tx(req);
-        // Fetch overlapping allocations for same employee (excluding current allocationId if any)
+
+        // ✅ Validate employee exists and check status
+        const oEmployee = await tx.run(SELECT.one.from(Employees).where({ ohrId: employeeId }));
+        if (!oEmployee) {
+            return req.reject(404, `Employee ${employeeId} not found`);
+        }
+        
+        // ✅ Check employee status - prevent allocation for Resigned employees
+        if (oEmployee.status === 'Resigned') {
+            return req.reject(400, `Cannot create allocation: Employee ${employeeId} has status 'Resigned'`);
+        }
+
+        // ✅ Validate customer exists
+        const oCustomer = await tx.run(SELECT.one.from(Customers).where({ SAPcustId: customerId }));
+        if (!oCustomer) {
+            return req.reject(404, `Customer ${customerId} not found`);
+        }
+
+        // ✅ Validate project exists and check requiredResources/allocatedResources
+        const oProject = await tx.run(SELECT.one.from(Projects).where({ sapPId: projectId }));
+        if (!oProject) {
+            return req.reject(404, `Project ${projectId} not found`);
+        }
+
+        // ✅ Check project status - prevent allocation to Closed projects
+        if (oProject.status === 'Closed') {
+            return req.reject(400, `Cannot create allocation: Project ${projectId} has status 'Closed'`);
+        }
+
+        // ✅ CRITICAL: Validate customer-project relationship
+        // Get the project's opportunity to find the customer
+        if (oProject.oppId) {
+            const oOpportunity = await tx.run(SELECT.one.from(Opportunities).where({ sapOpportunityId: oProject.oppId }));
+            if (oOpportunity && oOpportunity.customerId !== customerId) {
+                return req.reject(400, `Customer ${customerId} does not match project ${projectId}'s customer (${oOpportunity.customerId})`);
+            }
+        }
+
+        // ✅ Auto-fill dates from project if not provided
+        const bNeedsStartDate = !startDate || startDate === "" || startDate.trim() === "";
+        const bNeedsEndDate = !endDate || endDate === "" || endDate.trim() === "";
+
+        if (bNeedsStartDate && oProject.startDate) {
+            req.data.startDate = oProject.startDate;
+        }
+        if (bNeedsEndDate && oProject.endDate) {
+            req.data.endDate = oProject.endDate;
+        }
+
+        // ✅ Validate date range after auto-fill
+        const sFinalStartDate = req.data.startDate || startDate;
+        const sFinalEndDate = req.data.endDate || endDate;
+        
+        if (!sFinalStartDate || !sFinalEndDate) {
+            return req.reject(400, 'startDate and endDate are required. They can be auto-filled from project if not provided.');
+        }
+        
+        if (new Date(sFinalStartDate) > new Date(sFinalEndDate)) {
+            return req.reject(402, 'Invalid date range: startDate must be <= endDate');
+        }
+
+        // ✅ CRITICAL: Validate requiredResources and allocatedResources (strict number conversion)
+        const iRequiredResources = oProject.requiredResources != null ? Number(oProject.requiredResources) : 0;
+        const iCurrentAllocated = oProject.allocatedResources != null ? Number(oProject.allocatedResources) : 0;
+        const iNewAllocated = iCurrentAllocated + 1;
+
+        if (isNaN(iRequiredResources) || isNaN(iCurrentAllocated)) {
+            return req.reject(500, `Invalid numeric values for project resources: requiredResources=${oProject.requiredResources}, allocatedResources=${oProject.allocatedResources}`);
+        }
+
+        if (iRequiredResources <= 0) {
+            return req.reject(400, `Project ${projectId} has no required resources set. Please set requiredResources before creating allocations.`);
+        }
+
+        if (iNewAllocated > iRequiredResources) {
+            const sErrorMessage = `Cannot create allocation: Allocated resources (${iNewAllocated}) would exceed required resources (${iRequiredResources}) for project ${projectId}. Current allocated: ${iCurrentAllocated}`;
+            return req.reject(409, sErrorMessage);
+        }
+
+        // ✅ Validate allocation dates are within project date range
+        if (sFinalStartDate && oProject.startDate) {
+            const oAllocStart = new Date(sFinalStartDate);
+            const oProjStart = new Date(oProject.startDate);
+            if (oAllocStart < oProjStart) {
+                return req.reject(400, `Allocation start date (${sFinalStartDate}) cannot be earlier than project start date (${oProject.startDate})`);
+            }
+        }
+
+        if (sFinalEndDate && oProject.endDate) {
+            const oAllocEnd = new Date(sFinalEndDate);
+            const oProjEnd = new Date(oProject.endDate);
+            if (oAllocEnd > oProjEnd) {
+                return req.reject(400, `Allocation end date (${sFinalEndDate}) cannot be later than project end date (${oProject.endDate})`);
+            }
+        }
+
+        // ✅ Duplicate allocation check: Prevent same employee from being allocated to same project multiple times
+        if (employeeId && projectId) {
+            const oExistingAllocation = await tx.run(
+                SELECT.one.from(newAllocations)
+                    .where({
+                        employeeId: employeeId,
+                        projectId: projectId
+                    })
+            );
+
+            if (oExistingAllocation) {
+                return req.reject(409, `Employee ${employeeId} is already allocated to project ${projectId}. An employee can only be allocated to a project once.`);
+            }
+        }
+
+        // ✅ Fetch overlapping allocations for same employee (excluding current allocationId if any)
         const existing = await tx.run(
             SELECT.from(newAllocations)
                 .columns('allocationId', 'startDate', 'endDate', 'allocationPercentage')
                 .where({
                     employeeId,
                     // overlap condition: existing.endDate >= startDate AND existing.startDate <= endDate
-                    endDate: { '>=': startDate },
-                    startDate: { '<=': endDate }
+                    endDate: { '>=': sFinalStartDate },
+                    startDate: { '<=': sFinalEndDate }
                 })
         );
 
-        const peak = maxCumulativeWithNew(existing, { startDate, endDate, allocationPercentage });
+        // ✅ CRITICAL: Convert allocationPercentage values to numbers (strict type conversion)
+        const existingWithNumbers = (existing || []).map(r => ({
+            ...r,
+            allocationPercentage: r.allocationPercentage != null ? Number(r.allocationPercentage) : 0
+        }));
+
+        const peak = maxCumulativeWithNew(existingWithNumbers, { startDate: sFinalStartDate, endDate: sFinalEndDate, allocationPercentage: iAllocationPercentage });
 
         if (peak > 100) {
             return req.reject(409, `Allocation exceeds 100%. Peak cumulative allocation in the selected time frame would be ${peak}%.`);
@@ -1945,10 +2080,22 @@ module.exports = cds.service.impl(async function () {
             // Support array or single object
             const entries = Array.isArray(payload) ? payload : [payload];
 
-            // Optional: basic validation
+            // Optional: basic validation and type conversion
             for (const e of entries) {
                 if (!e.allocationId) e.allocationId = cds.utils.uuid(); // if you want CAP to generate UUID
-                if (e.allocationPercentage == null) e.allocationPercentage = 100; // default
+                
+                // ✅ CRITICAL: Ensure allocationPercentage is Integer (not string) - schema requirement
+                if (e.allocationPercentage == null) {
+                    e.allocationPercentage = 100; // default
+                } else {
+                    e.allocationPercentage = Number(e.allocationPercentage); // Convert to Integer
+                }
+                
+                // ✅ Ensure allocationDate is set (schema requirement: Date field)
+                if (!e.allocationDate) {
+                    e.allocationDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+                }
+                
                 if (!e.employeeId || !e.projectId || !e.customerId) {
                     return req.error(400, 'employeeId, projectId, and customerId are required');
                 }
