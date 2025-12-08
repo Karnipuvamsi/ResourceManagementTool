@@ -1128,6 +1128,95 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    // ✅ NEW: Helper function to update employee status based on newAllocations
+    // Similar to _updateEmployeeStatus but works with newAllocations entity
+    this._updateEmployeeStatusForNewAllocations = async function (sEmployeeId) {
+        try {
+            const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+            if (!oEmployee) {
+                return;
+            }
+
+            // ✅ Don't change status if employee is Resigned
+            if (oEmployee.status === 'Resigned') {
+                return;
+            }
+
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            // ✅ Get all newAllocations for this employee (no status filter since newAllocations doesn't have status)
+            const aAllocations = await SELECT.from(newAllocations)
+                .where({ employeeId: sEmployeeId });
+
+            // ✅ If no allocations, revert to Bench (if not already on bench)
+            if (!aAllocations || aAllocations.length === 0) {
+                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
+                    await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
+                }
+                return;
+            }
+
+            // ✅ Employee has allocations - determine status based on all of them
+            let sFinalStatus = null;
+            let bHasAllocated = false;
+            let bHasPreAllocated = false;
+
+            for (const oAllocation of aAllocations) {
+                const sProjectId = oAllocation.projectId;
+                if (!sProjectId) continue;
+
+                // Get project details
+                const oProject = await SELECT.one.from(Projects).where({ sapPId: sProjectId });
+                if (!oProject) continue;
+
+                const bHasSfdcPId = oProject.sfdcPId && oProject.sfdcPId.trim() !== "";
+
+                // Check project start date
+                const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+                if (oProjectStartDate) {
+                    oProjectStartDate.setHours(0, 0, 0, 0);
+                }
+                const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+
+                // Check allocation start date
+                const oAllocationStartDate = oAllocation.startDate ? new Date(oAllocation.startDate) : null;
+                if (oAllocationStartDate) {
+                    oAllocationStartDate.setHours(0, 0, 0, 0);
+                }
+                const bAllocationStarted = oAllocationStartDate && oToday >= oAllocationStartDate;
+
+                // ✅ Both dates must have arrived for status to apply
+                if (bAllocationStarted && bProjectStarted) {
+                    if (bHasSfdcPId) {
+                        bHasAllocated = true; // "Allocated" takes precedence
+                    } else {
+                        bHasPreAllocated = true;
+                    }
+                }
+            }
+
+            // ✅ Determine final status (Allocated > PreAllocated)
+            if (bHasAllocated) {
+                sFinalStatus = 'Allocated';
+            } else if (bHasPreAllocated) {
+                sFinalStatus = 'PreAllocated';
+            } else {
+                // ✅ Employee has allocations but none have started yet
+                // Keep current status (don't change to Bench yet)
+                return;
+            }
+
+            // Update employee status if different
+            if (sFinalStatus && oEmployee.status !== sFinalStatus) {
+                await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: sFinalStatus });
+            }
+        } catch (oError) {
+            console.error(`Error updating employee status for ${sEmployeeId}:`, oError);
+            throw oError;
+        }
+    };
+
     // ✅ NEW: Helper function to update a specific employee's status based on ALL their active allocations
     // This handles cases where:
     // - Employee has multiple active allocations (takes the "highest" status: Allocated > PreAllocated)
@@ -1630,6 +1719,121 @@ module.exports = cds.service.impl(async function () {
         }
     });
 
+    // ✅ NEW: Function to check and update employee statuses for projects starting today
+    // This checks all employees with newAllocations where:
+    // - Allocation start date is today or earlier
+    // - Project start date is today or earlier
+    // Then updates their status accordingly (Allocated or PreAllocated)
+    this._checkAndUpdateStatusesForStartingProjects = async function () {
+        try {
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+            const sTodayStr = oToday.toISOString().slice(0, 10); // YYYY-MM-DD
+
+            // Get all newAllocations where startDate <= today
+            const aAllocations = await SELECT.from(newAllocations)
+                .where({ startDate: { '<=': sTodayStr } });
+
+            if (!aAllocations || aAllocations.length === 0) {
+                return {
+                    checked: 0,
+                    updated: 0,
+                    employees: []
+                };
+            }
+
+            // Group by employee and project to avoid duplicate checks
+            const mEmployeeProjects = new Map();
+            for (const oAlloc of aAllocations) {
+                const sKey = `${oAlloc.employeeId}_${oAlloc.projectId}`;
+                if (!mEmployeeProjects.has(sKey)) {
+                    mEmployeeProjects.set(sKey, oAlloc);
+                }
+            }
+
+            const aAffectedEmployees = new Set();
+            let iUpdatedCount = 0;
+
+            // Check each unique employee-project combination
+            for (const [, oAlloc] of mEmployeeProjects) {
+                try {
+                    // Get project details
+                    const oProject = await SELECT.one.from(Projects).where({ sapPId: oAlloc.projectId });
+                    if (!oProject) continue;
+
+                    const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+                    if (oProjectStartDate) {
+                        oProjectStartDate.setHours(0, 0, 0, 0);
+                    }
+
+                    const oAllocationStartDate = oAlloc.startDate ? new Date(oAlloc.startDate) : null;
+                    if (oAllocationStartDate) {
+                        oAllocationStartDate.setHours(0, 0, 0, 0);
+                    }
+
+                    // Check if both dates have arrived
+                    const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+                    const bAllocationStarted = oAllocationStartDate && oToday >= oAllocationStartDate;
+
+                    if (bProjectStarted && bAllocationStarted) {
+                        // Both dates have arrived, update employee status
+                        aAffectedEmployees.add(oAlloc.employeeId);
+                    }
+                } catch (oError) {
+                    console.error(`Error checking allocation ${oAlloc.allocationId}:`, oError);
+                }
+            }
+
+            // Update status for all affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    const oEmployee = await SELECT.one.from(Employees).where({ ohrId: sEmployeeId });
+                    if (!oEmployee || oEmployee.status === 'Resigned') {
+                        continue; // Skip resigned employees
+                    }
+
+                    // Update status based on all allocations for this employee
+                    await this._updateEmployeeStatusForNewAllocations(sEmployeeId);
+                    iUpdatedCount++;
+                } catch (oError) {
+                    console.error(`Error updating employee ${sEmployeeId}:`, oError);
+                }
+            }
+
+            return {
+                checked: aAllocations.length,
+                updated: iUpdatedCount,
+                employees: Array.from(aAffectedEmployees)
+            };
+        } catch (oError) {
+            console.error('Error in _checkAndUpdateStatusesForStartingProjects:', oError);
+            throw oError;
+        }
+    };
+
+    // ✅ NEW: On-demand API endpoint to check and update employee statuses for projects starting today
+    // This can be called:
+    // 1. Manually via API: POST /service/checkStartingProjects
+    // 2. Scheduled daily via external scheduler (SAP Cloud Platform Job Scheduler, Cloud Functions, etc.)
+    // 3. Via cron job or scheduled task
+    this.on('checkStartingProjects', async (req) => {
+        try {
+            const oResult = await this._checkAndUpdateStatusesForStartingProjects();
+            return {
+                success: true,
+                message: `Checked and updated employee statuses for projects starting today`,
+                timestamp: new Date().toISOString(),
+                ...oResult
+            };
+        } catch (oError) {
+            return {
+                success: false,
+                error: oError.message,
+                timestamp: new Date().toISOString()
+            };
+        }
+    });
+
     // ✅ NEW: Proactive check on Employee READ (lightweight check)
     // This checks if the employee's allocations have expired when reading a single employee
     // Note: This runs AFTER the existing before('READ', Employees) handler
@@ -1956,6 +2160,46 @@ module.exports = cds.service.impl(async function () {
 
             // Persist
             await INSERT.into(newAllocations).entries(entries);
+
+            // ✅ NEW: Update employee status if allocation/project start dates have arrived
+            // This handles immediate cases where allocation is created and dates are already in the past/today
+            const aAffectedEmployees = new Set();
+            const oToday = new Date();
+            oToday.setHours(0, 0, 0, 0);
+
+            for (const e of entries) {
+                if (e.employeeId && e.projectId && e.startDate) {
+                    // Get project details to check start date and SFDC PID
+                    const oProject = await SELECT.one.from(Projects).where({ sapPId: e.projectId });
+                    if (oProject) {
+                        const oAllocationStartDate = new Date(e.startDate);
+                        oAllocationStartDate.setHours(0, 0, 0, 0);
+                        const oProjectStartDate = oProject.startDate ? new Date(oProject.startDate) : null;
+                        if (oProjectStartDate) {
+                            oProjectStartDate.setHours(0, 0, 0, 0);
+                        }
+
+                        // Check if both dates have arrived
+                        const bAllocationStarted = oToday >= oAllocationStartDate;
+                        const bProjectStarted = oProjectStartDate && oToday >= oProjectStartDate;
+
+                        if (bAllocationStarted && bProjectStarted) {
+                            // Dates have arrived, update status immediately
+                            aAffectedEmployees.add(e.employeeId);
+                        }
+                    }
+                }
+            }
+
+            // Update status for affected employees
+            for (const sEmployeeId of aAffectedEmployees) {
+                try {
+                    await this._updateEmployeeStatusForNewAllocations(sEmployeeId);
+                } catch (oError) {
+                    // Log but don't fail the create operation
+                    console.error(`Failed to update status for employee ${sEmployeeId}:`, oError);
+                }
+            }
 
             // Fetch back the created rows by their keys
             if (Array.isArray(payload)) {

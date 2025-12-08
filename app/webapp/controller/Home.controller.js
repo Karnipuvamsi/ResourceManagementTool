@@ -10538,21 +10538,45 @@ sap.ui.define([
             });
             const oCreatedContext = oListBinding.create(oPayload);
             console.log(oCreatedContext, "*******oCreatedContext");
-            oCreatedContext.created()
-                .then((oFinalContext) => {
-                    console.log(oFinalContext, "oFinalContext");
-                    // console.log(oFinalContext.getObject(),"response");
-
-                    sap.m.MessageToast.show("Allocation created!");
-                    // Access created object: oFinalContext.getObject()
+            
+            // Submit batch and handle errors properly
+            oModel.submitBatch("changesGroup")
+                .then((oResponse) => {
+                    console.log(oResponse, "Batch response");
+                    // Verify the context was actually created successfully
+                    // If there was an error, the context might be in error state
+                    if (oCreatedContext && oCreatedContext.getProperty && oCreatedContext.getProperty("allocationId")) {
+                        // Success
+                        sap.m.MessageToast.show("Allocation created!");
+                        this._onCustomerChangeCancel();
+                    } else {
+                        // Context doesn't have allocationId, likely an error occurred
+                        sap.m.MessageToast.show("Create failed: Unable to verify allocation creation");
+                        // Clear pending changes on error to prevent error state from persisting
+                        if (oModel.resetChanges) {
+                            oModel.resetChanges("changesGroup");
+                        }
+                    }
                 })
                 .catch((err) => {
-                    MessageToast.show("Create failed: " + err.message);
+                    console.error("Batch submission error:", err);
+                    // Extract error message from various possible error formats
+                    let sErrorMessage = "Create failed";
+                    if (err.message) {
+                        sErrorMessage = err.message;
+                    } else if (err.responseText) {
+                        sErrorMessage = err.responseText;
+                    } else if (err.response && err.response.body) {
+                        sErrorMessage = err.response.body.error?.message || JSON.stringify(err.response.body);
+                    } else if (typeof err === "string") {
+                        sErrorMessage = err;
+                    }
+                    sap.m.MessageToast.show("Create failed: " + sErrorMessage);
+                    // Clear pending changes on error to prevent error state from persisting
+                    if (oModel.resetChanges) {
+                        oModel.resetChanges("changesGroup");
+                    }
                 });
-            oModel.submitBatch("changesGroup");
-
-
-            this._onCustomerChangeCancel();
 
         }
 
