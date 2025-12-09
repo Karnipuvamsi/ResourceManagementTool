@@ -5670,21 +5670,6 @@ sap.ui.define([
                 sSkills = aSelectedSkills.join(", "),  // Join selected skills as comma-separated string
                 sStatus = this.byId("inputStatus_emp").getSelectedKey(),
                 sLWD = this.byId("inputLWD_emp").getValue();
-
-            // Validation
-            //     const oTable = this.byId("Employees");
-            // const aContexts = oTable.getRowBinding().getCurrentContexts();
-            //  const bDuplicate =aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
-
-            // if (!sOHRId) {
-            //     sap.m.MessageBox.error("OHR ID is required");
-            //     return;
-            // }
-
-            // if (bDuplicate) {
-            //     sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
-            //     return;
-            // }
             const oTable = this.byId("Employees");
             const aContexts = oTable.getRowBinding().getCurrentContexts();
 
