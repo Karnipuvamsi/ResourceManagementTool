@@ -679,9 +679,9 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
-                 window.alert("COMING SOON")
-            }else if (sKey === "projectsNearingCompletionReport") {
-                 window.alert("COMING SOON")
+                window.alert("COMING SOON")
+            } else if (sKey === "projectsNearingCompletionReport") {
+                window.alert("COMING SOON")
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
                 window.alert("COMING SOON")
@@ -5475,19 +5475,19 @@ sap.ui.define([
                 sLWD = this.byId("inputLWD_emp").getValue();
 
             // Validation
-    const oTable = this.byId("Employees");
-const aContexts = oTable.getRowBinding().getCurrentContexts();
- const bDuplicate =aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
+            const oTable = this.byId("Employees");
+            const aContexts = oTable.getRowBinding().getCurrentContexts();
+            const bDuplicate = aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
 
-if (!sOHRId) {
-    sap.m.MessageBox.error("OHR ID is required");
-    return;
-}
+            if (!sOHRId) {
+                sap.m.MessageBox.error("OHR ID is required");
+                return;
+            }
 
-if (bDuplicate) {
-    sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
-    return;
-}
+            if (bDuplicate) {
+                sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
+                return;
+            }
 
             if (!sFullName || sFullName.trim() === "") {
                 sap.m.MessageBox.error("Full Name is required!");
@@ -8477,15 +8477,15 @@ if (bDuplicate) {
                 // Get customer ID from Resinput_Customer
                 const oCustomerInput = this.byId("Resinput_Customer");
                 const sCustomerId = oCustomerInput?.data("selectedId") || this._sAllocateCustomerFilter;
-                
+
                 if (!sCustomerId) {
                     sap.m.MessageToast.show("Please select a Customer first");
                     return;
                 }
-                
+
                 // Store customer ID for filtering projects
                 this._sAllocateCustomerFilter = sCustomerId;
-                
+
                 // Clear any previous project filter
                 this._sAllocateProjectFilter = null;
             } else {
@@ -8497,7 +8497,7 @@ if (bDuplicate) {
             }
 
             this._oProjectValueHelpDialog.open();
-            
+
             // ✅ Apply customer filter immediately when dialog opens (for AllocateN fragment)
             if (bIsAllocateDialog && this._sAllocateCustomerFilter) {
                 setTimeout(() => {
@@ -8539,12 +8539,34 @@ if (bDuplicate) {
             }
 
             // Apply search filter
+            // if (sQuery && sQuery.trim() !== "") {
+            //     aFilters.push(new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+            // }
+
+            // Apply search filter
             if (sQuery && sQuery.trim() !== "") {
-                aFilters.push(new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+                const sTerm = sQuery.trim();
+
+                // Create individual filters for each field
+                const aSearchFilters = [
+                    new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sTerm, false),
+                    new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.Contains, sTerm, false),
+                    new sap.ui.model.Filter("sfdcPId", sap.ui.model.FilterOperator.Contains, sTerm, false)
+                ];
+
+                // Combine them with OR (and: false)
+                aFilters.push(
+                    new sap.ui.model.Filter({
+                        filters: aSearchFilters,
+                        and: false // OR across projectName, sapPId, sfdcPId
+                    })
+                );
             }
 
             oBinding.filter(aFilters.length > 0 ? aFilters : []);
         },
+
+       
 
         // ✅ Helper function: Apply customer filter to project value help dialog
         _applyProjectCustomerFilter: function () {
@@ -9375,9 +9397,26 @@ if (bDuplicate) {
                         operator: sap.ui.model.FilterOperator.Contains,
                         value1: sValue.trim(),
                         caseSensitive: false // ✅ Case-insensitive search for value help
+                    }),
+                    new sap.ui.model.Filter({
+                        path: "SAPcustId",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sValue.trim(),
+                        caseSensitive: false
                     })
+
                 ];
-                oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
+
+                // oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
+
+                if (/^[A-Za-z]-\d{3,}$/.test(sValue.trim())) {
+                    aFilters.push(new sap.ui.model.Filter("SAPcustId", sap.ui.model.FilterOperator.EQ, sValue.trim()));
+                }
+
+                // 1) Use OR by wrapping the two filters
+                const oOrFilter = new sap.ui.model.Filter({ filters: aFilters, and: false });
+                oBinding.filter([oOrFilter], sap.ui.model.FilterType.Application);
+
             } else {
                 oBinding.filter([], sap.ui.model.FilterType.Application);
             }
