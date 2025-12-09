@@ -5453,6 +5453,203 @@ sap.ui.define([
 
 
         // ✅ NEW: Submit function for Employee (handles both Create and Update)
+        // onSubmitEmployee: function () {
+        //     const sOHRId = this.byId("inputOHRId_emp").getValue(),
+        //         sFullName = this.byId("inputFullName_emp").getValue(),
+        //         sMailId = this.byId("inputMailId_emp").getValue(),
+        //         sGender = this.byId("inputGender_emp").getSelectedKey(),
+        //         sEmployeeType = this.byId("inputEmployeeType_emp").getSelectedKey(),
+        //         sUnit = this.byId("inputUnit_emp").getSelectedKey(),
+        //         sDoJ = this.byId("inputDoJ_emp").getValue(),
+        //         sBand = this.byId("inputBand_emp").getSelectedKey(),
+        //         sRole = this.byId("inputRole_emp").getSelectedKey(), // ✅ FIXED: Role is a Select control
+        //         sLocation = this.byId("inputLocation_emp").getSelectedKey(),
+        //         sCountry = this.byId("inputCountry_emp").getSelectedKey(),  // ✅ NEW: Country field
+        //         sCity = this.byId("inputCity_emp").getSelectedKey(),  // ✅ CHANGED: Now uses getSelectedKey
+        //         // Get Supervisor OHR ID from data attribute (not displayed name)
+        //         sSupervisor = (this.byId("inputSupervisor_emp")?.data("selectedId")) || this.byId("inputSupervisor_emp")?.getValue() || "",
+        //         // Get selected skill names from MultiComboBox and join as comma-separated string
+        //         aSelectedSkills = this.byId("inputSkills_emp")?.getSelectedKeys() || [],
+        //         sSkills = aSelectedSkills.join(", "),  // Join selected skills as comma-separated string
+        //         sStatus = this.byId("inputStatus_emp").getSelectedKey(),
+        //         sLWD = this.byId("inputLWD_emp").getValue();
+
+        //     // Validation
+        //     const oTable = this.byId("Employees");
+        //     const aContexts = oTable.getRowBinding().getCurrentContexts();
+        //     const bDuplicate = aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
+
+        //     if (!sOHRId) {
+        //         sap.m.MessageBox.error("OHR ID is required");
+        //         return;
+        //     }
+
+        //     if (bDuplicate) {
+        //         sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
+        //         return;
+        //     }
+
+        //     if (!sFullName || sFullName.trim() === "") {
+        //         sap.m.MessageBox.error("Full Name is required!");
+        //         return;
+        //     }
+
+        //     // Email validation (if email is provided)
+        //     if (sMailId && sMailId.trim() !== "") {
+        //         const sEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        //         if (!sEmailRegex.test(sMailId.trim())) {
+        //             sap.m.MessageBox.error("Please enter a valid email address!");
+        //             return;
+        //         }
+        //     }
+
+        //     // const oTable = this.byId("Employees");
+        //     const oModel = oTable.getModel();
+
+        //     // Check if a row is selected (Update mode)
+        //     const aSelectedContexts = oTable.getSelectedContexts();
+
+        //     if (aSelectedContexts && aSelectedContexts.length > 0) {
+        //         // UPDATE MODE: Row is selected, update existing employee
+        //         const oContext = aSelectedContexts[0];
+
+        //         const oUpdateEntry = {
+        //             "fullName": sFullName,
+        //             "mailid": sMailId || "",
+        //             "gender": sGender || "",
+        //             "employeeType": sEmployeeType || "",
+        //             "unit": sUnit || "",
+        //             "doj": (sDoJ && typeof sDoJ === "string" && sDoJ.trim() !== "") ? sDoJ : null,  // Date field - use null if empty
+        //             "band": sBand || "",
+        //             "role": sRole || "",
+        //             "location": sLocation || "",
+        //             "country": sCountry || "",  // ✅ NEW: Country field
+        //             "city": sCity || "",
+        //             "supervisorOHR": sSupervisor || "",
+        //             "skills": sSkills || "",  // Store skills as comma-separated string
+        //             "status": sStatus || "",
+        //             "lwd": (sLWD && typeof sLWD === "string" && sLWD.trim() !== "") ? sLWD : null   // Date field - use null if empty
+        //         };
+
+        //         try {
+        //             // Update the context
+        //             Object.keys(oUpdateEntry).forEach(sKey => {
+        //                 const vNewValue = oUpdateEntry[sKey];
+        //                 const vCurrentValue = oContext.getProperty(sKey);
+        //                 // Handle null values for date fields - compare properly
+        //                 if (vNewValue !== vCurrentValue) {
+        //                     // For date fields, handle null explicitly
+        //                     if ((sKey === "doj" || sKey === "lwd") && vNewValue === null) {
+        //                         oContext.setProperty(sKey, null);
+        //                     } else {
+        //                         oContext.setProperty(sKey, vNewValue);
+        //                     }
+        //                 }
+        //             });
+
+        //             // Submit employee changes (skills are included in the update)
+        //             oModel.submitBatch("changesGroup")
+        //                 .then(() => {
+        //                     MessageToast.show("Employee updated successfully!");
+
+        //                     // ✅ CRITICAL: Hard refresh table to get fresh data from DB
+        //                     this._hardRefreshTable("Employees");
+
+        //                     this.onCancelEmployeeForm();
+        //                 })
+        //                 .catch((oError) => {
+        //                     setTimeout(() => {
+        //                         try {
+        //                             const oCurrentData = oContext.getObject();
+        //                             if (oCurrentData && oCurrentData.fullName === oUpdateEntry.fullName) {
+        //                                 MessageToast.show("Employee updated successfully!");
+        //                                 const oBinding = oTable.getBinding("rows") || oTable.getBinding("items");
+        //                                 if (oBinding) {
+        //                                     oBinding.refresh();
+        //                                 }
+        //                                 this.onCancelEmployeeForm();
+        //                             } else {
+        //                             }
+        //                         } catch (e) {
+        //                         }
+        //                     }, 150);
+        //                 });
+        //         } catch (oSetError) {
+        //             sap.m.MessageBox.error("Failed to update employee. Please try again.");
+        //         }
+        //     } else {
+        //         // CREATE MODE: No row selected, create new employee
+        //         if (!sOHRId || sOHRId.trim() === "") {
+        //             sap.m.MessageBox.error("OHR ID is required for new employees!");
+        //             return;
+        //         }
+
+        //         const oCreateEntry = {
+        //             "ohrId": sOHRId,
+        //             "fullName": sFullName,
+        //             "mailid": sMailId || "",
+        //             "gender": sGender || "",
+        //             "employeeType": sEmployeeType || "",
+        //             "unit": sUnit,
+        //             "doj": (sDoJ && typeof sDoJ === "string" && sDoJ.trim() !== "") ? sDoJ : null,  // Date field - use null if empty
+        //             "band": sBand || "",
+        //             "role": sRole || "",
+        //             "location": sLocation || "",
+        //             "country": sCountry || "",  // ✅ NEW: Country field
+        //             "city": sCity || "",
+        //             "supervisorOHR": sSupervisor || "",
+        //             "skills": sSkills || "",  // Store skills as comma-separated string
+        //             "status": sStatus || "",
+        //             "lwd": (sLWD && typeof sLWD === "string" && sLWD.trim() !== "") ? sLWD : null   // Date field - use null if empty
+        //         };
+
+
+        //         // Try to get binding using multiple methods
+        //         let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
+        //             || oTable.getBinding("items")
+        //             || oTable.getBinding("rows");
+
+        //         if (oBinding) {
+        //             try {
+        //                 const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
+        //                 if (!oNewContext) {
+        //                     sap.m.MessageBox.error("Failed to create employee entry.");
+        //                     return;
+        //                 }
+
+        //                 oModel.submitBatch("changesGroup")
+        //                     .then(() => {
+        //                         MessageToast.show("Employee created successfully!");
+
+        //                         // ✅ CRITICAL: Hard refresh table to get fresh data from DB
+        //                         this._hardRefreshTable("Employees");
+
+        //                         this.onCancelEmployeeForm();
+        //                     })
+        //                     .catch((oError) => {
+        //                         setTimeout(() => {
+        //                             try {
+        //                                 const oCreatedData = oNewContext.getObject();
+        //                                 if (oCreatedData && oCreatedData.fullName === oCreateEntry.fullName) {
+        //                                     MessageToast.show("Employee created successfully!");
+        //                                     oBinding.refresh();
+        //                                     this.onCancelEmployeeForm();
+        //                                 } else {
+        //                                     this._createEmployeeDirect(oModel, oCreateEntry, oTable);
+        //                                 }
+        //                             } catch (e) {
+        //                                 this._createEmployeeDirect(oModel, oCreateEntry, oTable);
+        //                             }
+        //                         }, 150);
+        //                     });
+        //             } catch (oCreateError) {
+        //                 this._createEmployeeDirect(oModel, oCreateEntry, oTable);
+        //             }
+        //         } else {
+        //             this._createEmployeeDirect(oModel, oCreateEntry, oTable);
+        //         }
+        //     }
+        // },
         onSubmitEmployee: function () {
             const sOHRId = this.byId("inputOHRId_emp").getValue(),
                 sFullName = this.byId("inputFullName_emp").getValue(),
@@ -5475,19 +5672,21 @@ sap.ui.define([
                 sLWD = this.byId("inputLWD_emp").getValue();
 
             // Validation
+            //     const oTable = this.byId("Employees");
+            // const aContexts = oTable.getRowBinding().getCurrentContexts();
+            //  const bDuplicate =aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
+
+            // if (!sOHRId) {
+            //     sap.m.MessageBox.error("OHR ID is required");
+            //     return;
+            // }
+
+            // if (bDuplicate) {
+            //     sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
+            //     return;
+            // }
             const oTable = this.byId("Employees");
             const aContexts = oTable.getRowBinding().getCurrentContexts();
-            const bDuplicate = aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
-
-            if (!sOHRId) {
-                sap.m.MessageBox.error("OHR ID is required");
-                return;
-            }
-
-            if (bDuplicate) {
-                sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
-                return;
-            }
 
             if (!sFullName || sFullName.trim() === "") {
                 sap.m.MessageBox.error("Full Name is required!");
@@ -5584,6 +5783,18 @@ sap.ui.define([
                     return;
                 }
 
+                const bDuplicate = aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
+
+                if (!sOHRId) {
+                    sap.m.MessageBox.error("OHR ID is required");
+                    return;
+                }
+
+                if (bDuplicate) {
+                    sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
+                    return;
+                }
+
                 const oCreateEntry = {
                     "ohrId": sOHRId,
                     "fullName": sFullName,
@@ -5650,7 +5861,6 @@ sap.ui.define([
                 }
             }
         },
-
         // Helper function for direct model create (fallback)
         _createEmployeeDirect: function (oModel, oCreateEntry, oTable) {
             oModel.create("/Employees", oCreateEntry, {
@@ -7706,6 +7916,171 @@ sap.ui.define([
         // ✅ REMOVED: onFilterBarClear function - Clear button removed from all FilterBars
 
         // ✅ Load all home screen counts dynamically
+        // _loadHomeCounts: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         await Promise.all([
+        //             this._loadTotalHeadCount(),
+        //             this._loadAllocatedCount(),
+        //             this._loadPreAllocatedCount(),
+        //             this._loadUnproductiveBenchCount(),
+        //             this._loadOnLeaveCount()
+        //         ]);
+        //         // Calculate Bench Count
+        //         this._calculateBenchCount();
+        //     } catch (error) {
+        //     }
+        // },
+
+        // ✅ Load Total Head Count (all employees excluding Resigned)
+        // _loadTotalHeadCount: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+        //             new sap.ui.model.Filter({
+        //                 path: "status",
+        //                 operator: sap.ui.model.FilterOperator.NE,
+        //                 value1: "Resigned"
+        //             })
+        //         );
+
+        //         const aContexts = await oListBinding.requestContexts(0, 10000);
+        //         const totalCount = aContexts.length;
+
+
+        //         const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //         if (oHomeCountsModel) {
+        //             oHomeCountsModel.setProperty("/totalHeadCount", totalCount);
+        //         } else {
+        //         }
+        //     } catch (error) {
+        //     }
+        // },
+
+        // ✅ Load Allocated Count (employees with status='Allocated')
+        // _loadAllocatedCount: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         const oListBinding = oModel.bindList("/Employees", undefined, undefined,
+        //             new sap.ui.model.Filter({
+        //                 path: "status",
+        //                 operator: sap.ui.model.FilterOperator.EQ,
+        //                 value1: "Allocated"
+        //             })
+        //         );
+
+        //         const aContexts = await oListBinding.requestContexts(0, 10000);
+        //         const allocatedCount = aContexts.length;
+
+        //         const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //         if (oHomeCountsModel) {
+        //             oHomeCountsModel.setProperty("/allocatedCount", allocatedCount);
+        //         }
+        //     } catch (error) {
+        //     }
+        // },
+
+        // ✅ Load Pre Allocated Count (employees with status='Pre Allocated')
+        // _loadPreAllocatedCount: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+        //         const oListBinding = oModel.bindList("/Employees", null, null, null);
+
+        //         const aContexts = await oListBinding.requestContexts(0, 10000);
+        //         const allEmployees = aContexts.map(ctx => ctx.getObject());
+
+        //         // Filter employees with status = 'Pre Allocated'
+        //         const preAllocatedCount = allEmployees.filter(emp => emp.status === "Pre Allocated").length;
+
+        //         const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //         if (oHomeCountsModel) {
+        //             oHomeCountsModel.setProperty("/preAllocatedCount", preAllocatedCount);
+        //         }
+        //     } catch (error) {
+        //     }
+        // },
+
+        // ✅ Load Unproductive Bench Count (employees with status='Unproductive Bench')
+        // _loadUnproductiveBenchCount: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+        //         const oListBinding = oModel.bindList("/Employees", null, null, null);
+
+        //         const aContexts = await oListBinding.requestContexts(0, 10000);
+        //         const allEmployees = aContexts.map(ctx => ctx.getObject());
+
+        //         // Filter employees with status = 'Unproductive Bench'
+        //         const unproductiveBenchCount = allEmployees.filter(emp => emp.status === "Unproductive Bench").length;
+
+        //         const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //         if (oHomeCountsModel) {
+        //             oHomeCountsModel.setProperty("/unproductiveBenchCount", unproductiveBenchCount);
+        //         }
+        //     } catch (error) {
+        //     }
+        // },
+
+        // // ✅ Load On Leave Count (employees with status='Inactive Bench')
+        // _loadOnLeaveCount: async function () {
+        //     const oModel = this.getView().getModel("default") || this.getView().getModel();
+        //     if (!oModel) {
+        //         return;
+        //     }
+
+        //     try {
+        //         // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
+        //         const oListBinding = oModel.bindList("/Employees", null, null, null);
+
+        //         const aContexts = await oListBinding.requestContexts(0, 10000);
+        //         const allEmployees = aContexts.map(ctx => ctx.getObject());
+
+        //         // Filter employees with status = 'Inactive Bench'
+        //         const onLeaveCount = allEmployees.filter(emp => emp.status === "Inactive Bench").length;
+
+        //         const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //         if (oHomeCountsModel) {
+        //             oHomeCountsModel.setProperty("/onLeaveCount", onLeaveCount);
+        //         }
+        //     } catch (error) {
+        //     }
+        // },
+
+        // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
+        // _calculateBenchCount: function () {
+        //     const oHomeCountsModel = this.getView().getModel("homeCounts");
+        //     if (!oHomeCountsModel) {
+        //         return;
+        //     }
+
+        //     const oData = oHomeCountsModel.getData();
+        //     const benchCount = (oData.preAllocatedCount || 0) +
+        //         (oData.unproductiveBenchCount || 0) +
+        //         (oData.onLeaveCount || 0);
+
+        //     oHomeCountsModel.setProperty("/benchCount", benchCount);
+        // },
         _loadHomeCounts: async function () {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
             if (!oModel) {
@@ -7728,133 +8103,166 @@ sap.ui.define([
 
         // ✅ Load Total Head Count (all employees excluding Resigned)
         _loadTotalHeadCount: async function () {
+
             const oModel = this.getView().getModel("default") || this.getView().getModel();
-            if (!oModel) {
-                return;
-            }
+            if (!oModel) return;
 
             try {
-                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
-                    new sap.ui.model.Filter({
-                        path: "status",
-                        operator: sap.ui.model.FilterOperator.NE,
-                        value1: "Resigned"
-                    })
-                );
+                // Build filter
+                const oFilter = new sap.ui.model.Filter({
+                    path: "status",
+                    operator: sap.ui.model.FilterOperator.NE,
+                    value1: "Resigned"
+                });
 
-                const aContexts = await oListBinding.requestContexts(0, 10000);
-                const totalCount = aContexts.length;
+                // Bind the list with $count enabled
+                const oListBinding = oModel.bindList("/Employees", /* context */ undefined, /* sorter */ undefined, /* filters */[oFilter], {
+                    $count: true // ensure server returns total count
+                });
 
+                // Request no data rows, just trigger binding and length determination
+                await oListBinding.requestContexts(0, 0);
 
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // should be a non-negative integer
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
-                if (oHomeCountsModel) {
-                    oHomeCountsModel.setProperty("/totalHeadCount", totalCount);
-                } else {
-                }
+                oHomeCountsModel && oHomeCountsModel.setProperty("/totalHeadCount", totalCount);
             } catch (error) {
+                jQuery.sap.log.error("Failed to load total head count (V4)", error);
             }
         },
 
         // ✅ Load Allocated Count (employees with status='Allocated')
         _loadAllocatedCount: async function () {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
-            if (!oModel) {
-                return;
-            }
+            if (!oModel) return;
 
             try {
-                const oListBinding = oModel.bindList("/Employees", undefined, undefined,
-                    new sap.ui.model.Filter({
-                        path: "status",
-                        operator: sap.ui.model.FilterOperator.EQ,
-                        value1: "Allocated"
-                    })
-                );
+                // Build filter
+                const oFilter = new sap.ui.model.Filter({
+                    path: "status",
+                    operator: sap.ui.model.FilterOperator.EQ,
+                    value1: "Allocated"
+                });
 
-                const aContexts = await oListBinding.requestContexts(0, 10000);
-                const allocatedCount = aContexts.length;
+                // Bind the list with $count enabled
+                const oListBinding = oModel.bindList("/Employees", /* context */ undefined, /* sorter */ undefined, /* filters */[oFilter], {
+                    $count: true // ensure server returns total count
+                });
 
+                // Request no data rows, just trigger binding and length determination
+                await oListBinding.requestContexts(0, 0);
+
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // should be a non-negative integer
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
-                if (oHomeCountsModel) {
-                    oHomeCountsModel.setProperty("/allocatedCount", allocatedCount);
-                }
+                oHomeCountsModel && oHomeCountsModel.setProperty("/allocatedCount", totalCount);
             } catch (error) {
+                jQuery.sap.log.error("Failed to load Allocated count (V4)", error);
             }
+
+
+
+
         },
 
         // ✅ Load Pre Allocated Count (employees with status='Pre Allocated')
         _loadPreAllocatedCount: async function () {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
-            if (!oModel) {
-                return;
-            }
+            if (!oModel) return;
 
             try {
-                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
-                const oListBinding = oModel.bindList("/Employees", null, null, null);
+                // Build filter
+                const oFilter = new sap.ui.model.Filter({
+                    path: "status",
+                    operator: sap.ui.model.FilterOperator.EQ,
+                    value1: "Pre Allocated"
+                });
 
-                const aContexts = await oListBinding.requestContexts(0, 10000);
-                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                // Bind the list with $count enabled
+                const oListBinding = oModel.bindList("/Employees", /* context */ undefined, /* sorter */ undefined, /* filters */[oFilter], {
+                    $count: true // ensure server returns total count
+                });
 
-                // Filter employees with status = 'Pre Allocated'
-                const preAllocatedCount = allEmployees.filter(emp => emp.status === "Pre Allocated").length;
+                // Request no data rows, just trigger binding and length determination
+                await oListBinding.requestContexts(0, 0);
 
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // should be a non-negative integer
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
-                if (oHomeCountsModel) {
-                    oHomeCountsModel.setProperty("/preAllocatedCount", preAllocatedCount);
-                }
+                oHomeCountsModel && oHomeCountsModel.setProperty("/preAllocatedCount", totalCount);
             } catch (error) {
+                jQuery.sap.log.error("Failed to load Pre Allocated count (V4)", error);
             }
+
+
+
         },
 
         // ✅ Load Unproductive Bench Count (employees with status='Unproductive Bench')
         _loadUnproductiveBenchCount: async function () {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
-            if (!oModel) {
-                return;
-            }
+            if (!oModel) return;
 
             try {
-                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
-                const oListBinding = oModel.bindList("/Employees", null, null, null);
+                // Build filter
+                const oFilter = new sap.ui.model.Filter({
+                    path: "status",
+                    operator: sap.ui.model.FilterOperator.EQ,
+                    value1: "Unproductive Bench"
+                });
 
-                const aContexts = await oListBinding.requestContexts(0, 10000);
-                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                // Bind the list with $count enabled
+                const oListBinding = oModel.bindList("/Employees", /* context */ undefined, /* sorter */ undefined, /* filters */[oFilter], {
+                    $count: true // ensure server returns total count
+                });
 
-                // Filter employees with status = 'Unproductive Bench'
-                const unproductiveBenchCount = allEmployees.filter(emp => emp.status === "Unproductive Bench").length;
+                // Request no data rows, just trigger binding and length determination
+                await oListBinding.requestContexts(0, 0);
 
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // should be a non-negative integer
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
-                if (oHomeCountsModel) {
-                    oHomeCountsModel.setProperty("/unproductiveBenchCount", unproductiveBenchCount);
-                }
+                oHomeCountsModel && oHomeCountsModel.setProperty("/unproductiveBenchCount", totalCount);
             } catch (error) {
+                jQuery.sap.log.error("Failed to load Unproductive Bench count (V4)", error);
             }
+
+
+
         },
 
         // ✅ Load On Leave Count (employees with status='Inactive Bench')
         _loadOnLeaveCount: async function () {
             const oModel = this.getView().getModel("default") || this.getView().getModel();
-            if (!oModel) {
-                return;
-            }
+            if (!oModel) return;
 
             try {
-                // ✅ Fetch all employees and filter in JavaScript (OData V4 compatibility)
-                const oListBinding = oModel.bindList("/Employees", null, null, null);
+                // Build filter
+                const oFilter = new sap.ui.model.Filter({
+                    path: "status",
+                    operator: sap.ui.model.FilterOperator.EQ,
+                    value1: "Inactive Bench"
+                });
 
-                const aContexts = await oListBinding.requestContexts(0, 10000);
-                const allEmployees = aContexts.map(ctx => ctx.getObject());
+                // Bind the list with $count enabled
+                const oListBinding = oModel.bindList("/Employees", /* context */ undefined, /* sorter */ undefined, /* filters */[oFilter], {
+                    $count: true // ensure server returns total count
+                });
 
-                // Filter employees with status = 'Inactive Bench'
-                const onLeaveCount = allEmployees.filter(emp => emp.status === "Inactive Bench").length;
+                // Request no data rows, just trigger binding and length determination
+                await oListBinding.requestContexts(0, 0);
 
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // should be a non-negative integer
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
-                if (oHomeCountsModel) {
-                    oHomeCountsModel.setProperty("/onLeaveCount", onLeaveCount);
-                }
+                oHomeCountsModel && oHomeCountsModel.setProperty("/onLeaveCount", totalCount);
             } catch (error) {
+                jQuery.sap.log.error("Failed to load total head count (V4)", error);
             }
+
+
+
         },
 
         // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
@@ -8566,7 +8974,7 @@ sap.ui.define([
             oBinding.filter(aFilters.length > 0 ? aFilters : []);
         },
 
-       
+
 
         // ✅ Helper function: Apply customer filter to project value help dialog
         _applyProjectCustomerFilter: function () {
@@ -9870,6 +10278,532 @@ sap.ui.define([
             }
             return iValue + "%";
         },
+        // onTotalHeadPress: function () {
+        //     sap.m.MessageToast.show("Total Head Count clicked");
+
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("employeesPage"));
+
+        //     const oEmployeesPage = this.getView().byId("employeesPage");
+
+        //     this._bEmployeesLoaded = false;
+
+        //     oEmployeesPage.destroyContent();
+
+
+        //     // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.Employees",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oEmployeesPage.addContent(oFragment);
+        //         const oTable = this.byId("Employees");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+        //         // Ensure table starts with show-less state
+        //         oTable.removeStyleClass("show-more");
+        //         oTable.addStyleClass("show-less");
+
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+        //         // ✅ Set default filters for Employees FilterBar
+        //         const oEmployeeFilterBar = this.byId("employeeFilterBar");
+        //         if (oEmployeeFilterBar) {
+        //             oEmployeeFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oEmployeeFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oEmployeeFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oEmployeeFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("Employees");
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("Employees");
+
+        //         // ✅ Populate Country dropdown when Employees fragment loads
+        //         // Use multiple timeouts to ensure fragment is fully rendered
+        //         setTimeout(() => {
+        //             this._populateCountryDropdown();
+        //         }, 500);
+        //         setTimeout(() => {
+        //             this._populateCountryDropdown();
+        //         }, 1000);
+        //         setTimeout(() => {
+        //             this._populateCountryDropdown();
+        //         }, 2000);
+
+        //         // ✅ Initialize Employee form (no ID preview needed - manual OHR ID entry)
+        //         setTimeout(() => {
+        //             oTable.initialized().then(() => {
+        //                 setTimeout(() => {
+        //                     const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+        //                     if (aSelectedContexts.length === 0) {
+        //                         // No selection - initialize form for create mode
+        //                         this._onEmpDialogData([]);
+        //                     }
+        //                 }, 300);
+        //             }).catch(() => {
+        //                 setTimeout(() => {
+        //                     this._onEmpDialogData([]);
+        //                 }, 500);
+        //             });
+        //         }, 300);
+        //     }.bind(this));
+        // },
+
+        // onAllocatedPress: function () {
+        //     sap.m.MessageToast.show("Allocated Count clicked");
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("employeeAllocationReportPage"));
+
+
+        //     this._bEmployeeAllocationReportLoaded = false;
+        //     const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
+        //     oCustomersPage.destroyContent();
+
+        //     // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.EmployeeAllocationReport",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oCustomersPage.addContent(oFragment);
+
+        //         const oTable = this.byId("EmployeeAllocationReportTable");
+        //         // Ensure table starts with show-less state
+
+        //         oTable.addStyleClass("show-less");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+        //         // ✅ Populate Country dropdown when Customers fragment loads
+        //         this._populateCountryDropdown();
+
+        //         // ✅ Set default filters for Customers FilterBar
+        //         const oFilterBar = this.byId("employeeAllocationReportFilterBar");
+        //         if (oFilterBar) {
+        //             oFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("EmployeeAllocationReportTable").then(() => {
+        //             // ✅ Trigger initial data load by firing FilterBar search event
+        //             // This ensures table binds even when there are no filter conditions
+        //             setTimeout(() => {
+        //                 if (oFilterBar) {
+        //                     // Fire search event to trigger table binding
+        //                     oFilterBar.fireSearch();
+        //                 } else if (oTable && typeof oTable.rebind === "function") {
+        //                     // Fallback: rebind table directly if FilterBar not available
+        //                     oTable.rebind();
+        //                 }
+        //             }, 1000);
+        //         });
+
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("EmployeeAllocationReport");
+
+        //     }.bind(this));
+        // },
+
+        // onBenchPress: function () {
+        //     sap.m.MessageToast.show("Bench Count clicked");
+
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+        //     const oBenchPage = this.byId("employeeBenchReportPage");
+        //     this._bEmployeeBenchReportTableLoaded = false;
+        //     oBenchPage.destroyContent();
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.EmployeeBenchReport",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oBenchPage.addContent(oFragment);
+
+        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         // Ensure table starts with show-less state
+        //         oTable.addStyleClass("show-less");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+
+        //         // ✅ Set default filters for Customers FilterBar
+        //         const oFilterBar = this.byId("employeeBenchReportFilterBar");
+        //         if (oFilterBar) {
+        //             oFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //             // ✅ Trigger initial data load by firing FilterBar search event
+        //             // This ensures table binds even when there are no filter conditions
+        //             setTimeout(() => {
+        //                 if (oFilterBar) {
+        //                     // Fire search event to trigger table binding
+        //                     oFilterBar.fireSearch();
+        //                 } else if (oTable && typeof oTable.rebind === "function") {
+        //                     // Fallback: rebind table directly if FilterBar not available
+        //                     oTable.rebind();
+        //                 }
+        //             }, 1000);
+        //         });
+
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+        //     }.bind(this));
+
+        // },
+
+        // onUnallocatedBenchPress: function () {
+        //     sap.m.MessageToast.show("Pre Allocated clicked");
+        // },
+
+        // onUnproductiveBenchPress: function () {
+        //     sap.m.MessageToast.show("Unproductive Bench clicked");
+
+
+
+
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+        //     const oBenchPage = this.byId("employeeBenchReportPage");
+        //     this._bEmployeeBenchReportTableLoaded = false;
+        //     oBenchPage.destroyContent();
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.EmployeeBenchReport",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oBenchPage.addContent(oFragment);
+
+        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         // Ensure table starts with show-less state
+        //         oTable.addStyleClass("show-less");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+
+        //         // ✅ Set default filters for Customers FilterBar
+        //         const oFilterBar = this.byId("employeeBenchReportFilterBar");
+        //         if (oFilterBar) {
+        //             oFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //             // ✅ Trigger initial data load by firing FilterBar search event
+        //             // This ensures table binds even when there are no filter conditions
+        //             setTimeout(() => {
+        //                 if (oFilterBar) {
+        //                     // Fire search event to trigger table binding
+        //                     oFilterBar.fireSearch();
+        //                 } else if (oTable && typeof oTable.rebind === "function") {
+        //                     // Fallback: rebind table directly if FilterBar not available
+        //                     oTable.rebind();
+        //                 }
+        //             }, 1000);
+        //         });
+
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+        //     }.bind(this));
+
+
+
+        // },
+
+        // onNetBenchPress: function () {
+        //     sap.m.MessageToast.show("Inactive Bench clicked");
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("employeeBenchReportPage"));
+
+        //     const oBenchPage = this.byId("employeeBenchReportPage");
+        //     this._bEmployeeBenchReportTableLoaded = false;
+        //     oBenchPage.destroyContent();
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.EmployeeBenchReport",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oBenchPage.addContent(oFragment);
+
+        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         // Ensure table starts with show-less state
+        //         oTable.addStyleClass("show-less");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+
+        //         // ✅ Set default filters for Customers FilterBar
+        //         const oFilterBar = this.byId("employeeBenchReportFilterBar");
+        //         if (oFilterBar) {
+        //             oFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //             // ✅ Trigger initial data load by firing FilterBar search event
+        //             // This ensures table binds even when there are no filter conditions
+        //             const oMdcTable = this.byId("EmployeeBenchReportTable");
+
+        //             // Wait until MDC Table's inner table is ready
+        //             oMdcTable._oTableReady.promise.then(() => {
+        //                 const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
+
+        //                 // Attach event when rows are updated (binding is ready)
+        //                 oInnerTable.attachEventOnce("_rowsUpdated", () => {
+        //                     const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
+        //                     if (oBinding) {
+        //                         const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Inactive Bench");
+        //                         oBinding.filter([oFilter]);
+        //                     }
+        //                 });
+        //             });
+        //             setTimeout(() => {
+        //                 if (oFilterBar) {
+        //                     // Fire search event to trigger table binding
+        //                     oFilterBar.fireSearch();
+        //                 } else if (oTable && typeof oTable.rebind === "function") {
+        //                     // Fallback: rebind table directly if FilterBar not available
+        //                     oTable.rebind();
+        //                 }
+        //             }, 1000);
+        //         });
+
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("EmployeeBenchReport");
+
+        //     }.bind(this));
+
+        // },
+
+        // onDemandsPress: function () {
+        //     sap.m.MessageToast.show("Demands Count clicked");
+        //     var oLogButton = this.byId("uploadLogButton");
+
+        //     let oNavContainer = this.byId("pageContainer");
+        //     oNavContainer.to(this.byId("demandsPage"));
+
+
+        //     const oMasterDemandsPage = this.byId("demandsPage");
+        //     this._bMasterDemandsLoaded = false;
+        //     oMasterDemandsPage.destroyContent();
+
+
+
+
+        //     Fragment.load({
+        //         id: this.getView().getId(),
+        //         name: "glassboard.view.fragments.MasterDemands",
+        //         controller: this
+        //     }).then(function (oFragment) {
+        //         oMasterDemandsPage.addContent(oFragment);
+
+        //         const oTable = this.byId("MasterDemands");
+        //         // Ensure table starts with show-less state
+        //         oTable.removeStyleClass("show-more");
+        //         oTable.addStyleClass("show-less");
+
+        //         if (oLogButton) {
+        //             oLogButton.setVisible(false);
+        //         }
+        //         // Ensure the table has the correct model
+        //         const oModel = this.getOwnerComponent().getModel();
+        //         if (oModel) {
+        //             oTable.setModel(oModel);
+        //         }
+
+        //         // ✅ Set default filters for Opportunities FilterBar
+        //         const oMasterDemandsFilterBar = this.byId("masterDemandsFilterBar");
+        //         if (oMasterDemandsFilterBar) {
+        //             oMasterDemandsFilterBar.setModel(oModel, "default");
+        //             const oFilterModel = this.getView().getModel("filterModel");
+        //             const oFiltersModel = this.getView().getModel("$filters");
+        //             if (oFilterModel) {
+        //                 oMasterDemandsFilterBar.setModel(oFilterModel, "filterModel");
+        //             }
+        //             if (oFiltersModel) {
+        //                 oMasterDemandsFilterBar.setModel(oFiltersModel, "$filters");
+        //             }
+        //             // ✅ Set defaults with multiple retries
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+        //             }, 1000);
+        //             setTimeout(() => {
+        //                 this._setDefaultFilterFields(oMasterDemandsFilterBar, ["SapPId"]);
+        //             }, 2000);
+        //         }
+
+        //         // Initialize table-specific functionality
+        //         this.initializeTable("MasterDemands");
+        //         // Reset segmented button to "less" state for this fragment
+        //         this._resetSegmentedButtonForFragment("MasterDemands");
+
+        //         // ✅ Initialize Opportunity ID field and form
+        //         setTimeout(() => {
+        //             oTable.initialized().then(() => {
+        //                 setTimeout(() => {
+        //                     this._initializeOpportunityIdField();
+        //                     const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+        //                     if (aSelectedContexts.length === 0) {
+        //                         this._onOppDialogData([]);
+        //                     }
+        //                 }, 500);
+        //             }).catch(() => {
+        //                 setTimeout(() => {
+        //                     this._initializeOpportunityIdField();
+        //                 }, 1000);
+        //             });
+        //         }, 300);
+        //     }.bind(this));
+
+        // },
+
+        // onYetToJoinPress: function () {
+        //     sap.m.MessageToast.show("Yet To Join clicked");
+        // },
+
+        // onProjectsEndingPress: function () {
+        //     sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
+        // },
+        // onCustomerChange: function () {
+
+
+        // }
         onTotalHeadPress: function () {
             sap.m.MessageToast.show("Total Head Count clicked");
 
@@ -10128,6 +11062,99 @@ sap.ui.define([
 
         onUnallocatedBenchPress: function () {
             sap.m.MessageToast.show("Pre Allocated clicked");
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            var oLogButton = this.byId("uploadLogButton");
+
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("employeeAllocationReportPage"));
+
+
+            this._bEmployeeAllocationReportLoaded = false;
+            const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
+            oCustomersPage.destroyContent();
+
+            // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.EmployeeAllocationReport",
+                controller: this
+            }).then(function (oFragment) {
+                oCustomersPage.addContent(oFragment);
+
+                const oTable = this.byId("EmployeeAllocationReportTable");
+                // Ensure table starts with show-less state
+
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+                // ✅ Populate Country dropdown when Customers fragment loads
+                this._populateCountryDropdown();
+
+                // ✅ Set default filters for Customers FilterBar
+                const oFilterBar = this.byId("employeeAllocationReportFilterBar");
+                if (oFilterBar) {
+                    oFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    // ✅ Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                    }, 2000);
+                }
+
+                this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                    // ✅ Trigger initial data load by firing FilterBar search event
+                    // This ensures table binds even when there are no filter conditions
+                    const oMdcTable = this.byId("EmployeeAllocationReportTable");
+
+                    // Wait until MDC Table's inner table is ready
+                    oMdcTable._oTableReady.promise.then(() => {
+                        const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
+
+                        // Attach event when rows are updated (binding is ready)
+                        oInnerTable.attachEventOnce("_rowsUpdated", () => {
+                            const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
+                            if (oBinding) {
+                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Pre Allocated");
+                                oBinding.filter([oFilter]);
+                            }
+                        });
+                    });
+                    setTimeout(() => {
+                        if (oFilterBar) {
+                            // Fire search event to trigger table binding
+                            oFilterBar.fireSearch();
+                        } else if (oTable && typeof oTable.rebind === "function") {
+                            // Fallback: rebind table directly if FilterBar not available
+                            oTable.rebind();
+                        }
+                    }, 1000);
+                });
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("EmployeeAllocationReport");
+
+            }.bind(this));
         },
 
         onUnproductiveBenchPress: function () {
@@ -10192,6 +11219,21 @@ sap.ui.define([
                 this.initializeTable("EmployeeBenchReportTable").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
+                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+
+                    // Wait until MDC Table's inner table is ready
+                    oMdcTable._oTableReady.promise.then(() => {
+                        const oInnerTable = oMdcTable._oTable; // This is sap.ui.table.Table
+
+                        // Attach event when rows are updated (binding is ready)
+                        oInnerTable.attachEventOnce("_rowsUpdated", () => {
+                            const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
+                            if (oBinding) {
+                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
+                                oBinding.filter([oFilter]);
+                            }
+                        });
+                    });
                     setTimeout(() => {
                         if (oFilterBar) {
                             // Fire search event to trigger table binding
@@ -10202,7 +11244,6 @@ sap.ui.define([
                         }
                     }, 1000);
                 });
-
                 // Reset segmented button to "less" state for this fragment
                 this._resetSegmentedButtonForFragment("EmployeeBenchReport");
 
@@ -10392,10 +11433,6 @@ sap.ui.define([
         onProjectsEndingPress: function () {
             sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
         },
-        // onCustomerChange: function () {
-
-
-        // }
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
             // ✅ Clear project field when customer changes (to ensure correct customer-project relationship)
