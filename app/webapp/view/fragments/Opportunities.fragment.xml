@@ -552,20 +552,20 @@
                                     <Select id="inputProbability_oppr" selectedKey="{opportunityModel>/probability}" width="100%" required="true">
                                         <items>
                                             <core:Item key="" text="Select Probability..." />
-                                            <core:Item key="0%" text="0%" />
-                                            <core:Item key="33%" text="33%" />
-                                            <core:Item key="85%" text="85%" />
-                                            <core:Item key="100%" text="100%" />
+                                            <core:Item key="0" text="0%" />
+                                            <core:Item key="33" text="33%" />
+                                            <core:Item key="85" text="85%" />
+                                            <core:Item key="100" text="100%" />
                                         </items>
                                     </Select>
                                     <Label text="SFDC Probability %" required="true" />
                                     <Select id="inputStage_oppr" selectedKey="{opportunityModel>/Stage}" width="100%" required="true">
                                         <items>
                                             <core:Item key="" text="Select Probability..." />
-                                            <core:Item key="0%" text="0%" />
-                                            <core:Item key="33%" text="33%" />
-                                            <core:Item key="85%" text="85%" />
-                                            <core:Item key="100%" text="100%" />
+                                            <core:Item key="0" text="0%" />
+                                            <core:Item key="33" text="33%" />
+                                            <core:Item key="85" text="85%" />
+                                            <core:Item key="100" text="100%" />
                                         </items>
                                     </Select>
                                     

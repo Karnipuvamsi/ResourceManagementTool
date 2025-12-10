@@ -410,12 +410,14 @@
                                     <Select id="inputProjectType_proj" selectedKey="{projectModel>/projectType}" width="100%">
                                         <items>
                                             <core:Item key="" text="Select Project Type..." />
-                                            <core:Item key="FixedPrice" text="Fixed Price" />
-                                            <core:Item key="TransactionBased" text="Transaction Based" />
-                                            <core:Item key="FixedMonthly" text="Fixed Monthly" />
-                                            <core:Item key="PassThru" text="Pass Thru" />
+                                            <core:Item key="Fixed Price" text="Fixed Price" />
+                                            <!-- <core:Item key="TransactionBased" text="Transaction Based" /> -->
+                                            <core:Item key="Fixed Monthly" text="Fixed Monthly" />
+                                            <core:Item key="Pass Thru" text="Pass Thru" />
                                             <core:Item key="Divine" text="Divine" />
-                                            <core:Item key="TimeAndMaterial" text="Time &amp; Material" />
+                                            <core:Item key="T & M" text="Time &amp; Material" />
+                                            <core:Item key="Transactions" text="Transactions" />
+                                            <core:Item key="Support" text="Support" />
                                         </items>
                                     </Select>
                                     <Label text="SOW Received" />
@@ -474,7 +476,8 @@
                                             <core:Item key="" text="Select Vertical..." />
                                             <core:Item key="HMS" text="HMS" />
                                             <core:Item key="CNH" text="CNH" />
-                                            <core:Item key="FS" text="FS" />                                               
+                                            <core:Item key="FS" text="FS" />                                           
+                                            <core:Item key="Corporate-CMITS-9634" text="Corporate-CMITS-9634" />                                           
 
                                         </items>
                                     </Select>
@@ -484,8 +487,22 @@
                                             <core:Item key="" text="Select Sub-Vertical..." />
                                             <core:Item key="SAP" text="SAP" />
                                             <core:Item key="Digital" text="Digital" />
-                                                                                     
-
+                                                    <!-- Added items -->
+                                            <core:Item key="Industrial Machinery" text="Industrial Machinery" />
+                                            <core:Item key="Corporate" text="Corporate" />
+                                            <core:Item key="Pharma" text="Pharma" />
+                                            <core:Item key="BFS" text="BFS" />
+                                            <core:Item key="Chemicals and O and G" text="Chemicals and O&amp;G" />
+                                            <core:Item key="Materials" text="Materials" />
+                                            <core:Item key="Automotive and Mobility" text="Automotive &amp; Mobility" />
+                                            <core:Item key="High Tech (Semi-Conductor)" text="High Tech (Semi-Conductor)" />
+                                            <core:Item key="Pharmacy" text="Pharmacy" />
+                                            <core:Item key="BIC-E-Commerce" text="BIC-E-Commerce" />
+                                            <core:Item key="CPG" text="CPG" />
+                                            <core:Item key="BIC-Cloud Service Providers" text="BIC-Cloud Service Providers" />
+                                            <core:Item key="Distributor" text="Distributor" />
+                                            <core:Item key="Med Devices" text="Med Devices" />
+                                                                            
                                         </items>
                                     </Select>
                                     <Label text="Unit/Service Line" />
@@ -496,6 +513,9 @@
                                             <core:Item key="HMS" text="HMS" />
                                             <core:Item key="CNH" text="CNH" />
                                             <core:Item key="FS" text="FS" />
+                                            <core:Item key="EAS SAP" text="EAS SAP" />
+                                            <core:Item key="EAS Oracle" text="EAS Oracle" />
+
                                                                                      
 
                                         </items>
