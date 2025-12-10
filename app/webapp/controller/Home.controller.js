@@ -6239,10 +6239,69 @@ sap.ui.define([
             }
 
             // Validation
+            // if (!sOppName || sOppName.trim() === "") {
+            //     sap.m.MessageBox.error("Opportunity Name is required!");
+            //     return;
+            // }
+
+            // ✅ Validation for mandatory fields
+            if (!sCustomerId || sCustomerId.trim() === "") {
+                sap.m.MessageBox.error("Customer is required!");
+                return;
+            }
+
             if (!sOppName || sOppName.trim() === "") {
                 sap.m.MessageBox.error("Opportunity Name is required!");
                 return;
             }
+
+            if (!sBusinessUnit || sBusinessUnit.trim() === "") {
+                sap.m.MessageBox.error("Business Unit is required!");
+                return;
+            }
+
+            if (!sProbability || sProbability.trim() === "") {
+                sap.m.MessageBox.error("Actual Probability % is required!");
+                return;
+            }
+
+            // If SFDC Probability is mandatory, fetch and validate it
+           
+            if (!sStage || sStage.trim() === "") {
+                sap.m.MessageBox.error("SFDC Probability % is required!");
+                return;
+            }
+
+            if (!sSalesSPOC || sSalesSPOC.trim() === "") {
+                sap.m.MessageBox.error("Sales SPOC is required!");
+                return;
+            }
+
+            if (!sDeliverySPOC || sDeliverySPOC.trim() === "") {
+                sap.m.MessageBox.error("Delivery SPOC is required!");
+                return;
+            }
+
+            if (!sExpectedStart || sExpectedStart.trim() === "") {
+                sap.m.MessageBox.error("Expected Start is required!");
+                return;
+            }
+
+            if (!sExpectedEnd || sExpectedEnd.trim() === "") {
+                sap.m.MessageBox.error("Expected End is required!");
+                return;
+            }
+
+            if (!sTCV || sTCV.trim() === "") {
+                sap.m.MessageBox.error("TCV is required!");
+                return;
+            }
+
+            if (!sCurrency || sCurrency.trim() === "") {
+                sap.m.MessageBox.error("Currency is required!");
+                return;
+            }
+
 
             const oTable = this.byId("Opportunities");
             const oModel = oTable.getModel();
