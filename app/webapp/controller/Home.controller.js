@@ -595,9 +595,9 @@ sap.ui.define([
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeBenchReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeBenchReportTable");
+                    const oTable = this.byId("EmployeeBenchReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeBenchReportTable").catch(() => {
+                        this.initializeTable("EmployeeBenchReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -627,7 +627,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oCustomersPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeBenchReportTable");
+                    const oTable = this.byId("EmployeeBenchReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -665,7 +665,7 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    this.initializeTable("EmployeeBenchReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
@@ -885,9 +885,9 @@ sap.ui.define([
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeAllocationReportLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeAllocationReportTable");
+                    const oTable = this.byId("EmployeeAllocationReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeAllocationReportTable").catch(() => {
+                        this.initializeTable("EmployeeAllocationReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -917,7 +917,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oCustomersPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeAllocationReportTable");
+                    const oTable = this.byId("EmployeeAllocationReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -957,7 +957,7 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                    this.initializeTable("EmployeeAllocationReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
@@ -980,9 +980,9 @@ sap.ui.define([
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeSkillReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeSkillReportTable");
+                    const oTable = this.byId("EmployeeSkillReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeSkillReportTable").catch(() => {
+                        this.initializeTable("EmployeeSkillReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -1012,7 +1012,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
                     oCustomersPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeSkillReportTable");
+                    const oTable = this.byId("EmployeeSkillReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -1052,7 +1052,7 @@ sap.ui.define([
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeSkillReportTable").then(() => {
+                    this.initializeTable("EmployeeSkillReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
@@ -1417,8 +1417,8 @@ sap.ui.define([
         _resetAllTablesToShowLess: function () {
             const aTableIds = [
                 "Customers", "Opportunities", "Projects", "SAPIdStatuses", "Employees", "Allocations",
-                "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
-                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable"
+                "EmployeeBenchReport", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
+                "EmployeeAllocationReport", "EmployeeSkillReport", "ProjectsNearingCompletionReportTable"
             ];
 
             aTableIds.forEach((sTableId) => {
@@ -10709,7 +10709,7 @@ sap.ui.define([
         //     }).then(function (oFragment) {
         //         oCustomersPage.addContent(oFragment);
 
-        //         const oTable = this.byId("EmployeeAllocationReportTable");
+        //         const oTable = this.byId("EmployeeAllocationReport");
         //         // Ensure table starts with show-less state
 
         //         oTable.addStyleClass("show-less");
@@ -10749,7 +10749,7 @@ sap.ui.define([
         //         }
 
         //         // Initialize table-specific functionality
-        //         this.initializeTable("EmployeeAllocationReportTable").then(() => {
+        //         this.initializeTable("EmployeeAllocationReport").then(() => {
         //             // ✅ Trigger initial data load by firing FilterBar search event
         //             // This ensures table binds even when there are no filter conditions
         //             setTimeout(() => {
@@ -10788,7 +10788,7 @@ sap.ui.define([
         //     }).then(function (oFragment) {
         //         oBenchPage.addContent(oFragment);
 
-        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         const oTable = this.byId("EmployeeBenchReport");
         //         // Ensure table starts with show-less state
         //         oTable.addStyleClass("show-less");
 
@@ -10825,7 +10825,7 @@ sap.ui.define([
         //         }
 
         //         // Initialize table-specific functionality
-        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //         this.initializeTable("EmployeeBenchReport").then(() => {
         //             // ✅ Trigger initial data load by firing FilterBar search event
         //             // This ensures table binds even when there are no filter conditions
         //             setTimeout(() => {
@@ -10872,7 +10872,7 @@ sap.ui.define([
         //     }).then(function (oFragment) {
         //         oBenchPage.addContent(oFragment);
 
-        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         const oTable = this.byId("EmployeeBenchReport");
         //         // Ensure table starts with show-less state
         //         oTable.addStyleClass("show-less");
 
@@ -10909,7 +10909,7 @@ sap.ui.define([
         //         }
 
         //         // Initialize table-specific functionality
-        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //         this.initializeTable("EmployeeBenchReport").then(() => {
         //             // ✅ Trigger initial data load by firing FilterBar search event
         //             // This ensures table binds even when there are no filter conditions
         //             setTimeout(() => {
@@ -10950,7 +10950,7 @@ sap.ui.define([
         //     }).then(function (oFragment) {
         //         oBenchPage.addContent(oFragment);
 
-        //         const oTable = this.byId("EmployeeBenchReportTable");
+        //         const oTable = this.byId("EmployeeBenchReport");
         //         // Ensure table starts with show-less state
         //         oTable.addStyleClass("show-less");
 
@@ -10987,10 +10987,10 @@ sap.ui.define([
         //         }
 
         //         // Initialize table-specific functionality
-        //         this.initializeTable("EmployeeBenchReportTable").then(() => {
+        //         this.initializeTable("EmployeeBenchReport").then(() => {
         //             // ✅ Trigger initial data load by firing FilterBar search event
         //             // This ensures table binds even when there are no filter conditions
-        //             const oMdcTable = this.byId("EmployeeBenchReportTable");
+        //             const oMdcTable = this.byId("EmployeeBenchReport");
 
         //             // Wait until MDC Table's inner table is ready
         //             oMdcTable._oTableReady.promise.then(() => {
@@ -11235,7 +11235,7 @@ sap.ui.define([
             }).then(function (oFragment) {
                 oCustomersPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeAllocationReportTable");
+                const oTable = this.byId("EmployeeAllocationReport");
                 // Ensure table starts with show-less state
 
                 oTable.addStyleClass("show-less");
@@ -11275,7 +11275,7 @@ sap.ui.define([
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                this.initializeTable("EmployeeAllocationReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     setTimeout(() => {
@@ -11314,7 +11314,7 @@ sap.ui.define([
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -11351,7 +11351,7 @@ sap.ui.define([
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     setTimeout(() => {
@@ -11396,7 +11396,7 @@ sap.ui.define([
             }).then(function (oFragment) {
                 oCustomersPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeAllocationReportTable");
+                const oTable = this.byId("EmployeeAllocationReport");
                 // Ensure table starts with show-less state
 
                 oTable.addStyleClass("show-less");
@@ -11435,10 +11435,10 @@ sap.ui.define([
                     }, 2000);
                 }
 
-                this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                this.initializeTable("EmployeeAllocationReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
-                    const oMdcTable = this.byId("EmployeeAllocationReportTable");
+                    const oMdcTable = this.byId("EmployeeAllocationReport");
 
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
@@ -11491,7 +11491,7 @@ sap.ui.define([
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -11528,10 +11528,10 @@ sap.ui.define([
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
-                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+                    const oMdcTable = this.byId("EmployeeBenchReport");
 
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
@@ -11583,7 +11583,7 @@ sap.ui.define([
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -11620,10 +11620,10 @@ sap.ui.define([
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
-                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+                    const oMdcTable = this.byId("EmployeeBenchReport");
 
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
