@@ -240,7 +240,9 @@ sap.ui.define([
                 "overview": "Projects", // Allocations overview uses Projects collection
                 "employeeBenchReport": "EmployeeBenchReport",
                 "employeeAllocationReport": "EmployeeAllocationReport",
-                "employeeSkillReport": "EmployeeSkillReport"
+                "employeeSkillReport": "EmployeeSkillReport",
+                "projectsNearingCompletionReport":"ProjectsNearingCompletionReport",
+                "revenueForecastReport":"RevenueForecastReport"
 
             };
             const sCollectionPath = sCollectionMap[sKey];
@@ -684,11 +686,200 @@ sap.ui.define([
             } else if (sKey === "employeeProbableReleaseReport") {
                 window.alert("COMING SOON")
             } else if (sKey === "projectsNearingCompletionReport") {
-                window.alert("COMING SOON")
+               
+
+
+                // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
+                // Check if already loaded to prevent duplicate IDs
+                if (this._projectsNearingCompletionReport) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("ProjectsNearingCompletionReportTable");
+                    if (oTable) {
+                        this.initializeTable("ProjectsNearingCompletionReportTable").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
+                    return;
+                }
+
+                this._projectsNearingCompletionReport = true;
+                const oCustomersPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oCustomersPage && oCustomersPage.getContent) {
+                    const aExistingContent = oCustomersPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oCustomersPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.ProjectsNearingCompletionReport",
+                    controller: this
+                }).then(function (oFragment) {
+                    oCustomersPage.addContent(oFragment);
+
+                    const oTable = this.byId("ProjectsNearingCompletionReportTable");
+                    // Ensure table starts with show-less state
+
+                    oTable.addStyleClass("show-less");
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+
+                    // Ensure the table has the correct model
+                    const oModel = this.getOwnerComponent().getModel();
+                    if (oModel) {
+                        oTable.setModel(oModel);
+                    }
+
+
+                    // ✅ Set default filters for Customers FilterBar
+                    const oFilterBar = this.byId("employeeProbableReleaseReportFilterBar");
+                    if (oFilterBar) {
+                        oFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 2000);
+                    }
+
+                    // Initialize table-specific functionality
+                    this.initializeTable("ProjectsNearingCompletionReportTable").then(() => {
+                        // ✅ Trigger initial data load by firing FilterBar search event
+                        // This ensures table binds even when there are no filter conditions
+                        setTimeout(() => {
+                            if (oFilterBar) {
+                                // Fire search event to trigger table binding
+                                oFilterBar.fireSearch();
+                            } else if (oTable && typeof oTable.rebind === "function") {
+                                // Fallback: rebind table directly if FilterBar not available
+                                oTable.rebind();
+                            }
+                        }, 1000);
+                    });
+
+                    // Reset segmented button to "less" state for this fragment
+                    this._resetSegmentedButtonForFragment("ProjectsNearingCompletionReport");
+
+                }.bind(this));
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
-                window.alert("COMING SOON")
-                this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+                
+
+
+                // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
+                // Check if already loaded to prevent duplicate IDs
+                if (this._revenueForecastReport) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("RevenueForecastReportTable");
+                    if (oTable) {
+                        this.initializeTable("RevenueForecastReportTable").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
+                    return;
+                }
+
+                this._revenueForecastReport = true;
+                const oCustomersPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oCustomersPage && oCustomersPage.getContent) {
+                    const aExistingContent = oCustomersPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oCustomersPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.RevenueForecastReport",
+                    controller: this
+                }).then(function (oFragment) {
+                    oCustomersPage.addContent(oFragment);
+
+                    const oTable = this.byId("RevenueForecastReportTable");
+                    // Ensure table starts with show-less state
+
+                    oTable.addStyleClass("show-less");
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+
+                    // Ensure the table has the correct model
+                    const oModel = this.getOwnerComponent().getModel();
+                    if (oModel) {
+                        oTable.setModel(oModel);
+                    }
+
+
+                    // ✅ Set default filters for Customers FilterBar
+                    const oFilterBar = this.byId("revenueForecastReportFilterBar");
+                    if (oFilterBar) {
+                        oFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 2000);
+                    }
+
+                    // Initialize table-specific functionality
+                    this.initializeTable("RevenueForecastReportTable").then(() => {
+                        // ✅ Trigger initial data load by firing FilterBar search event
+                        // This ensures table binds even when there are no filter conditions
+                        setTimeout(() => {
+                            if (oFilterBar) {
+                                // Fire search event to trigger table binding
+                                oFilterBar.fireSearch();
+                            } else if (oTable && typeof oTable.rebind === "function") {
+                                // Fallback: rebind table directly if FilterBar not available
+                                oTable.rebind();
+                            }
+                        }, 1000);
+                    });
+
+                    // Reset segmented button to "less" state for this fragment
+                    this._resetSegmentedButtonForFragment("RevenueForecastReport");
+
+                }.bind(this));
+               
+               // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
             } else if (sKey === "employeeAllocationReport") {
                 // this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
