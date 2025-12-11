@@ -242,7 +242,7 @@
                 <Panel class="sapUiResponsiveMargin" expandable="false">
                     <ScrollContainer height="600px" vertical="true" horizontal="false">
                         <mdc:Table
-                            id="EmployeeBenchReportTable"
+                            id="EmployeeBenchReport"
                             header="Employee Bench Report"
                             class="verticalsTable rowDetailToggleTable"
                             autoBindOnInit="true"

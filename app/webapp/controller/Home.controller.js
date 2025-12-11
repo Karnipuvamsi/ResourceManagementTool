@@ -590,9 +590,9 @@ sap.ui.define([
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeBenchReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeBenchReportTable");
+                    const oTable = this.byId("EmployeeBenchReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeBenchReportTable").catch(() => {
+                        this.initializeTable("EmployeeBenchReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -600,18 +600,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeBenchReportTableLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeBenchReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeBenchReportPage && oEmployeeBenchReportPage.getContent) {
+                    const aExistingContent = oEmployeeBenchReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeBenchReportPage.removeAllContent();
                     }
                 }
 
@@ -620,9 +620,9 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeBenchReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeBenchReportPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeBenchReportTable");
+                    const oTable = this.byId("EmployeeBenchReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -639,34 +639,34 @@ sap.ui.define([
 
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeBenchReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeBenchReportFilterBar = this.byId("employeeBenchReportFilterBar");
+                    if (oEmployeeBenchReportFilterBar) {
+                        oEmployeeBenchReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeBenchReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeBenchReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oEmployeeBenchReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oEmployeeBenchReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeBenchReportTable").then(() => {
+                    this.initializeTable("EmployeeBenchReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeBenchReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeBenchReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -685,15 +685,15 @@ sap.ui.define([
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
                 window.alert("COMING SOON")
-                this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+                // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
             } else if (sKey === "employeeAllocationReport") {
                 // this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeAllocationReportLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeAllocationReportTable");
+                    const oTable = this.byId("EmployeeAllocationReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeAllocationReportTable").catch(() => {
+                        this.initializeTable("EmployeeAllocationReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -701,18 +701,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeAllocationReportLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeAllocationReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeAllocationReportPage && oEmployeeAllocationReportPage.getContent) {
+                    const aExistingContent = oEmployeeAllocationReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeAllocationReportPage.removeAllContent();
                     }
                 }
 
@@ -721,9 +721,9 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeAllocationReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeAllocationReportPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeAllocationReportTable");
+                    const oTable = this.byId("EmployeeAllocationReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -742,34 +742,34 @@ sap.ui.define([
                     this._populateCountryDropdown();
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeAllocationReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeAllocationReportFilterBar = this.byId("employeeAllocationReportFilterBar");
+                    if (oEmployeeAllocationReportFilterBar) {
+                        oEmployeeAllocationReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeAllocationReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeAllocationReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                            this._setDefaultFilterFields(oEmployeeAllocationReportFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                            this._setDefaultFilterFields(oEmployeeAllocationReportFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 2000);
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                    this.initializeTable("EmployeeAllocationReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeAllocationReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeAllocationReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -786,9 +786,9 @@ sap.ui.define([
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeSkillReportTableLoaded) {
                     // ✅ Even if already loaded, re-initialize table to refresh p13n state
-                    const oTable = this.byId("EmployeeSkillReportTable");
+                    const oTable = this.byId("EmployeeSkillReport");
                     if (oTable) {
-                        this.initializeTable("EmployeeSkillReportTable").catch(() => {
+                        this.initializeTable("EmployeeSkillReport").catch(() => {
                             // Ignore errors during re-initialization
                         });
                     }
@@ -796,18 +796,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeSkillReportTableLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeSkillReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeSkillReportPage && oEmployeeSkillReportPage.getContent) {
+                    const aExistingContent = oEmployeeSkillReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeSkillReportPage.removeAllContent();
                     }
                 }
 
@@ -816,9 +816,9 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeSkillReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeSkillReportPage.addContent(oFragment);
 
-                    const oTable = this.byId("EmployeeSkillReportTable");
+                    const oTable = this.byId("EmployeeSkillReport");
                     // Ensure table starts with show-less state
 
                     oTable.addStyleClass("show-less");
@@ -837,34 +837,34 @@ sap.ui.define([
                     this._populateCountryDropdown();
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeSkillReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeSkillReportFilterBar = this.byId("employeeSkillReportFilterBar");
+                    if (oEmployeeSkillReportFilterBar) {
+                        oEmployeeSkillReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeSkillReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeSkillReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["skillName", "category"]);
+                            this._setDefaultFilterFields(oEmployeeSkillReportFilterBar, ["skillName", "category"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["skillName", "category"]);
+                            this._setDefaultFilterFields(oEmployeeSkillReportFilterBar, ["skillName", "category"]);
                         }, 2000);
                     }
 
                     // Initialize table-specific functionality
-                    this.initializeTable("EmployeeSkillReportTable").then(() => {
+                    this.initializeTable("EmployeeSkillReport").then(() => {
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeSkillReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeSkillReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -1223,8 +1223,8 @@ sap.ui.define([
         _resetAllTablesToShowLess: function () {
             const aTableIds = [
                 "Customers", "Opportunities", "Projects", "SAPIdStatuses", "Employees", "Allocations",
-                "EmployeeBenchReportTable", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
-                "EmployeeAllocationReportTable", "EmployeeSkillReportTable", "ProjectsNearingCompletionReportTable"
+                "EmployeeBenchReport", "EmployeeProbableReleaseReportTable", "RevenueForecastReportTable",
+                "EmployeeAllocationReport", "EmployeeSkillReport", "ProjectsNearingCompletionReportTable"
             ];
 
             aTableIds.forEach((sTableId) => {
@@ -9878,7 +9878,7 @@ if (bDuplicate) {
             }).then(function (oFragment) {
                 oCustomersPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeAllocationReportTable");
+                const oTable = this.byId("EmployeeAllocationReport");
                 // Ensure table starts with show-less state
 
                 oTable.addStyleClass("show-less");
@@ -9918,7 +9918,7 @@ if (bDuplicate) {
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeAllocationReportTable").then(() => {
+                this.initializeTable("EmployeeAllocationReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     setTimeout(() => {
@@ -9957,7 +9957,7 @@ if (bDuplicate) {
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -9994,7 +9994,7 @@ if (bDuplicate) {
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     setTimeout(() => {
@@ -10041,7 +10041,7 @@ if (bDuplicate) {
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -10078,7 +10078,7 @@ if (bDuplicate) {
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
                     setTimeout(() => {
@@ -10119,7 +10119,7 @@ if (bDuplicate) {
             }).then(function (oFragment) {
                 oBenchPage.addContent(oFragment);
 
-                const oTable = this.byId("EmployeeBenchReportTable");
+                const oTable = this.byId("EmployeeBenchReport");
                 // Ensure table starts with show-less state
                 oTable.addStyleClass("show-less");
 
@@ -10156,10 +10156,10 @@ if (bDuplicate) {
                 }
 
                 // Initialize table-specific functionality
-                this.initializeTable("EmployeeBenchReportTable").then(() => {
+                this.initializeTable("EmployeeBenchReport").then(() => {
                     // ✅ Trigger initial data load by firing FilterBar search event
                     // This ensures table binds even when there are no filter conditions
-                    const oMdcTable = this.byId("EmployeeBenchReportTable");
+                    const oMdcTable = this.byId("EmployeeBenchReport");
 
                     // Wait until MDC Table's inner table is ready
                     oMdcTable._oTableReady.promise.then(() => {
