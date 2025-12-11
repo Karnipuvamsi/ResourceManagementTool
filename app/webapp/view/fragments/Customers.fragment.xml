@@ -333,7 +333,7 @@
                             <Label text="Customer Name" required="true" />
                             <Input id="inputCustomerName" value="{customerModel>/customerName}" width="100%" required="true" />
                             <!-- COUNTRY -->
-                            <Label text="Country" required="true" />
+                            <Label text="Country" required="false" />
                             <ComboBox
                                 id="countryComboBox"
                                 selectedKey="{customerModel>/custCountryId}"
@@ -417,8 +417,26 @@
                                     <core:Item key="Manufacturing" text="Manufacturing" />
                                     <core:Item key="Retail" text="Retail" />
                                     <core:Item key="Services" text="Services" />
+                                    <core:Item key="Corporate-CMITS-9634" text="Corporate-CMITS-9634" />
                                 </items>
                             </Select>
+                            <!-- <MultiComboBox id="inputVertical" selectedKeys="{customerModel>/vertical}" width="100%" required="true">
+                            <items>
+                                <core:Item key="" text="Select Vertical..." />
+                                <core:Item key="BFS" text="BFS" />
+                                <core:Item key="CapitalMarkets" text="Capital Markets" />
+                                <core:Item key="CPG" text="CPG" />
+                                <core:Item key="Healthcare" text="Healthcare" />
+                                <core:Item key="HighTech" text="High Tech" />
+                                <core:Item key="Insurance" text="Insurance" />
+                                <core:Item key="LifeSciences" text="Life Sciences" />
+                                <core:Item key="Manufacturing" text="Manufacturing" />
+                                <core:Item key="Retail" text="Retail" />
+                                <core:Item key="Services" text="Services" />
+                                <core:Item key="Corporate-CMITS-9634" text="Corporate-CMITS-9634" />
+                            </items>
+                        </MultiComboBox> -->
+ 
                             <Label text="Start Date" />
                             <DatePicker id="inputStartDate_cus" value="{customerModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                             <Label text="End Date" />

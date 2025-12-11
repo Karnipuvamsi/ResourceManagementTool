@@ -343,10 +343,10 @@
                                     <Select id="inputEmployeeType_emp" selectedKey="{employeeModel>/employeeType}" width="100%">
                                         <items>
                                             <core:Item key="" text="Select Employee Type..." />
-                                            <core:Item key="FullTime" text="Full Time" />
-                                            <core:Item key="SubCon" text="Subcon" />
+                                            <core:Item key="Full Time" text="Full Time" />
+                                            <core:Item key="Subcon" text="Subcon" />
                                             <core:Item key="Intern" text="Intern" />
-                                            <core:Item key="YTJ" text="Yet To Join" />
+                                            <core:Item key="Yet To Join" text="Yet To Join" />
                                         </items>
                                     </Select>
                                     <Label text="Date of Joining" />
@@ -433,6 +433,7 @@
                                         selectionChange="onSkillsSelectionChange"
                                         items="{
                                             path: '/Skills',
+                                            length:5000,
                                             templateShareable: false
                                         }">
                                         <core:Item key="{name}" text="{name}" />
@@ -452,14 +453,17 @@
                                     <DatePicker id="inputLWD_emp" value="{employeeModel>/lwd}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                     <Label text="Unit/Service Line" />
                                     <Select id="inputUnit_emp" selectedKey="{employeeModel>/unit}" width="100%">
-                                        <items>
+                                      <items>
                                             <core:Item key="" text="Select Unit..." />
-                                            <core:Item key="GEV" text="GEV" />
-                                            <core:Item key="HMS" text="HMS" />
-                                            <core:Item key="CNH" text="CNH" />
-                                            <core:Item key="FS" text="FS" />                                                                                
- 
+                                             <core:Item key="HMS GE" text="HMS GE" />
+                                            <core:Item key="HMS GC" text="HMS GC" />
+                                            <core:Item key="CGRLH" text="CGRLH" />
+                                            <core:Item key="HMS ABB" text="HMS ABB" />  
+                                            <core:Item key="SGA" text="SGA" />
+                                            <core:Item key="TBD" text="TBD" />                                                                              
+                                                                
                                         </items>
+ 
                                     </Select>
                                 </f:SimpleForm>
                             </VBox>

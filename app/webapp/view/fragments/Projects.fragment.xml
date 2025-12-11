@@ -415,7 +415,7 @@
                                             <core:Item key="Fixed Monthly" text="Fixed Monthly" />
                                             <core:Item key="Pass Thru" text="Pass Thru" />
                                             <core:Item key="Divine" text="Divine" />
-                                            <core:Item key="T & M" text="Time &amp; Material" />
+                                            <core:Item key="T and M" text="Time &amp; Material" />
                                             <core:Item key="Transactions" text="Transactions" />
                                             <core:Item key="Support" text="Support" />
                                         </items>

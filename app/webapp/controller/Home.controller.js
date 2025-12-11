@@ -67,7 +67,7 @@ sap.ui.define([
             this._mCountryToCities = {
                 "South Africa": ["Johannesburg (Gauteng)"],
                 "China": ["Dalian", "Foshan (Guangdong)", "Kunshan (Jiangsu)"],
-                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)"],
+                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)","Hyd","Onsite","Chennai","Kol","GGN","Noida","BLR","Pune","Mumbai","Jaipur"],
                 "Japan": ["Tokyo (Chiyoda-ku)", "Yokohama (Kanagawa)"],
                 "Malaysia": ["Kuala Lumpur / Petaling Jaya (Selangor)"],
                 "Philippines": ["Bataan", "Manila / Quezon City"],
@@ -94,7 +94,10 @@ sap.ui.define([
                 "Republic of Ireland": ["Dublin"],
                 "Romania": ["Bucharest", "Cluj Napoca", "Iași"],
                 "Switzerland": ["Zug"],
-                "United Kingdom": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"]
+                "United Kingdom": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
+                "UK": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
+                "Slovakia": [],
+                "Belgium" : []
             };
 
             // ✅ Initialize Band-Designation mapping for dependent dropdowns
@@ -4254,7 +4257,7 @@ sap.ui.define([
             sCustCityId = sCustCityId ? String(sCustCityId).replace(/[,\s]/g, "") : "";
 
             // Debug logging
-            console.log("Selected IDs (raw) - Country:", sCustCountryId, "State:", sCustStateId, "City:", sCustCityId);
+            // console.log("Selected IDs (raw) - Country:", sCustCountryId, "State:", sCustStateId, "City:", sCustCityId);
 
             // -------------------------------
             const sCustId = this.byId("inputCustomerId").getValue(),
@@ -4272,10 +4275,10 @@ sap.ui.define([
                 return;
             }
 
-            if (!sCustCountryId) {
-                sap.m.MessageBox.error("Country is required!");
-                return;
-            }
+            // if (!sCustCountryId) {
+            //     sap.m.MessageBox.error("Country is required!");
+            //     return;
+            // }
 
             if (!sStatus) {
                 sap.m.MessageBox.error("Status is required!");
@@ -6266,7 +6269,7 @@ sap.ui.define([
             }
 
             // If SFDC Probability is mandatory, fetch and validate it
-           
+
             if (!sStage || sStage.trim() === "") {
                 sap.m.MessageBox.error("SFDC Probability % is required!");
                 return;
@@ -8959,15 +8962,79 @@ sap.ui.define([
         },
 
         // ✅ Value Help Dialog: Project search handler
+        // onProjectValueHelpSearch: function (oEvent) {
+        //     const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+        //     const oDialog = this._oProjectValueHelpDialog;
+        //     if (!oDialog) return;
+
+        //     const oDialogContent = oDialog.getContent()[0];
+        //     const aItems = oDialogContent.getItems();
+        //     const oTable = aItems.find(item => item.getId && item.getId().includes("projectValueHelpTable"));
+
+        //     if (!oTable) return;
+
+        //     const oBinding = oTable.getBinding("items");
+        //     if (!oBinding) return;
+
+        //     const aFilters = [];
+
+        //     // ✅ CRITICAL: Apply customer filter if from AllocateN fragment
+        //     const oInputField = oDialog._oInputField;
+        //     if (oInputField) {
+        //         const sInputId = oInputField.getId();
+        //         if (sInputId && sInputId.includes("Resinput_proj") && this._sAllocateCustomerFilter) {
+        //             // Filter projects by customer via Opportunity relationship
+        //             // Path: Projects → to_Opportunity → customerId
+        //             aFilters.push(new sap.ui.model.Filter({
+        //                 path: "to_Opportunity/customerId",
+        //                 operator: sap.ui.model.FilterOperator.EQ,
+        //                 value1: this._sAllocateCustomerFilter
+        //             }));
+        //         }
+        //     }
+
+        //     // Apply search filter
+        //     // if (sQuery && sQuery.trim() !== "") {
+        //     //     aFilters.push(new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+        //     // }
+
+        //     // Apply search filter
+        //     if (sQuery && sQuery.trim() !== "") {
+        //         const sTerm = sQuery.trim();
+
+        //         // Create individual filters for each field
+        //         const aSearchFilters = [
+        //             new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sTerm, false),
+        //             new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.Contains, sTerm, false),
+        //             new sap.ui.model.Filter("sfdcPId", sap.ui.model.FilterOperator.Contains, sTerm, false)
+        //         ];
+
+        //         // Combine them with OR (and: false)
+        //         aFilters.push(
+        //             new sap.ui.model.Filter({
+        //                 filters: aSearchFilters,
+        //                 and: false // OR across projectName, sapPId, sfdcPId
+        //             })
+        //         );
+        //     }
+
+        //     oBinding.filter(aFilters.length > 0 ? aFilters : []);
+        // },
         onProjectValueHelpSearch: function (oEvent) {
-            const sQuery = oEvent.getParameter("query") || oEvent.getParameter("newValue") || "";
+            // Normalize input from ValueHelpDialog/SearchField/LiveChange
+            const sQuery =
+                oEvent.getParameter("value") ||
+                oEvent.getParameter("query") ||
+                oEvent.getParameter("newValue") ||
+                (oEvent.getSource && oEvent.getSource().getValue && oEvent.getSource().getValue()) ||
+                "";
+
             const oDialog = this._oProjectValueHelpDialog;
             if (!oDialog) return;
 
             const oDialogContent = oDialog.getContent()[0];
             const aItems = oDialogContent.getItems();
             const oTable = aItems.find(item => item.getId && item.getId().includes("projectValueHelpTable"));
-
             if (!oTable) return;
 
             const oBinding = oTable.getBinding("items");
@@ -8975,13 +9042,11 @@ sap.ui.define([
 
             const aFilters = [];
 
-            // ✅ CRITICAL: Apply customer filter if from AllocateN fragment
+            // ✅ AND: Apply customer filter if coming from AllocateN fragment
             const oInputField = oDialog._oInputField;
             if (oInputField) {
                 const sInputId = oInputField.getId();
                 if (sInputId && sInputId.includes("Resinput_proj") && this._sAllocateCustomerFilter) {
-                    // Filter projects by customer via Opportunity relationship
-                    // Path: Projects → to_Opportunity → customerId
                     aFilters.push(new sap.ui.model.Filter({
                         path: "to_Opportunity/customerId",
                         operator: sap.ui.model.FilterOperator.EQ,
@@ -8990,35 +9055,47 @@ sap.ui.define([
                 }
             }
 
-            // Apply search filter
-            // if (sQuery && sQuery.trim() !== "") {
-            //     aFilters.push(new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
-            // }
-
-            // Apply search filter
+            // ✅ OR: Case-insensitive search across projectName, sapPId, sfdcPId
             if (sQuery && sQuery.trim() !== "") {
                 const sTerm = sQuery.trim();
 
-                // Create individual filters for each field
                 const aSearchFilters = [
-                    new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sTerm, false),
-                    new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.Contains, sTerm, false),
-                    new sap.ui.model.Filter("sfdcPId", sap.ui.model.FilterOperator.Contains, sTerm, false)
+                    new sap.ui.model.Filter({
+                        path: "projectName",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sTerm,
+                        caseSensitive: false
+                    }),
+                    new sap.ui.model.Filter({
+                        path: "sapPId",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sTerm,
+                        caseSensitive: false
+                    }),
+                    new sap.ui.model.Filter({
+                        path: "sfdcPId",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sTerm,
+                        caseSensitive: false
+                    })
                 ];
 
-                // Combine them with OR (and: false)
-                aFilters.push(
-                    new sap.ui.model.Filter({
-                        filters: aSearchFilters,
-                        and: false // OR across projectName, sapPId, sfdcPId
-                    })
-                );
+                // Optional: exact ID match if input looks like an ID (e.g., "P-1234" or digits)
+                if (/^[A-Za-z]-\d{3,}$/.test(sTerm) || /^\d+$/.test(sTerm)) {
+                    aSearchFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sTerm));
+                    aSearchFilters.push(new sap.ui.model.Filter("sfdcPId", sap.ui.model.FilterOperator.EQ, sTerm));
+                }
+
+                // Wrap with OR
+                aFilters.push(new sap.ui.model.Filter({
+                    filters: aSearchFilters,
+                    and: false
+                }));
             }
 
-            oBinding.filter(aFilters.length > 0 ? aFilters : []);
+            // Use Application filter type consistently
+            oBinding.filter(aFilters.length > 0 ? aFilters : [], sap.ui.model.FilterType.Application);
         },
-
-
 
         // ✅ Helper function: Apply customer filter to project value help dialog
         _applyProjectCustomerFilter: function () {
@@ -10071,7 +10148,7 @@ sap.ui.define([
                     filters: [
                         new sap.ui.model.Filter("country_id", "EQ", Number(countryId))
                     ],
-                    length: 1000,
+                    length: 2000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
@@ -10129,7 +10206,7 @@ sap.ui.define([
                         new sap.ui.model.Filter("state_id", "EQ", stateId),
                         new sap.ui.model.Filter("country_id", "EQ", countryId)
                     ],
-                    length: 1000,
+                    length: 2000,
                     template: new sap.ui.core.ListItem({
                         key: "{default>id}",
                         text: "{default>name}"

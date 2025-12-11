@@ -208,4 +208,3 @@ sap.ui.define([
 
     return BaseFilterBarDelegate;
 });
-

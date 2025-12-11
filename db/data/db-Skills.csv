@@ -1,18 +1,333 @@
 id,name,category
-1,SAP FICO,Finance
-2,SAP MM,Logistics
-3,SAP HR,HR
-4,SAP ABAP,Technical
-5,SAP SD,Sales
-6,SAP BW,Analytics
-7,SAP Basis,Technical
-8,SAP CRM,Customer Relations
-9,SAP HANA,Database
-10,SAP SuccessFactors,HR
-11,SAP BOA,Analytics
-12,SAP Fiori,Technical
-13,Java,Technical
-14,Project Management,Management
-15,Leadership,Management
-16,SAP PP/QM,Manufacturing
-17,Data Migration,Technical
+
+1,SAP FICO,
+
+2,SAP BASIS,
+
+3,SAP MM,
+
+4,SAP ABAP,
+
+5,Program Manager,
+
+6,SAP GRC,
+
+7,SAP PP/QM,
+
+8,SAP BI/BW,
+
+9,SAP FICO/CO,
+
+10,SAP EWM,
+
+11,SAP SD,
+
+12,SAP SD/Project Manager,
+
+13,SAP BI/BW /Native Hana,
+
+14,PI/PO,
+
+15,SAP MM/WM,
+
+16,SAP PMO,
+
+17,SAP MM/MDM,
+
+18,PMO,
+
+19,SAP BODS,
+
+20,Project Manager,
+
+21,SAP Ariba,
+
+22,SAP HCM & SuccesFactors,
+
+23,SAP HCM,
+
+24,SAP CO,
+
+25,SAP APO/SCM,
+
+26,BW 4 Hana/Project Management,
+
+27,Project Management,
+
+28,SAP BOA,
+
+29,SAP APO/PPDS/MM,
+
+30,SAP UI5/FIORI,
+
+31,BI/BW,
+
+32,Data Migration,
+
+33,SAP ABAP HR,
+
+34,SAP BASIS HANA,
+
+35,SAP Successfactor,
+
+36,SAP PS,
+
+37,SAP Dellbhoomi,
+
+38,BW 4 Hana,
+
+39,SAP CPI,
+
+40,SAP PP/QM/PM,
+
+41,Data Migration - MM,
+
+42,Syniti,
+
+43,MDM/MDG,
+
+44,Scrum Master,
+
+45,SAP MM/EWM,
+
+46,SAP Solman with ITSM,
+
+47,HCM/ECP,
+
+48,Project Management/BI/BW,
+
+49,DM-FICO,
+
+50,SAP ABAP-Odata-WF-Fiori,
+
+51,SAP HR,
+
+52,SAP MM/IM,
+
+53,SAP BI/BW/Native Hana,
+
+54,SAP MDG,
+
+55,Success Factors,
+
+56,SAP SD/CRM,
+
+57,CA/FICO,
+
+58,Training - MM,
+
+59,OpenText VIM & xECM,
+
+60,SAP SAC,
+
+61,CPQ TechnoFunctional,
+
+62,SAPMM,
+
+63,SAP WM,
+
+64,S4 Basis,
+
+65,SAP IBP,
+
+66,SAP SD VISTEX,
+
+67,ABAP Odata,
+
+68,S4 FICO,
+
+69,SAP CFIN,
+
+70,S4 ABAP,
+
+71,SAP S4 MM,
+
+72,FICO Architect,
+
+73,WM MM,
+
+74,GRC+Basis,
+
+75,S4 SD,
+
+76,SAP CPQ,
+
+77,Freshers,
+
+78,FICO (ICWA/CA),
+
+79,SAP HCM ,
+
+80,BTP,
+
+81,ABAP+Vistex,
+
+82,SAP Delivery Leader,
+
+83,Data Migration with MM,
+
+84,SAP Ariba Upstream,
+
+85,SuccessFactors EC,
+
+86,SAP S4 SD,
+
+87,SAP ABAP ODATA,
+
+88,BO,
+
+89,BTP Integration,
+
+90,BODS -  With MM Functional,
+
+91,BODS -  With PS Functional,
+
+92,ProShip Technical Support!,
+
+93,SGA,
+
+94,SAP Vistex with Royalties,
+
+95,Business Objects,
+
+96,SAP BTP-Integration/CPI,
+
+97,BODS -  With SD Functional,
+
+98,SAP ABAP+Odata,
+
+99,SAP S4 FICO,
+
+100,SAP FICO with Tresury,
+
+101,SAP GRC and Security,
+
+102,SAP MM/Logistic,
+
+103,SAP ABAP/WF/Fiori,
+
+104,SAP PP/PLM,
+
+105,SAP  Data Migration,
+
+106,SAP Basis with Security + Shell Scripting,
+
+107,SAP S4 ABAP,
+
+108,"ABAP, All Modules",
+
+109,SAP PP/S4 Hana Expert,
+
+110,SAP Technical Project Manager,
+
+111,S4 FICO VIM,
+
+112,SF/PS,
+
+113,SAP Basis + Shell Scripting,
+
+114,SAP ABAP S4,
+
+115,Vistex ,
+
+116,Basis+ BTP,
+
+117,"BTP , RPA",
+
+118,GRC/ABAP,
+
+119,SAP Successfactor/HCM,
+
+120,SAP FICO/Testing,
+
+121,SAP Datasphere,
+
+122,SAP Solman,
+
+123,BODS Admin,
+
+124,SAP QM,
+
+125,BTP Admin,
+
+126,FICO/PS,
+
+127,SAP Fieldglass,
+
+128,S4 Basis ,
+
+129,SAP HR/Testing,
+
+130,ABAP BTP,
+
+131,Basis,
+
+132,SAP APO PPDS  ,
+
+133,ABAP,
+
+134,SAP PP,
+
+135,SAP MM S4,
+
+136,SAP MM S4 Hana,
+
+137,SAP ABAP MDG,
+
+138,Plant Maintence with ETM,
+
+139,S4 MM,
+
+140,SAP PM,
+
+141,SAP SD S4,
+
+142,Fresher Training- BTP,
+
+143,Open Text VIM,
+
+144,Delivery Leader,
+
+145,PP/QM,
+
+146,SAP GRC/Fiori,
+
+147,SAP PPQM,
+
+148,MES-BA,
+
+149,PreSales,
+
+150,Campus Hire,
+
+151,SAP MMS4,
+
+152,BTP CAPM,
+
+153,SAP SD(Public Cloud),
+
+154,SAP MM(Public Cloud),
+
+155,SAP FICO(Public Cloud),
+
+156,UI5 Fiori,
+
+157,SAP CPM,
+
+158,S4 ABAP Odata,
+
+159,SAP FICO S4,
+
+160,Fiori/UI5,
+
+161,BTP CPI,
+
+162,CA,
+
+163,SAP ETM,
+
+164,BTP ,
+
+165,BTP with Mulesoft Integration,
+
+166,BW 4 Hana with MDG/Azure,
