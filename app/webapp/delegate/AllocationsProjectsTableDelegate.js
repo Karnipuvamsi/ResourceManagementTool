@@ -225,7 +225,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -244,7 +244,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                        
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField

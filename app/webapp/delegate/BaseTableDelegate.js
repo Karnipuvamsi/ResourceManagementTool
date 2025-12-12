@@ -25,8 +25,9 @@ sap.ui.define([
     "sap/m/ComboBox",
     "sap/ui/core/Item",
     "glassboard/utility/EnumConfig",
-    "glassboard/utility/AssociationConfig"
-], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, EnumConfig, AssociationConfig) {
+    "glassboard/utility/AssociationConfig",
+    "sap/ui/model/Filter"
+], function (ODataTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, EnumConfig, AssociationConfig, Filter) {
     "use strict";
 
     /**
@@ -343,7 +344,7 @@ sap.ui.define([
                             const bAnd = (oFilter.getAnd && typeof oFilter.getAnd === "function") ? oFilter.getAnd() : true;
 
                             // Recreate the filter with caseSensitive: false
-                            const oNewFilter = new sap.ui.model.Filter({
+                            const oNewFilter = new Filter({
                                 path: sFilterPath,
                                 operator: sOperator,
                                 value1: vValue1,
@@ -367,7 +368,7 @@ sap.ui.define([
                             if (aNewNestedFilters !== aNestedFilters) {
                                 // Recreate filter with updated nested filters
                                 try {
-                                    return new sap.ui.model.Filter({
+                                    return new Filter({
                                         path: sFilterPath,
                                         operator: oFilter.getOperator(),
                                         value1: oFilter.getValue1(),
@@ -397,7 +398,7 @@ sap.ui.define([
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
                         if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
-                            return new sap.ui.model.Filter({
+                            return new Filter({
                                 filters: oOptimized,
                                 and: vFilters.getAnd ? vFilters.getAnd() : true
                             });
@@ -423,7 +424,7 @@ sap.ui.define([
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
                         if (oOptimizedNested) {
-                            aOtherFilters.push(new sap.ui.model.Filter({
+                            aOtherFilters.push(new Filter({
                                 filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
                                 and: oFilter.getAnd ? oFilter.getAnd() : true
                             }));
@@ -472,7 +473,7 @@ sap.ui.define([
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
                         // Multiple filters for same field, combine with OR
-                        const oOrFilter = new sap.ui.model.Filter({
+                        const oOrFilter = new Filter({
                             filters: aFieldFilters,
                             and: false // OR logic
                         });
@@ -492,7 +493,7 @@ sap.ui.define([
                     return aOptimizedFilters[0];
                 } else {
                     // Multiple field groups, combine them with AND
-                    return new sap.ui.model.Filter({
+                    return new Filter({
                         filters: aOptimizedFilters,
                         and: true // AND logic between different fields
                     });
@@ -568,7 +569,7 @@ sap.ui.define([
                 // Check if it's an enum field
                 const oEnumConfig = oDelegate._getEnumConfig(sTableId, sPropertyName);
                 if (oEnumConfig) {
-                    return Promise.resolve(oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType));
+                    return oDelegate._createEnumFilterField(oTable, sPropertyName, oEnumConfig, sDataType);
                 }
 
                 // Check if it's an association field
@@ -827,7 +828,8 @@ sap.ui.define([
                 template: new Item({
                     key: "{" + oAssocConfig.keyField + "}",
                     text: "{" + oAssocConfig.displayField + "}"
-                })
+                }),
+                templateShareable:false
             },
             editable: this._createEditableBinding(sTableId),
             showSecondaryValues: true,
@@ -937,7 +939,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: oHeaderInfo.label,
                             template: oField
@@ -949,7 +951,7 @@ sap.ui.define([
                         const oField = oDelegate._createStandardField(sPropertyName, sTableId);
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: oHeaderInfo.label,
                             template: oField

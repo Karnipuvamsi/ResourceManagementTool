@@ -8,8 +8,10 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Element, Filter) {
     "use strict";
 
     /**
@@ -196,7 +198,8 @@ sap.ui.define([
                                     template: new Item({
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
-                                    })
+                                    }),
+                                    templateShareable:false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
@@ -231,7 +234,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                            
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -250,7 +253,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -334,7 +337,7 @@ sap.ui.define([
 
     // 2️⃣ Try main Project FilterBar search
     if (!sSearch) {
-        const oFB = sap.ui.getCore().byId("projectFilterBar");
+        const oFB = Element.getElementById("projectFilterBar");
         sSearch = oFB?.getSearch?.() || "";
     }
 
@@ -350,13 +353,13 @@ sap.ui.define([
     // ============================
     if (sId.includes("tblSapPIdVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "sapPId",
                 operator: "Contains",
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
                 operator: "Contains",
                 value1: sSearch,
@@ -370,13 +373,13 @@ sap.ui.define([
     // ============================
     else if (sId.includes("tblSfdcPIdVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "sfdcPId",
                 operator: "Contains",
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
                 operator: "Contains",
                 value1: sSearch,
@@ -390,13 +393,13 @@ sap.ui.define([
     // ============================
     else if (sId.includes("tblProjectTypeVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
                 operator: "Contains",
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "sapPId",
                 operator: "Contains",
                 value1: sSearch,
@@ -410,13 +413,13 @@ sap.ui.define([
     // ============================
     else if (sId.includes("tblSOWReceivedVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "SOWReceived",
                 operator: "Contains",
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
                 operator: "Contains",
                 value1: sSearch,
@@ -435,7 +438,7 @@ sap.ui.define([
 
     // OR group (search across multiple fields)
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: aFilters,
             and: false
         })

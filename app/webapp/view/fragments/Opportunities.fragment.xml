@@ -467,7 +467,7 @@
                             filter="opportunityFilterBar"
                             filterConditions="{filterModel>/Opportunities/conditions}"
                             selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            >
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

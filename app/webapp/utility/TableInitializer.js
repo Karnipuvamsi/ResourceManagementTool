@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
-    "sap/ui/mdc/p13n/StateUtil"
-], function (Controller, StateUtil) {
+    "sap/ui/mdc/p13n/StateUtil",
+    "sap/ui/model/json/JSONModel"
+], function (Controller, StateUtil, JSONModel) {
     "use strict";
 
     return Controller.extend("glassboard.utility.TableInitializer", {
@@ -98,7 +99,7 @@ sap.ui.define([
             const oView = this.getView();
             const oModel = oView.getModel("model");
             if (!oModel) {
-                oModel = new sap.ui.model.json.JSONModel({});
+                oModel = new JSONModel({});
                 oView.setModel(oModel, "model");
             }
 
@@ -125,7 +126,7 @@ sap.ui.define([
             const oView = this.getView();
             const oModel = oView.getModel("model");
             if (!oModel) {
-                oModel = new sap.ui.model.json.JSONModel({});
+                oModel = new JSONModel({});
                 oView.setModel(oModel, "model");
             }
 

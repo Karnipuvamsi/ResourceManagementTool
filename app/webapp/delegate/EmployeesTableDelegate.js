@@ -8,8 +8,11 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Element, Filter, FilterOperator) {
     "use strict";
 
     /**
@@ -52,9 +55,9 @@ sap.ui.define([
             const bIsResTable = sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res";
             
             if (bIsResTable) {
-                const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
-                const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
-                const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+                const oPercentageFilter = new Filter("empallocpercentage", FilterOperator.LE, 95);
+                const oStatusFilter = new Filter("status", FilterOperator.NE, "Resigned");
+                const oAllocationFilter = new Filter([oPercentageFilter, oStatusFilter], true); // true = AND
                 
                 // Initialize filters array if it doesn't exist
                 if (!oBindingInfo.filters) {
@@ -234,7 +237,8 @@ sap.ui.define([
                                     template: new Item({
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
-                                    })
+                                    }),
+                                    templateShareable:false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
@@ -270,7 +274,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField,
@@ -290,7 +294,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                         
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField,
@@ -402,7 +406,7 @@ sap.ui.define([
 
     // 2️⃣ Fallback → Main Employee FilterBar search
     if (!sSearch) {
-        const oFB = sap.ui.getCore().byId("employeeFilterBar");
+        const oFB = Element.getElementById("employeeFilterBar");
         sSearch = oFB?.getSearch?.() || "";
     }
 
@@ -419,21 +423,21 @@ sap.ui.define([
     // ============================
     if (sTableId.includes("tblEmployeeOHRIdVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -445,21 +449,21 @@ sap.ui.define([
     // ============================
     else if (sTableId.includes("tblEmployeeBandVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -471,21 +475,21 @@ sap.ui.define([
     // ============================
     else if (sTableId.includes("tblEmployeeSkillsVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -504,7 +508,7 @@ sap.ui.define([
     // 🔥 APPLY OR-GROUP FILTER
     // ============================
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: aFilters,
             and: false
         })

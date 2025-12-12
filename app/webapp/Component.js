@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
-    "glassboard/model/models"
-], (UIComponent, models) => {
+    "glassboard/model/models",
+    "sap/ui/core/Lib"
+], (UIComponent, models, Lib) => {
     "use strict";
 
     return UIComponent.extend("glassboard.Component", {
@@ -21,8 +22,10 @@ sap.ui.define([
 
             // enable routing
             this.getRouter().initialize();
-            sap.ui.getCore().loadLibrary("sap.ui.core");
-            jQuery.sap.includeStyleSheet("glassboard/css/style.css");
+            Lib.load("sap.ui.core");
+
+            
+            
         }
     });
 });

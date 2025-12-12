@@ -6,8 +6,10 @@
  */
  
 sap.ui.define([
-    "glassboard/delegate/BaseTableDelegate"
-], function (BaseTableDelegate) {
+    "glassboard/delegate/BaseTableDelegate",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Filter, FilterOperator) {
     "use strict";
  
     const MasterDemandsTableDelegate = Object.assign({}, BaseTableDelegate);
@@ -252,23 +254,23 @@ sap.ui.define([
            
             // Create case-insensitive search filters
             const aSearchFilters = aSearchKeys.map((sKey) => {
-                return new sap.ui.model.Filter({
+                return new Filter({
                     path: sKey,
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 });
             });
  
             // Combine search filters with OR logic
-            const oSearchFilter = new sap.ui.model.Filter({
+            const oSearchFilter = new Filter({
                 filters: aSearchFilters,
                 and: false
             });
  
             // Merge with existing filters
             if (oBindingInfo.filters) {
-                oBindingInfo.filters = new sap.ui.model.Filter({
+                oBindingInfo.filters = new Filter({
                     filters: [oBindingInfo.filters, oSearchFilter],
                     and: true
                 });

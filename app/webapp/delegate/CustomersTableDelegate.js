@@ -8,8 +8,11 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Element, Filter, FilterOperator) {
     "use strict";
 
     /**
@@ -63,8 +66,8 @@ sap.ui.define([
 
     // fallback to FilterBar if needed
     if (!sSearch) {
-        const oFilterBar = sap.ui.getCore().byId("fbCustomerVH");
-        const bFilterBar = sap.ui.getCore().byId("tblVerticalVH");
+        const oFilterBar = Element.getElementById("fbCustomerVH");
+        const bFilterBar = Element.getElementById("tblVerticalVH");
         if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
     }
 
@@ -73,17 +76,17 @@ sap.ui.define([
 
     // CASE-SENSITIVE FILTERS
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: [
-                new sap.ui.model.Filter({
+                new Filter({
                     path: "customerName",
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 }),
-                new sap.ui.model.Filter({
+                new Filter({
                     path: "vertical",
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 })

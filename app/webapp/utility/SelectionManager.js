@@ -1,7 +1,15 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
+    "sap/ui/core/mvc/Controller",
+    "sap/m/Column",
+    "sap/m/ColumnListItem",
+    "sap/m/Panel",
+    "sap/m/Table",
+    "sap/m/Text",
+    "sap/m/Title",
+    "sap/ui/core/HTML",
+    "sap/ui/model/json/JSONModel"
     // "glassboard/utility/FormHandler"
-], function (Controller,FormHandler) {
+], function (Controller, Column, ColumnListItem, Panel, Table, Text, Title, HTML, JSONModel,FormHandler) {
     "use strict";
 
     return Controller.extend("glassboard.utility.SelectionManager", {
@@ -135,7 +143,7 @@ sap.ui.define([
                 // ✅ CRITICAL: Clear the model first (form fields are bound to model)
                 let oProjModel = this.getView().getModel("projectModel");
                 if (!oProjModel) {
-                    oProjModel = new sap.ui.model.json.JSONModel({});
+                    oProjModel = new JSONModel({});
                     this.getView().setModel(oProjModel, "projectModel");
                 }
                 // Clear all model properties
@@ -216,7 +224,7 @@ sap.ui.define([
                 if (bHasSelection) {
                     const oModel = this.getView().getModel();
                     if (!oModel) {
-                        vbox.addItem(new sap.m.Text({ text: "Model not found" }));
+                        vbox.addItem(new Text({ text: "Model not found" }));
                         return;
                     }
 
@@ -244,11 +252,11 @@ sap.ui.define([
 
                             // Add separator only between employees (not before the first one)
                             if (index > 0) {
-                                vbox.addItem(new sap.ui.core.HTML({
+                                vbox.addItem(new HTML({
                                     content: "<div style='border-top:2px solid #007cc0; margin:15px 0;'></div>"
                                 }));
                             }
-                            vbox.addItem(new sap.m.Title({
+                            vbox.addItem(new Title({
                                 text: `OHR ID: ${ohrId}, Name: ${name}`,
                                 level: "H4",
                                 titleStyle: "H4"
@@ -257,21 +265,21 @@ sap.ui.define([
                             const employeeAllocations = allAllocations.filter(a => a.employeeId === ohrId);
 
                             if (employeeAllocations.length === 0) {
-                                vbox.addItem(new sap.m.Text({
+                                vbox.addItem(new Text({
                                     text: "No allocation record.",
                                     design: "Italic"
                                 }));
                             } else {
                                 // Create one table for all allocations of this employee
-                                const oTable = new sap.m.Table({
+                                const oTable = new Table({
                                     inset: false,
                                     columns: [
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
-                                        new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
+                                        new Column({ header: new Text({ text: "Project ID" }) }),
+                                        new Column({ header: new Text({ text: "Project Name" }) }),
+                                        new Column({ header: new Text({ text: "Start Date" }) }),
+                                        new Column({ header: new Text({ text: "End Date" }) }),
+                                        new Column({ header: new Text({ text: "Allocation %" }) }),
+                                        new Column({ header: new Text({ text: "Status" }) })
                                     ]
                                 });
 
@@ -284,20 +292,20 @@ sap.ui.define([
                                     const percent = allocation.allocationPercentage;
                                     const status = allocation.status || "N/A";
 
-                                    oTable.addItem(new sap.m.ColumnListItem({
+                                    oTable.addItem(new ColumnListItem({
                                         cells: [
-                                            new sap.m.Text({ text: projectId }),
-                                            new sap.m.Text({ text: projectName }),
-                                            new sap.m.Text({ text: startDate }),
-                                            new sap.m.Text({ text: endDate }),
-                                            new sap.m.Text({ text: percent }),
-                                            new sap.m.Text({ text: status })
+                                            new Text({ text: projectId }),
+                                            new Text({ text: projectName }),
+                                            new Text({ text: startDate }),
+                                            new Text({ text: endDate }),
+                                            new Text({ text: percent }),
+                                            new Text({ text: status })
                                         ]
                                     }));
                                 });
 
                                 // Add the table inside one panel
-                                const allocationPanel = new sap.m.Panel({
+                                const allocationPanel = new Panel({
                                     content: [oTable]
                                 }).addStyleClass("sapUiSmallMarginBottom");
 
@@ -305,12 +313,12 @@ sap.ui.define([
                             }
                         });
                     }).catch(err => {
-                        vbox.addItem(new sap.m.Text({
+                        vbox.addItem(new Text({
                             text: "Error loading allocation details: " + (err.message || "Unknown error")
                         }));
                     });
                 } else {
-                    vbox.addItem(new sap.m.Text({ text: "Select an employee to see allocation details" }));
+                    vbox.addItem(new Text({ text: "Select an employee to see allocation details" }));
                 }
             }
 
@@ -332,13 +340,13 @@ sap.ui.define([
                     const sProjectId = oProject.sapPId;
 
                     if (!sProjectId) {
-                        vbox.addItem(new sap.m.Text({ text: "Project ID not found" }));
+                        vbox.addItem(new Text({ text: "Project ID not found" }));
                         return;
                     }
 
                     const oModel = this.getView().getModel();
                     if (!oModel) {
-                        vbox.addItem(new sap.m.Text({ text: "Model not found" }));
+                        vbox.addItem(new Text({ text: "Model not found" }));
                         return;
                     }
 
@@ -366,21 +374,21 @@ sap.ui.define([
                         );
 
                         if (projectAllocations.length === 0) {
-                            vbox.addItem(new sap.m.Text({
+                            vbox.addItem(new Text({
                                 text: "No employees allocated to this project."
                             }));
                         } else {
                             // Create one table for all allocations of this project
-                            const oTable = new sap.m.Table({
+                            const oTable = new Table({
                                 inset: false,
                                 columns: [
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "OHR ID" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
-                                    new sap.m.Column({ header: new sap.m.Text({ text: "Status" }) })
+                                    new Column({ header: new Text({ text: "OHR ID" }) }),
+                                    new Column({ header: new Text({ text: "Employee Name" }) }),
+                                    new Column({ header: new Text({ text: "Demand" }) }),
+                                    new Column({ header: new Text({ text: "Start Date" }) }),
+                                    new Column({ header: new Text({ text: "End Date" }) }),
+                                    new Column({ header: new Text({ text: "Allocation %" }) }),
+                                    new Column({ header: new Text({ text: "Status" }) })
                                 ]
                             });
 
@@ -394,37 +402,37 @@ sap.ui.define([
                                 const percent = allocation.allocationPercentage || 0;
                                 const status = allocation.status || "N/A";
 
-                                oTable.addItem(new sap.m.ColumnListItem({
+                                oTable.addItem(new ColumnListItem({
                                     cells: [
-                                        new sap.m.Text({ text: sOhrId }),
-                                        new sap.m.Text({ text: sEmployeeName }),
-                                        new sap.m.Text({ text: sDemand }),
-                                        new sap.m.Text({ text: startDate }),
-                                        new sap.m.Text({ text: endDate }),
-                                        new sap.m.Text({ text: percent + "%" }),
-                                        new sap.m.Text({ text: status })
+                                        new Text({ text: sOhrId }),
+                                        new Text({ text: sEmployeeName }),
+                                        new Text({ text: sDemand }),
+                                        new Text({ text: startDate }),
+                                        new Text({ text: endDate }),
+                                        new Text({ text: percent + "%" }),
+                                        new Text({ text: status })
                                     ]
                                 }));
                             });
 
                             // Add the table inside one panel
-                            const allocationPanel = new sap.m.Panel({
+                            const allocationPanel = new Panel({
                                 content: [oTable]
                             }).addStyleClass("sapUiSmallMarginBottom");
 
-                            vbox.addItem(new sap.m.Text({
+                            vbox.addItem(new Text({
                                 text: `Project: ${oProject.projectName || sProjectId} - ${projectAllocations.length} employee(s) allocated:`
                             }));
                             vbox.addItem(allocationPanel);
                         }
                     }).catch(err => {
-                        vbox.addItem(new sap.m.Text({
+                        vbox.addItem(new Text({
                             text: "Error loading allocation details: " + (err.message || "Unknown error")
                         }));
                     });
                 } else {
                     // No selection - show placeholder
-                    vbox.addItem(new sap.m.Text({ text: "Select a project to see allocation details" }));
+                    vbox.addItem(new Text({ text: "Select a project to see allocation details" }));
                 }
             }
         }

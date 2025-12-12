@@ -1,6 +1,9 @@
 sap.ui.define([
-    "glassboard/delegate/BaseTableDelegate"
-], function (BaseTableDelegate) {
+    "glassboard/delegate/BaseTableDelegate",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Element, Filter, FilterOperator) {
     "use strict";
  
     /**
@@ -50,7 +53,7 @@ sap.ui.define([
  
         // ✅ Fallback to FilterBar if needed
         if (!sSearch) {
-            const oFilterBar = sap.ui.getCore().byId("vhSkill");
+            const oFilterBar = Element.getElementById("vhSkill");
             if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
         }
  
@@ -59,17 +62,17 @@ sap.ui.define([
  
         // ✅ CASE-INSENSITIVE FILTERS for skillName and category
         oBindingInfo.filters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 filters: [
-                    new sap.ui.model.Filter({
+                    new Filter({
                         path: "skillName",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sSearch,
                         caseSensitive: false
                     }),
-                    new sap.ui.model.Filter({
+                    new Filter({
                         path: "category",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sSearch,
                         caseSensitive: false
                     })

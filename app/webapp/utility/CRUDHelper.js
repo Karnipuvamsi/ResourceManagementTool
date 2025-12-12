@@ -1,6 +1,9 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], function (Controller) {
+    "sap/ui/core/mvc/Controller",
+    "sap/m/MessageBox",
+    "sap/m/MessageToast",
+    "sap/ui/model/json/JSONModel"
+], function (Controller, MessageBox, MessageToast, JSONModel) {
     "use strict";
 
     return Controller.extend("glassboard.utility.CRUDHelper", {
@@ -21,7 +24,7 @@ sap.ui.define([
             const sTableId = Object.keys(buttonMap).find(tableId => buttonMap[tableId].delete === sButtonId);
 
             if (!sTableId) {
-                return sap.m.MessageBox.error("No table mapping found for delete button: " + sButtonId);
+                return MessageBox.error("No table mapping found for delete button: " + sButtonId);
             }
 
             const oView = this.getView();
@@ -30,18 +33,18 @@ sap.ui.define([
             const oEditBtn = this.byId(buttonMap[sTableId].edit);
 
             if (!oTable) {
-                return sap.m.MessageBox.error(`Table '${sTableId}' not found.`);
+                return MessageBox.error(`Table '${sTableId}' not found.`);
             }
 
             const aSelectedContexts = oTable.getSelectedContexts?.() || [];
 
             if (aSelectedContexts.length === 0) {
-                return sap.m.MessageBox.warning("Please select one or more entries to delete.");
+                return MessageBox.warning("Please select one or more entries to delete.");
             }
 
-            sap.m.MessageBox.confirm("Are you sure you want to delete the selected entries?", {
+            MessageBox.confirm("Are you sure you want to delete the selected entries?", {
                 onClose: async (sAction) => {
-                    if (sAction !== sap.m.MessageBox.Action.OK) {
+                    if (sAction !== MessageBox.Action.OK) {
                         return;
                     }
 
@@ -99,7 +102,7 @@ sap.ui.define([
                         }
 
                         if (bAllDeleted) {
-                            sap.m.MessageToast.show(`${sTableId} entries successfully deleted.`);
+                            MessageToast.show(`${sTableId} entries successfully deleted.`);
 
                             setTimeout(() => {
                                 if (oTable.rebind) {
@@ -125,7 +128,7 @@ sap.ui.define([
                                 }
                             }, 200);
                         } else {
-                            sap.m.MessageBox.error("Some entries could not be deleted. Check console for details.");
+                            MessageBox.error("Some entries could not be deleted. Check console for details.");
 
                             setTimeout(() => {
                                 const oRowBinding = oTable.getRowBinding && oTable.getRowBinding();
@@ -154,7 +157,7 @@ sap.ui.define([
 
                     } catch (error) {
                         if (!bAllDeleted) {
-                            sap.m.MessageBox.error("Delete operation failed completely. Please try again.");
+                            MessageBox.error("Delete operation failed completely. Please try again.");
                             const oBinding = oTable.getBinding("items");
                             if (oBinding) {
                                 oBinding.refresh();
@@ -195,7 +198,7 @@ sap.ui.define([
             const aSelectedContexts = oTable.getSelectedContexts();
 
             if (!aSelectedContexts.length) {
-                sap.m.MessageToast.show("Please select one or more rows to edit.");
+                MessageToast.show("Please select one or more rows to edit.");
                 return;
             }
 
@@ -229,7 +232,7 @@ sap.ui.define([
                 oTable.getBinding("items")?.refresh();
             }, 100);
 
-            sap.m.MessageToast.show(`${aSelectedContexts.length} rows are now in edit mode.`);
+            MessageToast.show(`${aSelectedContexts.length} rows are now in edit mode.`);
         },
 
         /**
@@ -240,7 +243,7 @@ sap.ui.define([
             const oTable = this.byId(sTableId);
 
             if (!oTable) {
-                sap.m.MessageBox.error(`Table '${sTableId}' not found.`);
+                MessageBox.error(`Table '${sTableId}' not found.`);
                 return;
             }
 
@@ -275,7 +278,7 @@ sap.ui.define([
                         if (oBinding) {
                             this._executeAddWithRetry(oTable, oBinding, sTableId);
                         } else {
-                            sap.m.MessageBox.error("No data binding available. Please ensure the table is fully loaded and try again.");
+                            MessageBox.error("No data binding available. Please ensure the table is fully loaded and try again.");
                         }
                     }, 1000);
                     return;
@@ -313,7 +316,7 @@ sap.ui.define([
                         editingPath: "",
                         mode: null
                     };
-                    this.getView().setModel(new sap.ui.model.json.JSONModel(oEditModelData), "edit");
+                    this.getView().setModel(new JSONModel(oEditModelData), "edit");
                 }
 
                 const oEditModelFinal = this.getView().getModel("edit");
@@ -370,10 +373,10 @@ sap.ui.define([
                     oTable.getBinding("items")?.refresh();
                 }, 100);
 
-                sap.m.MessageToast.show("New row added. You can now fill in the data.");
+                MessageToast.show("New row added. You can now fill in the data.");
 
             } catch (error) {
-                sap.m.MessageBox.error("Failed to add new row: " + error.message);
+                MessageBox.error("Failed to add new row: " + error.message);
             }
         },
 
@@ -469,7 +472,7 @@ sap.ui.define([
             const sMode = oEditModel.getProperty(`/${sTableId}/mode`);
 
             if (!sPath) {
-                sap.m.MessageToast.show("No row is in edit mode.");
+                MessageToast.show("No row is in edit mode.");
                 return;
             }
 
@@ -494,14 +497,14 @@ sap.ui.define([
                     oContext = aFallbackSelected && aFallbackSelected.find(ctx => ctx.getPath() === sPath) || aFallbackSelected && aFallbackSelected[0];
                 }
                 if (!oContext) {
-                    sap.m.MessageToast.show("Unable to find edited context.");
+                    MessageToast.show("Unable to find edited context.");
                     return;
                 }
                 aContextsToCancel = [oContext];
             }
 
             if (aContextsToCancel.length === 0) {
-                sap.m.MessageToast.show("No contexts to cancel.");
+                MessageToast.show("No contexts to cancel.");
                 return;
             }
 
@@ -547,7 +550,7 @@ sap.ui.define([
                 oTable.getBinding("items")?.refresh();
             }, 100);
 
-            sap.m.MessageToast.show("Changes cancelled.");
+            MessageToast.show("Changes cancelled.");
         },
 
         /**
@@ -596,7 +599,7 @@ sap.ui.define([
                 if (oAppModel) {
                     oAppModel.setProperty("/hasUIChanges", bHasChanges);
                 } else {
-                    const oViewModel = new sap.ui.model.json.JSONModel({
+                    const oViewModel = new JSONModel({
                         busy: false,
                         hasUIChanges: bHasChanges,
                         usernameEmpty: false,

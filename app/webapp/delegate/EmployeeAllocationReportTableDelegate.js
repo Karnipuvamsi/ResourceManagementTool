@@ -1,6 +1,9 @@
 sap.ui.define([
-    "glassboard/delegate/BaseTableDelegate"
-], function (BaseTableDelegate) {
+    "glassboard/delegate/BaseTableDelegate",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Element, Filter, FilterOperator) {
     "use strict";
 
     /**
@@ -60,7 +63,7 @@ sap.ui.define([
     // fallback to FilterBar if needed
     if (!sSearch) {
 
-        const oFilterBar = sap.ui.getCore().byId("tblEmployeeVH");
+        const oFilterBar = Element.getElementById("tblEmployeeVH");
         if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
     }
 
@@ -69,23 +72,23 @@ sap.ui.define([
 
     // CASE-SENSITIVE FILTERS
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: [
-                new sap.ui.model.Filter({
+                new Filter({
                     path: "employeeName",
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 }),
-                new sap.ui.model.Filter({
+                new Filter({
                     path: "currentProject",
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 }),
-                new sap.ui.model.Filter({
+                new Filter({
                     path: "customer",
-                    operator: sap.ui.model.FilterOperator.Contains,
+                    operator: FilterOperator.Contains,
                     value1: sSearch,
                     caseSensitive: false
                 }),

@@ -8,8 +8,13 @@ sap.ui.define([
     "glassboard/utility/TableInitializer",
     "glassboard/utility/CRUDHelper",
     "glassboard/utility/FileUploadHelper",
-    "glassboard/utility/SelectionManager"
-], function (Controller, StateUtil, JSONModel, MessageToast, FormHandler, TableInitializer, CRUDHelper, FileUploadHelper, SelectionManager) {
+    "glassboard/utility/SelectionManager",
+    "sap/m/Menu",
+    "sap/m/MenuItem",
+    "sap/m/MessageBox",
+    "sap/ui/core/Messaging",
+    "sap/ui/core/Fragment"
+], function (Controller, StateUtil, JSONModel, MessageToast, FormHandler, TableInitializer, CRUDHelper, FileUploadHelper, SelectionManager, Menu, MenuItem, MessageBox, Messaging, Fragment) {
     "use strict";
 
     // Fixed syntax error - removed duplicate oData declarations
@@ -41,10 +46,10 @@ sap.ui.define([
 
 
             // -------------------------------------------------------------
-            const oMessageManager = sap.ui.getCore().getMessageManager();
-            const oMessageModel = oMessageManager.getMessageModel();
+            
+            const oMessageModel = Messaging.getMessageModel();
             this.getView().setModel(oMessageModel, "message");
-            oMessageManager.registerObject(this.getView(), true);
+            Messaging.registerObject(this.getView(), true);
 
             const oBinding = oMessageModel.bindList("/");
 
@@ -133,7 +138,7 @@ sap.ui.define([
                 // Also update/create model with the ID (for backend submission)
                 let oOppModel = this.getView().getModel("opportunityModel");
                 if (!oOppModel) {
-                    oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
+                    oOppModel = new JSONModel({ customerId: sCustomerId });
                     this.getView().setModel(oOppModel, "opportunityModel");
                 } else {
                     oOppModel.setProperty("/customerId", sCustomerId);
@@ -172,7 +177,7 @@ sap.ui.define([
                 // Also update/create model with the ID (for backend submission)
                 let oOppModel = this.getView().getModel("opportunityModel");
                 if (!oOppModel) {
-                    oOppModel = new sap.ui.model.json.JSONModel({ customerId: sCustomerId });
+                    oOppModel = new JSONModel({ customerId: sCustomerId });
                     this.getView().setModel(oOppModel, "opportunityModel");
                 } else {
                     oOppModel.setProperty("/customerId", sCustomerId);
@@ -193,7 +198,7 @@ sap.ui.define([
                 // Also update/create model with the ID (for backend submission)
                 let oProjModel = this.getView().getModel("projectModel");
                 if (!oProjModel) {
-                    oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
+                    oProjModel = new JSONModel({ oppId: sOppId });
                     this.getView().setModel(oProjModel, "projectModel");
                 } else {
                     oProjModel.setProperty("/oppId", sOppId);
@@ -232,7 +237,7 @@ sap.ui.define([
                 // Also update/create model with the ID (for backend submission)
                 let oProjModel = this.getView().getModel("projectModel");
                 if (!oProjModel) {
-                    oProjModel = new sap.ui.model.json.JSONModel({ oppId: sOppId });
+                    oProjModel = new JSONModel({ oppId: sOppId });
                     this.getView().setModel(oProjModel, "projectModel");
                 } else {
                     oProjModel.setProperty("/oppId", sOppId);
@@ -294,14 +299,14 @@ sap.ui.define([
                 sTableId = Object.keys(buttonMap).find(tableId => buttonMap[tableId].cancel === sButtonId) || "Customers";
             }
 
-            sap.m.MessageBox.confirm(
+            MessageBox.confirm(
                 "Are you sure you want to cancel? Unsaved changes will be lost.",
                 {
-                    icon: sap.m.MessageBox.Icon.WARNING,
+                    icon: MessageBox.Icon.WARNING,
                     title: "Cancel Edit",
-                    actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
+                    actions: [MessageBox.Action.YES, MessageBox.Action.NO],
                     onClose: function (sAction) {
-                        if (sAction === sap.m.MessageBox.Action.YES) {
+                        if (sAction === MessageBox.Action.YES) {
                             // ✅ FIXED: Call _performCancelOperation on the controller instance
                             // The method is exposed in Home.controller.js, so it's available on the controller
                             oController._performCancelOperation(sTableId, false);
@@ -358,7 +363,7 @@ sap.ui.define([
             const sMode = oEditModel.getProperty(`/${sTableId}/mode`);
 
             if (!sPath) {
-                sap.m.MessageToast.show("No row is in edit mode.");
+                MessageToast.show("No row is in edit mode.");
                 return;
             }
 
@@ -382,7 +387,7 @@ sap.ui.define([
                     oContext = aSelectedContexts && aSelectedContexts[0];
                 }
                 if (!oContext) {
-                    sap.m.MessageBox.error("Unable to find edited context.");
+                    MessageBox.error("Unable to find edited context.");
                     return;
                 }
                 aContextsToSave = [oContext];
@@ -478,7 +483,7 @@ sap.ui.define([
                     delete oData._isNew; // Clear new row marker
                 });
 
-                sap.m.MessageToast.show("Changes saved successfully.");
+                MessageToast.show("Changes saved successfully.");
 
                 // 🔹 Refresh table
                 oTable.getBinding("items")?.refresh();
@@ -507,7 +512,7 @@ sap.ui.define([
                 }
 
             } catch (err) {
-                sap.m.MessageBox.error("Error saving changes. Check console for details.");
+                MessageBox.error("Error saving changes. Check console for details.");
             } finally {
                 this.getView().setBusy(false);
             }
@@ -651,14 +656,14 @@ sap.ui.define([
             this._sUploadButtonId = sButtonId;
 
             if (!this._oMenu) {
-                this._oMenu = new sap.m.Menu({
+                this._oMenu = new Menu({
                     items: [
-                        new sap.m.MenuItem({
+                        new MenuItem({
                             text: "Upload Template",
                             tooltip: "Upload",
                             press: () => this.onUpload(this.oEventStore)
                         }),
-                        new sap.m.MenuItem({
+                        new MenuItem({
                             text: "Download Template",
                             tooltip: "Download Template",
                             press: () => {
@@ -713,7 +718,7 @@ sap.ui.define([
         _getMessagePopover: function (oController) {
             const oView = oController.getView();
             if (!oController._pMessagePopover) {
-                oController._pMessagePopover = new sap.ui.core.Fragment.load({
+                oController._pMessagePopover = new Fragment.load({
                     id: oView.getId(),
                     name: "glassboard.view.fragments.MessagePopover"
                 }).then(function (oMessagePopover) {

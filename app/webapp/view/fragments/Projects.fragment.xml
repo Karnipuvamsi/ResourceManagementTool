@@ -319,7 +319,7 @@
                             filter="projectFilterBar"
                             filterConditions="{filterModel>/Projects/conditions}"
                             selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            >
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

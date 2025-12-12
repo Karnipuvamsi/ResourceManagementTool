@@ -98,7 +98,7 @@
                                 threshold="20"
                                 enableExport="true"
                                 enableAutoColumnWidth="false"
-                                type="ResponsiveTable">
+                                >
                                 <mdc:type>
                                     <mdct:ResponsiveTableType/>
                                 </mdc:type>

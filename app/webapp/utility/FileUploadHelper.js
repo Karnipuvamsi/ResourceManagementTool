@@ -1,6 +1,13 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], function (Controller) {
+    "sap/ui/core/mvc/Controller",
+    "sap/m/MessageBox",
+    "sap/m/MessageToast",
+    "sap/ui/core/Messaging",
+    "sap/ui/core/format/DateFormat",
+    "sap/ui/core/Fragment",
+    "sap/ui/core/message/MessageType",
+    "sap/ui/core/message/Message"
+], function (Controller, MessageBox, MessageToast, Messaging, DateFormat, Fragment, MessageType, Message) {
     "use strict";
 
     return Controller.extend("glassboard.utility.FileUploadHelper", {
@@ -13,7 +20,7 @@ sap.ui.define([
             const oController = this;
 
             if (!this._pDialog) {
-                this._pDialog = sap.ui.core.Fragment.load({
+                this._pDialog = Fragment.load({
                     id: oView.getId(),
                     name: "glassboard.view.fragments.UploadDialog",
                     controller: oController
@@ -39,13 +46,13 @@ sap.ui.define([
             const oFile = oFiles && oFiles.length > 0 ? oFiles[0] : (oFileUploader.oFileUpload ? oFileUploader.oFileUpload.files[0] : null);
 
             if (!oFile) {
-                sap.m.MessageToast.show("Please select a CSV file.");
+                MessageToast.show("Please select a CSV file.");
                 return;
             }
 
             const oDialog = this.getView().byId("uploadDialog");
             if (!oDialog) {
-                sap.m.MessageToast.show("Upload dialog not found.");
+                MessageToast.show("Upload dialog not found.");
                 return;
             }
 
@@ -58,7 +65,7 @@ sap.ui.define([
                 const aLines = sContent.split("\n").filter(line => line.trim());
 
                 if (aLines.length < 2) {
-                    sap.m.MessageBox.error("CSV file must have at least a header row and one data row.");
+                    MessageBox.error("CSV file must have at least a header row and one data row.");
                     return;
                 }
 
@@ -101,21 +108,21 @@ sap.ui.define([
                 const aExtraHeaders = aHeaders.filter(h => !mExpectedHeaders[sButtonId].includes(h));
 
                 if (aMissingHeaders.length > 0 || aExtraHeaders.length > 0) {
-                    const oMessageManager = sap.ui.getCore().getMessageManager();
+                   
 
-                    const oHeaderMessage = new sap.ui.core.message.Message({
+                    const oHeaderMessage = new Message({
                         message: `Invalid CSV template for ${mExpectedMessage[sButtonId]}`,
-                        type: sap.ui.core.MessageType.Error,
+                        type: MessageType.Error,
                         description: `Missing: ${aMissingHeaders.join(", ") || "None"} | Unexpected: ${aExtraHeaders.join(", ") || "None"}`,
                         target: "/Dummy",
                         processor: that.getView().getModel()
                     });
-                    oMessageManager.addMessages(oHeaderMessage);
+                    Messaging.addMessages(oHeaderMessage);
                     return;
                 }
 
                 if (aMissingHeaders.length > 0 || aExtraHeaders.length > 0) {
-                    sap.m.MessageBox.error(
+                    MessageBox.error(
                         `Invalid CSV template for ${mExpectedMessage[sButtonId]}`,
                         {
                             title: "Invalid File",
@@ -145,7 +152,7 @@ sap.ui.define([
                             } else {
 
                                 // Convert to ISO format
-                                const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
+                                const oDate = DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
 
 
                                 // Add +5:30 hours (IST) to the timestamp
@@ -178,7 +185,7 @@ sap.ui.define([
                 }
 
                 that._csvPayload = aPayloadArray;
-                sap.m.MessageToast.show("✅ CSV file validated and parsed successfully!");
+                MessageToast.show("✅ CSV file validated and parsed successfully!");
             };
 
             oReader.readAsText(oFile);
@@ -193,12 +200,12 @@ sap.ui.define([
 
             const oMainModel = this.getView().getModel();
 
-            const oMessageManager = sap.ui.getCore().getMessageManager();
-            oMessageManager.removeAllMessages();
+            
+            Messaging.removeAllMessages();
 
             const sButtonId = oDialog.data("uploadButtonId");
             if (!this._csvPayload?.length) {
-                sap.m.MessageToast.show("Please parse a CSV file first.");
+                MessageToast.show("Please parse a CSV file first.");
                 return;
             }
 
@@ -210,9 +217,9 @@ sap.ui.define([
                 projectUpload: "/Projects",
             };
             const sEntitySet = mEntityMap[sButtonId];
-            if (!sEntitySet) return sap.m.MessageBox.error("Invalid entry type selected.");
+            if (!sEntitySet) return MessageBox.error("Invalid entry type selected.");
 
-            sap.m.MessageToast.show(`📤 Uploading ${this._csvPayload.length} records...`);
+            MessageToast.show(`📤 Uploading ${this._csvPayload.length} records...`);
             oView.setBusy(true);
 
             const oUploadBtn = this.byId("uploadSubmitBtn");
@@ -269,9 +276,9 @@ sap.ui.define([
 
                     if (oRes.status === 201) {
                         iSuccessCount++;
-                        aMessages.push(new sap.ui.core.message.Message({
+                        aMessages.push(new Message({
                             message: `✅ Record ${iIndex + 1} uploaded successfully`,
-                            type: sap.ui.core.MessageType.Success,
+                            type: MessageType.Success,
                             description: sBackendMsg || "HTTP 201 Created",
                             additionalText: `Record Index: ${iIndex + 1}`,
                             target: "/Dummy",
@@ -279,9 +286,9 @@ sap.ui.define([
                         }));
                     } else {
                         iFailureCount++;
-                        aMessages.push(new sap.ui.core.message.Message({
+                        aMessages.push(new Message({
                             message: `❌ Record ${iIndex + 1} failed: ${sBackendMsg || oRes.statusText}`,
-                            type: sap.ui.core.MessageType.Error,
+                            type: MessageType.Error,
                             description: `HTTP ${oRes.status} ${oRes.statusText}`,
                             additionalText: `Record Index: ${iIndex + 1}`,
                             target: "/Dummy",
@@ -290,9 +297,9 @@ sap.ui.define([
                     }
                 } catch (oError) {
                     iFailureCount++;
-                    aMessages.push(new sap.ui.core.message.Message({
+                    aMessages.push(new Message({
                         message: `❌ Record ${iIndex + 1} failed: Network/Unexpected error`,
-                        type: sap.ui.core.MessageType.Error,
+                        type: MessageType.Error,
                         description: oError.message || JSON.stringify(oError),
                         additionalText: `Record Index: ${iIndex + 1}`,
                         target: "/Dummy",
@@ -309,7 +316,7 @@ sap.ui.define([
             // await oMainModel.refresh();
             oView.setBusy(false);
 
-            sap.m.MessageToast.show(`📋 Upload complete: ${iSuccessCount} success, ${iFailureCount} failed`);
+            MessageToast.show(`📋 Upload complete: ${iSuccessCount} success, ${iFailureCount} failed`);
         },
 
         /**
@@ -318,7 +325,7 @@ sap.ui.define([
         _exportUploadTemplate: function (oEvent) {
             try {
                 if (!oEvent || !oEvent.getSource) {
-                    sap.m.MessageBox.error("Invalid event object for template download.");
+                    MessageBox.error("Invalid event object for template download.");
                     return;
                 }
 
@@ -376,7 +383,7 @@ sap.ui.define([
 
                 const aHeaders = mExpectedHeaders[sButtonId];
                 if (!aHeaders) {
-                    sap.m.MessageBox.error(`Unknown upload type: ${sButtonId}. Full ID: ${sFullId}`);
+                    MessageBox.error(`Unknown upload type: ${sButtonId}. Full ID: ${sFullId}`);
                     console.error("Download Template Error:", { sButtonId, sFullId, availableKeys: Object.keys(mExpectedHeaders) });
                     return;
                 }
@@ -421,15 +428,15 @@ sap.ui.define([
                             URL.revokeObjectURL(sUrl);
                         }, 100);
 
-                        sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
+                        MessageToast.show(`Template downloaded: ${sFileName}`);
                     } catch (oDownloadError) {
                         console.error("Error downloading CSV:", oDownloadError);
-                        sap.m.MessageBox.error("Failed to download template: " + oDownloadError.message);
+                        MessageBox.error("Failed to download template: " + oDownloadError.message);
                     }
                 }
             } catch (oError) {
                 console.error("Error in _exportUploadTemplate:", oError);
-                sap.m.MessageBox.error("Failed to export template: " + oError.message);
+                MessageBox.error("Failed to export template: " + oError.message);
             }
         },
 
@@ -454,9 +461,9 @@ sap.ui.define([
                     URL.revokeObjectURL(sUrl);
                 }, 100);
 
-                sap.m.MessageToast.show(`Template downloaded: ${sFileName}`);
+                MessageToast.show(`Template downloaded: ${sFileName}`);
             } catch (oError) {
-                sap.m.MessageBox.error("Failed to download template: " + oError.message);
+                MessageBox.error("Failed to download template: " + oError.message);
             }
         },
 

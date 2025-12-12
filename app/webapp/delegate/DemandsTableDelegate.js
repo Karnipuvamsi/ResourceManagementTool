@@ -8,8 +8,9 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/model/Filter"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Filter) {
     "use strict";
 
     /**
@@ -184,7 +185,7 @@ sap.ui.define([
                     } catch (e) {}
                     if (bIsString) {
                         try {
-                            return new sap.ui.model.Filter({
+                            return new Filter({
                                 path: sFilterPath,
                                 operator: oFilter.getOperator(),
                                 value1: oFilter.getValue1(),
@@ -201,7 +202,7 @@ sap.ui.define([
                         const aNewNested = fnMakeCaseInsensitive(oFilter.getFilters());
                         if (aNewNested !== oFilter.getFilters()) {
                             try {
-                                return new sap.ui.model.Filter({
+                                return new Filter({
                                     path: sFilterPath,
                                     operator: oFilter.getOperator(),
                                     value1: oFilter.getValue1(),
@@ -224,7 +225,7 @@ sap.ui.define([
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
                         if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
-                            return new sap.ui.model.Filter({
+                            return new Filter({
                                 filters: oOptimized,
                                 and: vFilters.getAnd ? vFilters.getAnd() : true
                             });
@@ -242,7 +243,7 @@ sap.ui.define([
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
                         if (oOptimizedNested) {
-                            aOtherFilters.push(new sap.ui.model.Filter({
+                            aOtherFilters.push(new Filter({
                                 filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
                                 and: oFilter.getAnd ? oFilter.getAnd() : true
                             }));
@@ -273,7 +274,7 @@ sap.ui.define([
                     if (aFieldFilters.length === 1) {
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                        aOptimizedFilters.push(new Filter({
                             filters: aFieldFilters,
                             and: false
                         }));
@@ -282,7 +283,7 @@ sap.ui.define([
                 aOtherFilters.forEach((oFilter) => aOptimizedFilters.push(oFilter));
                 if (aOptimizedFilters.length === 0) return null;
                 if (aOptimizedFilters.length === 1) return aOptimizedFilters[0];
-                return new sap.ui.model.Filter({ filters: aOptimizedFilters, and: true });
+                return new Filter({ filters: aOptimizedFilters, and: true });
             };
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
@@ -506,7 +507,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                           
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -525,7 +526,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                           
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField

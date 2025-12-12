@@ -8,8 +8,10 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Element, Filter) {
     "use strict";
 
     /**
@@ -213,7 +215,8 @@ sap.ui.define([
                                     template: new Item({
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
-                                    })
+                                    }),
+                                    templateShareable:false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
@@ -248,7 +251,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                         
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -267,7 +270,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -302,7 +305,7 @@ sap.ui.define([
 
     // Fallback to main Opportunity FilterBar (if any)
     if (!sSearch) {
-        const oFilterBar = sap.ui.getCore().byId("opportunityFilterBar");
+        const oFilterBar = Element.getElementById("opportunityFilterBar");
         if (oFilterBar?.getSearch) sSearch = oFilterBar.getSearch();
     }
 
@@ -317,53 +320,53 @@ sap.ui.define([
     // ----------- SAP Opp ID VH -------------------
     if (sId.includes("tblSAPOppVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
-            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
     // ----------- SFDC Opp ID VH -------------------
     else if (sId.includes("tblSfdcOppVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "sfdcOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
-            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "sfdcOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
     // ----------- Opportunity Name VH -------------------
     else if (sId.includes("tblOppNameVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false }),
-            new sap.ui.model.Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false})
+            new Filter({ path: "opportunityName", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new Filter({ path: "sapOpportunityId", operator: "Contains", value1: sSearch, caseSensitive: false})
         ];
     }
 
     // ----------- Business Unit VH -------------------
     else if (sId.includes("tblBusinessUnitVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "businessUnit", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "businessUnit", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
     // ----------- Sales SPOC VH -------------------
     else if (sId.includes("tblSalesSpocVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "salesSPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "salesSPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
     // ----------- Delivery SPOC VH -------------------
     else if (sId.includes("tblDeliverySpocVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "deliverySPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "deliverySPOC", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
     // ----------- Customer VH inside Opportunities -------------------
     else if (sId.includes("tblOppCustomerVH")) {
         aFilters = [
-            new sap.ui.model.Filter({ path: "customerName", operator: "Contains", value1: sSearch, caseSensitive: false }),
-            new sap.ui.model.Filter({ path: "SAPcustId", operator: "Contains", value1: sSearch, caseSensitive: false })
+            new Filter({ path: "customerName", operator: "Contains", value1: sSearch, caseSensitive: false }),
+            new Filter({ path: "SAPcustId", operator: "Contains", value1: sSearch, caseSensitive: false })
         ];
     }
 
@@ -375,7 +378,7 @@ sap.ui.define([
 
     // OR group
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: aFilters,
             and: false
         })

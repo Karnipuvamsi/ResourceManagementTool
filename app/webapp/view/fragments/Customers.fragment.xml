@@ -258,7 +258,7 @@
                     <ScrollContainer height="220px" vertical="true" horizontal="false">
                 <mdc:Table
                     id="Customers"
-                            header="Customers"
+                    header="Customers"
                     class="verticalsTable rowDetailToggleTable"
                     autoBindOnInit="false"
                     busyIndicatorDelay="0"
@@ -278,7 +278,7 @@
                     filter="customerFilterBar"
                             filterConditions="{filterModel>/Customers/conditions}"
                     selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                          >
                             <mdc:type>
                                 <table:ResponsiveTableType />
                             </mdc:type>

@@ -8,8 +8,11 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/core/Element",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Element, Filter, FilterOperator) {
     "use strict";
 
     /**
@@ -145,7 +148,7 @@ sap.ui.define([
                     } catch (e) {}
                     if (bIsString) {
                         try {
-                            return new sap.ui.model.Filter({
+                            return new Filter({
                                 path: sFilterPath,
                                 operator: oFilter.getOperator(),
                                 value1: oFilter.getValue1(),
@@ -162,7 +165,7 @@ sap.ui.define([
                         const aNewNested = fnMakeCaseInsensitive(oFilter.getFilters());
                         if (aNewNested !== oFilter.getFilters()) {
                             try {
-                                return new sap.ui.model.Filter({
+                                return new Filter({
                                     path: sFilterPath,
                                     operator: oFilter.getOperator(),
                                     value1: oFilter.getValue1(),
@@ -186,7 +189,7 @@ sap.ui.define([
                         const aNested = vFilters.getFilters();
                         const oOptimized = fnOptimizeFilters(aNested);
                         if (oOptimized && Array.isArray(oOptimized) && oOptimized.length > 0) {
-                            return new sap.ui.model.Filter({
+                            return new Filter({
                                 filters: oOptimized,
                                 and: vFilters.getAnd ? vFilters.getAnd() : true
                             });
@@ -204,7 +207,7 @@ sap.ui.define([
                         const aNested = oFilter.getFilters();
                         const oOptimizedNested = fnOptimizeFilters(aNested);
                         if (oOptimizedNested) {
-                            aOtherFilters.push(new sap.ui.model.Filter({
+                            aOtherFilters.push(new Filter({
                                 filters: Array.isArray(oOptimizedNested) ? oOptimizedNested : [oOptimizedNested],
                                 and: oFilter.getAnd ? oFilter.getAnd() : true
                             }));
@@ -235,7 +238,7 @@ sap.ui.define([
                     if (aFieldFilters.length === 1) {
                         aOptimizedFilters.push(aFieldFilters[0]);
                     } else if (aFieldFilters.length > 1) {
-                        aOptimizedFilters.push(new sap.ui.model.Filter({
+                        aOptimizedFilters.push(new Filter({
                             filters: aFieldFilters,
                             and: false
                         }));
@@ -244,7 +247,7 @@ sap.ui.define([
                 aOtherFilters.forEach((oFilter) => aOptimizedFilters.push(oFilter));
                 if (aOptimizedFilters.length === 0) return null;
                 if (aOptimizedFilters.length === 1) return aOptimizedFilters[0];
-                return new sap.ui.model.Filter({ filters: aOptimizedFilters, and: true });
+                return new Filter({ filters: aOptimizedFilters, and: true });
             };
             const oOptimizedFilter = fnOptimizeFilters(oBindingInfo.filters);
             oBindingInfo.filters = oOptimizedFilter || null;
@@ -430,7 +433,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                          
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -449,7 +452,7 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                            
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField
@@ -533,7 +536,7 @@ sap.ui.define([
 
     // 2️⃣ Try main Allocation FilterBar search
     if (!sSearch) {
-        const oFB = sap.ui.getCore().byId("allocationFilterBar");
+        const oFB = Element.getElementById("allocationFilterBar");
         sSearch = oFB?.getSearch?.() || "";
     }
 
@@ -549,21 +552,21 @@ sap.ui.define([
     // ============================
     if (sTableId.includes("tblAllocProjectNameVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectName",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "SOWReceived",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -575,15 +578,15 @@ sap.ui.define([
     // ============================
     else if (sTableId.includes("tblAllocProjectTypeVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectType",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectName",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -595,15 +598,15 @@ sap.ui.define([
     // ============================
     else if (sTableId.includes("tblAllocSOWReceivedVH")) {
         aFilters = [
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "SOWReceived",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             }),
-            new sap.ui.model.Filter({
+            new Filter({
                 path: "projectName",
-                operator: sap.ui.model.FilterOperator.Contains,
+                operator: FilterOperator.Contains,
                 value1: sSearch,
                 caseSensitive: false
             })
@@ -622,7 +625,7 @@ sap.ui.define([
     // 🔥 APPLY ODATA FILTER (OR group)
     // ============================
     oBindingInfo.filters = [
-        new sap.ui.model.Filter({
+        new Filter({
             filters: aFilters,
             and: false
         })

@@ -185,7 +185,7 @@
                             filter="masterDemandsFilterBar"
                             filterConditions="{filterModel>/Demands/conditions}"
                             selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            >
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>

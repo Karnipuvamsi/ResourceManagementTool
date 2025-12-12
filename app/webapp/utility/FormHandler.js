@@ -1,6 +1,11 @@
 sap.ui.define([
-    "sap/ui/core/mvc/Controller"
-], function (Controller) {
+    "sap/ui/core/mvc/Controller",
+    "sap/m/MessageToast",
+    "sap/ui/core/Item",
+    "sap/ui/core/ListItem",
+    "sap/ui/model/Filter",
+    "sap/ui/model/json/JSONModel"
+], function (Controller, MessageToast, Item, ListItem, Filter, JSONModel) {
     "use strict";
 
     return Controller.extend("glassboard.utility.FormHandler", {
@@ -12,7 +17,7 @@ sap.ui.define([
                 // No selection - clear form for new entry
                 let oDemandModel = this.getView().getModel("demandModel");
                 if (!oDemandModel) {
-                    oDemandModel = new sap.ui.model.json.JSONModel({});
+                    oDemandModel = new JSONModel({});
                     this.getView().setModel(oDemandModel, "demandModel");
                 }
 
@@ -38,7 +43,7 @@ sap.ui.define([
             let oObj = aSelectedContexts[0].getObject();
             let oDemandModel = this.getView().getModel("demandModel");
             if (!oDemandModel) {
-                oDemandModel = new sap.ui.model.json.JSONModel({});
+                oDemandModel = new JSONModel({});
                 this.getView().setModel(oDemandModel, "demandModel");
             }
             oDemandModel.setProperty("/demandId", oObj.demandId || "");
@@ -116,7 +121,7 @@ sap.ui.define([
                             }
                         });
                         aDesignations.forEach((sDesignation) => {
-                            oDesignationSelect.addItem(new sap.ui.core.Item({
+                            oDesignationSelect.addItem(new Item({
                                 key: sDesignation,
                                 text: sDesignation
                             }));
@@ -146,7 +151,7 @@ sap.ui.define([
                         });
                         // Add new city items
                         aCities.forEach((sCity) => {
-                            oCitySelect.addItem(new sap.ui.core.Item({
+                            oCitySelect.addItem(new Item({
                                 key: sCity,
                                 text: sCity
                             }));
@@ -189,7 +194,7 @@ sap.ui.define([
                     // For now, just clear - Employees might use manual OHR IDs
                     sNextId = "";
                 } catch (e) {
-                    sap.m.MessageToast.show("Could not generate next Demand ID: " + e.message, {
+                    MessageToast.show("Could not generate next Demand ID: " + e.message, {
                         duration: 4000, // 4 seconds
                         width: "20em"
                     });
@@ -426,7 +431,7 @@ sap.ui.define([
 
             let oOppModel = this.getView().getModel("opportunityModel");
             if (!oOppModel) {
-                oOppModel = new sap.ui.model.json.JSONModel({});
+                oOppModel = new JSONModel({});
                 this.getView().setModel(oOppModel, "opportunityModel");
             }
             oOppModel.setProperty("/sapOpportunityId", oObj.sapOpportunityId || "");
@@ -496,7 +501,7 @@ sap.ui.define([
 
                 let oProjModel = this.getView().getModel("projectModel");
                 if (!oProjModel) {
-                    oProjModel = new sap.ui.model.json.JSONModel({});
+                    oProjModel = new JSONModel({});
                     this.getView().setModel(oProjModel, "projectModel");
                 }
                 oProjModel.setData({
@@ -534,7 +539,7 @@ sap.ui.define([
 
             let oProjModel = this.getView().getModel("projectModel");
             if (!oProjModel) {
-                oProjModel = new sap.ui.model.json.JSONModel({});
+                oProjModel = new JSONModel({});
                 this.getView().setModel(oProjModel, "projectModel");
             }
             oProjModel.setProperty("/sapPId", oObj.sapPId || "");
@@ -599,7 +604,7 @@ sap.ui.define([
             // Initialize customerModel if it doesn't exist
             let oCustomerModel = this.getView().getModel("customerModel");
             if (!oCustomerModel) {
-                oCustomerModel = new sap.ui.model.json.JSONModel({});
+                oCustomerModel = new JSONModel({});
                 this.getView().setModel(oCustomerModel, "customerModel");
             }
 
@@ -714,11 +719,11 @@ sap.ui.define([
                     oStateCombo.bindItems({
                         path: "default>/CustomerStates",
                         filters: [
-                            new sap.ui.model.Filter("country_id", "EQ", nCountryIdForFilter)
+                            new Filter("country_id", "EQ", nCountryIdForFilter)
                         ],
                         length:1000,
 
-                        template: new sap.ui.core.ListItem({
+                        template: new ListItem({
                             key: "{default>id}",
                             text: "{default>name}"
                         })
@@ -786,12 +791,12 @@ sap.ui.define([
                                     oCityCombo.bindItems({
                                         path: "default>/CustomerCities",
                                         filters: [
-                                            new sap.ui.model.Filter("state_id", "EQ", stateId),
-                                            new sap.ui.model.Filter("country_id", "EQ", countryId)
+                                            new Filter("state_id", "EQ", stateId),
+                                            new Filter("country_id", "EQ", countryId)
                                         ],
                                        length:1000,
 
-                                        template: new sap.ui.core.ListItem({
+                                        template: new ListItem({
                                             key: "{default>id}",
                                             text: "{default>name}"
                                         })

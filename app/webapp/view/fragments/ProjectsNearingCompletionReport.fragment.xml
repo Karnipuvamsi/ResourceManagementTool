@@ -33,8 +33,7 @@
                         search="onFilterSearch"
                         showAdaptFiltersButton="true"
                         showGoButton="true"
-                        showRestoreButton="true"
-                        showVariantManagement="true"
+                       
                         variantBackreference="projectsNearingCompletionReportFilterBar"
                         filterConditions="{filterModel>/ProjectsNearingCompletionReport/conditions}"
                         p13nMode="Item,Value">
@@ -48,7 +47,7 @@
                                 propertyKey="projectName"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
+                               
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -63,7 +62,7 @@
                                 propertyKey="completionRisk"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
+                              
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -78,7 +77,7 @@
                                 propertyKey="customer"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
+                               
                                 width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",

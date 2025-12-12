@@ -20,7 +20,7 @@
                             id="sideNavigationToggleButton"
                             icon="sap-icon://menu2"
                             type="Transparent"
-                            press="onSideNavButtonPress"
+                            press=".onSideNavButtonPress"
                         >
                             <layoutData>
                                 <OverflowToolbarLayoutData
@@ -51,7 +51,7 @@
                         id="uploadLogButton"
                         visible="{= ${message>/}.length > 0 }"
                         type="Emphasized"
-                        press="onMessagePopoverPress"
+                        press=".onMessagePopoverPress"
                     />
                 </HBox>
             </tnt:ToolHeader>
@@ -61,7 +61,7 @@
             <tnt:SideNavigation
                 id="sideNavigation"
                 expanded="true"
-                itemSelect="onItemSelect"
+                itemSelect=".onItemSelect"
                 selectedKey="home"
             >
                 <tnt:NavigationList>

@@ -8,8 +8,10 @@ sap.ui.define([
     "sap/m/Button",
     "sap/m/library",
     "sap/m/ComboBox",
-    "sap/ui/core/Item"
-], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item) {
+    "sap/ui/core/Item",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator"
+], function (BaseTableDelegate, Sorter, FilterField, Field, mdcLibrary, HBox, Button, mLibrary, ComboBox, Item, Filter, FilterOperator) {
     "use strict";
 
     /**
@@ -53,9 +55,9 @@ sap.ui.define([
             const bIsAllocationsEmployeesTable = sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res";
             
             if (bIsAllocationsEmployeesTable) {
-                const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
-                const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
-                const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+                const oPercentageFilter = new Filter("empallocpercentage", FilterOperator.LE, 95);
+                const oStatusFilter = new Filter("status", FilterOperator.NE, "Resigned");
+                const oAllocationFilter = new Filter([oPercentageFilter, oStatusFilter], true); // true = AND
                 
                 // Initialize filters array if it doesn't exist
                 if (!oBindingInfo.filters) {
@@ -271,7 +273,7 @@ sap.ui.define([
 
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
+                            
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField,
@@ -291,7 +293,6 @@ sap.ui.define([
                         });
                         const oColumn = new Column({
                             id: oTable.getId() + "--col-" + sPropertyName,
-                            dataProperty: sPropertyName,
                             propertyKey: sPropertyName,
                             header: sLabel,
                             template: oField,

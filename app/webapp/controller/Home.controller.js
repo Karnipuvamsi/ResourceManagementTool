@@ -5,8 +5,31 @@ sap.ui.define([
     "sap/m/MessageToast",
     "glassboard/utility/CustomUtility",
     "glassboard/delegate/BaseTableDelegate",
-    "sap/m/MessageBox"
-], (Controller, Fragment, StateUtil, MessageToast, CustomUtility, BaseTableDelegate, MessageBox) => {
+    "sap/m/MessageBox",
+    "sap/base/Log",
+    "sap/m/Column",
+    "sap/m/ColumnListItem",
+    "sap/m/DatePicker",
+    "sap/m/GenericTile",
+    "sap/m/Input",
+    "sap/m/Label",
+    "sap/m/MultiComboBox",
+    "sap/m/Panel",
+    "sap/m/Select",
+    "sap/m/Table",
+    "sap/m/Text",
+    "sap/m/Title",
+    "sap/m/VBox",
+    "sap/ui/core/Element",
+    "sap/ui/core/HTML",
+    "sap/ui/core/Item",
+    "sap/ui/core/ListItem",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
+    "sap/ui/model/FilterType",
+    "sap/ui/model/json/JSONModel"
+], (Controller, Fragment, StateUtil, MessageToast, CustomUtility, BaseTableDelegate, MessageBox, Log, Column, ColumnListItem, DatePicker, GenericTile, Input, Label, MultiComboBox, Panel, Select, Table, Text,
+    Title, VBox, Element, HTML, Item, ListItem, ModelFilter, FilterOperator, FilterType, JSONModel) => {
     "use strict";
 
     return Controller.extend("glassboard.controller.Home", {
@@ -33,7 +56,7 @@ sap.ui.define([
             this.byId("projectsEndingVBox").attachBrowserEvent("click", this.onProjectsEndingPress.bind(this));
 
             // ✅ Set the filter model with isolated conditions per fragment
-            const oFilterModel = new sap.ui.model.json.JSONModel({
+            const oFilterModel = new JSONModel({
                 Customers: { conditions: {}, items: [] },
                 Projects: { conditions: {}, items: [] },
                 Opportunities: { conditions: {}, items: [] },
@@ -51,7 +74,7 @@ sap.ui.define([
             this.getView().setModel(oFilterModel, "filterModel");
 
             // ✅ Also set $filters model for MDC FilterBar (points to same model but different structure)
-            const oFiltersModel = new sap.ui.model.json.JSONModel({
+            const oFiltersModel = new JSONModel({
                 conditions: {}
             });
             this.getView().setModel(oFiltersModel, "$filters");
@@ -60,14 +83,14 @@ sap.ui.define([
             this._setDefaultFilters();
 
             // Optional: Set a separate model for table-specific state (if needed)
-            const oTableModel = new sap.ui.model.json.JSONModel();
+            const oTableModel = new JSONModel();
             this.getView().setModel(oTableModel, "tableModel");
 
             // ✅ Initialize Country-City mapping for dependent dropdowns
             this._mCountryToCities = {
                 "South Africa": ["Johannesburg (Gauteng)"],
                 "China": ["Dalian", "Foshan (Guangdong)", "Kunshan (Jiangsu)"],
-                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)","Hyd","Onsite","Chennai","Kol","GGN","Noida","BLR","Pune","Mumbai","Jaipur"],
+                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)", "Hyd", "Onsite", "Chennai", "Kol", "GGN", "Noida", "BLR", "Pune", "Mumbai", "Jaipur"],
                 "Japan": ["Tokyo (Chiyoda-ku)", "Yokohama (Kanagawa)"],
                 "Malaysia": ["Kuala Lumpur / Petaling Jaya (Selangor)"],
                 "Philippines": ["Bataan", "Manila / Quezon City"],
@@ -97,7 +120,7 @@ sap.ui.define([
                 "United Kingdom": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
                 "UK": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
                 "Slovakia": [],
-                "Belgium" : []
+                "Belgium": []
             };
 
             // ✅ Initialize Band-Designation mapping for dependent dropdowns
@@ -119,7 +142,7 @@ sap.ui.define([
             this._populateCountryDropdown();
 
             // ✅ Initialize home counts model
-            const oHomeCountsModel = new sap.ui.model.json.JSONModel({
+            const oHomeCountsModel = new JSONModel({
                 totalHeadCount: 0,
                 allocatedCount: 0,
                 preAllocatedCount: 0,
@@ -242,9 +265,9 @@ sap.ui.define([
                 "employeeBenchReport": "EmployeeBenchReport",
                 "employeeAllocationReport": "EmployeeAllocationReport",
                 "employeeSkillReport": "EmployeeSkillReport",
-                "projectsNearingCompletionReport":"ProjectsNearingCompletionReport",
-                "revenueForecastReport":"RevenueForecastReport",
-                "employeeProbableReleaseReport":"EmployeeProbableReleaseReport"
+                "projectsNearingCompletionReport": "ProjectsNearingCompletionReport",
+                "revenueForecastReport": "RevenueForecastReport",
+                "employeeProbableReleaseReport": "EmployeeProbableReleaseReport"
 
             };
             const sCollectionPath = sCollectionMap[sKey];
@@ -686,7 +709,7 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
-                
+
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeeProbableReleaseReportTableLoaded) {
@@ -779,9 +802,9 @@ sap.ui.define([
                     this._resetSegmentedButtonForFragment("EmployeeProbableReleaseReport");
 
                 }.bind(this));
-                
+
             } else if (sKey === "projectsNearingCompletionReport") {
-               
+
 
 
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
@@ -878,7 +901,7 @@ sap.ui.define([
                 }.bind(this));
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
-                
+
 
 
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
@@ -973,8 +996,8 @@ sap.ui.define([
                     this._resetSegmentedButtonForFragment("RevenueForecastReport");
 
                 }.bind(this));
-               
-               // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+
+                // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
             } else if (sKey === "employeeAllocationReport") {
                 // this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
@@ -1403,7 +1426,7 @@ sap.ui.define([
                 }).then(function (oFragment) {
 
                     // ✅ Add model setting here
-                    const oVM = new sap.ui.model.json.JSONModel({
+                    const oVM = new JSONModel({
                         projAllowed: false,
                         empAllowed: false,
                         datesAllowed: false,
@@ -1716,10 +1739,10 @@ sap.ui.define([
                 const CANCEL_ACTION = "Cancel";
                 const STAY_ACTION = "Stay";
 
-                sap.m.MessageBox.show(
+                MessageBox.show(
                     `You have unsaved changes in ${sCurrentTable}. What would you like to do?`,
                     {
-                        icon: sap.m.MessageBox.Icon.WARNING,
+                        icon: MessageBox.Icon.WARNING,
                         title: "Unsaved Changes",
                         actions: [
                             SAVE_ACTION,
@@ -1740,7 +1763,7 @@ sap.ui.define([
                                     this._discardTableEditState(sCurrentTable);
                                     resolve(true); // Allow navigation after save
                                 }).catch((err) => {
-                                    sap.m.MessageBox.error("Error saving changes. Please try again.");
+                                    MessageBox.error("Error saving changes. Please try again.");
                                     resolve(false); // Prevent navigation on error
                                 });
                             } else if (sAction === CANCEL_ACTION) {
@@ -2081,7 +2104,7 @@ sap.ui.define([
             if (oBinding) {
                 if (sQuery) {
                     // Create search filter - search in projectName field
-                    const oFilter = new sap.ui.model.Filter("projectName", sap.ui.model.FilterOperator.Contains, sQuery);
+                    const oFilter = new ModelFilter("projectName", FilterOperator.Contains, sQuery);
                     oBinding.filter([oFilter]);
                 } else {
                     // Clear filter if search is empty
@@ -2096,14 +2119,14 @@ sap.ui.define([
             const oTable = this.byId("Allocations");
 
             if (!oAllocationPage) {
-                sap.m.MessageToast.show("Allocation page not found");
+                MessageToast.show("Allocation page not found");
                 return;
             }
 
             // Get selected project
             const aSelectedContexts = oTable ? oTable.getSelectedContexts() : [];
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                sap.m.MessageToast.show("Please select a project first");
+                MessageToast.show("Please select a project first");
                 return;
             }
 
@@ -2174,7 +2197,7 @@ sap.ui.define([
                     if (oEarlyBinding && sProjectId) {
                         try {
                             // ✅ Use project ID as-is (should be "P-0001" format to match Demand CSV)
-                            const oFilter = new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sProjectId);
+                            const oFilter = new ModelFilter("sapPId", FilterOperator.EQ, sProjectId);
                             oEarlyBinding.filter([oFilter]);
                         } catch (e) {
                         }
@@ -2189,7 +2212,7 @@ sap.ui.define([
                             if (oBinding && sProjectId) {
                                 try {
                                     // ✅ Use project ID as-is (should be "P-0001" format to match Demand CSV)
-                                    const oFilter = new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sProjectId);
+                                    const oFilter = new ModelFilter("sapPId", FilterOperator.EQ, sProjectId);
                                     oBinding.filter([oFilter]);
 
                                     // Attach data received event to track data loading
@@ -2231,7 +2254,7 @@ sap.ui.define([
             // Update the model - ALWAYS store ID, not name
             let oDemandModel = this.getView().getModel("demandModel");
             if (!oDemandModel) {
-                oDemandModel = new sap.ui.model.json.JSONModel({});
+                oDemandModel = new JSONModel({});
                 this.getView().setModel(oDemandModel, "demandModel");
             }
             oDemandModel.setProperty("/sapPId", sFinalProjectId); // ✅ Store ID in model
@@ -2271,7 +2294,7 @@ sap.ui.define([
                     if (oBinding && sFilterValue) {
                         try {
                             // ✅ Use project ID as-is (should be "P-0001" format to match Demand CSV)
-                            const oFilter = new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sFilterValue);
+                            const oFilter = new ModelFilter("sapPId", FilterOperator.EQ, sFilterValue);
                             oBinding.filter([oFilter]);
 
                             // Attach data received event to verify filter is working
@@ -2391,7 +2414,7 @@ sap.ui.define([
                             const fnApplyBenchFilter = () => {
                                 const oResBinding = oTable.getRowBinding && oTable.getRowBinding();
                                 if (oResBinding) {
-                                    const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
+                                    const oBenchFilter = new ModelFilter("status", FilterOperator.EQ, "Unproductive Bench");
                                     oResBinding.filter([oBenchFilter]);
 
                                     // ✅ CRITICAL: Re-apply filter on dataReceived to ensure it persists
@@ -2481,13 +2504,13 @@ sap.ui.define([
             // Get selected demand to get project ID
             const oDemandsTable = this.byId("Demands");
             if (!oDemandsTable) {
-                sap.m.MessageToast.show("Demands table not found");
+                MessageToast.show("Demands table not found");
                 return;
             }
 
             const aSelectedContexts = oDemandsTable.getSelectedContexts();
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                sap.m.MessageToast.show("Please select a demand first");
+                MessageToast.show("Please select a demand first");
                 return;
             }
 
@@ -2519,7 +2542,7 @@ sap.ui.define([
             this._sAllocationDemandId = iDemandId;
 
             if (!sProjectId) {
-                sap.m.MessageBox.error("Project ID not found. Please navigate from Projects screen or select a demand with a project.");
+                MessageBox.error("Project ID not found. Please navigate from Projects screen or select a demand with a project.");
                 return;
             }
 
@@ -2551,7 +2574,7 @@ sap.ui.define([
                     let oAllocateBtn = this.byId("btnFindResourcesAllocate");
                     if (!oAllocateBtn) {
                         // Try using Fragment.byId
-                        oAllocateBtn = sap.ui.core.Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
+                        oAllocateBtn = Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
                     }
                     if (!oAllocateBtn && oDialog) {
                         // Try to get it from dialog's begin button
@@ -2582,7 +2605,7 @@ sap.ui.define([
                 let oAllocateBtn = this.byId("btnFindResourcesAllocate");
                 if (!oAllocateBtn) {
                     // Try using Fragment.byId
-                    oAllocateBtn = sap.ui.core.Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
+                    oAllocateBtn = Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
                 }
                 if (!oAllocateBtn && this._oFindResourcesDialog) {
                     // Try to get it from dialog's begin button
@@ -2684,7 +2707,7 @@ sap.ui.define([
                 ];
 
                 if (sQuery) {
-                    aFilters.push(new sap.ui.model.Filter("fullName", sap.ui.model.FilterOperator.Contains, sQuery));
+                    aFilters.push(new ModelFilter("fullName", FilterOperator.Contains, sQuery));
                 }
 
                 oBinding.filter(aFilters, "Application");
@@ -2700,7 +2723,7 @@ sap.ui.define([
             let oAllocateBtn = this.byId("btnFindResourcesAllocate");
             if (!oAllocateBtn) {
                 // Try using Fragment.byId
-                oAllocateBtn = sap.ui.core.Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
+                oAllocateBtn = Fragment.byId(this.getView().getId(), "btnFindResourcesAllocate");
             }
             if (!oAllocateBtn && this._oFindResourcesDialog) {
                 // Try to get it from dialog's begin button
@@ -2739,13 +2762,13 @@ sap.ui.define([
             }
 
             if (!oTable) {
-                sap.m.MessageToast.show("Resources table not found");
+                MessageToast.show("Resources table not found");
                 return;
             }
 
             const aSelectedItems = oTable.getSelectedItems();
             if (!aSelectedItems || aSelectedItems.length === 0) {
-                sap.m.MessageToast.show("Please select at least one employee to allocate");
+                MessageToast.show("Please select at least one employee to allocate");
                 return;
             }
 
@@ -2764,14 +2787,14 @@ sap.ui.define([
             }
 
             if (aEmployees.length === 0) {
-                sap.m.MessageToast.show("Could not get employee data from selected items");
+                MessageToast.show("Could not get employee data from selected items");
                 return;
             }
 
             let sProjectId = this._sAllocationProjectId;
 
             if (!sProjectId) {
-                sap.m.MessageToast.show("Project ID missing");
+                MessageToast.show("Project ID missing");
                 return;
             }
 
@@ -2782,7 +2805,7 @@ sap.ui.define([
             const iDemandId = this._sAllocationDemandId;
 
             if (!iDemandId) {
-                sap.m.MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
+                MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
                     title: "Demand Selection Required"
                 });
                 return;
@@ -2797,14 +2820,14 @@ sap.ui.define([
             const sEndDate = oEndDatePicker ? oEndDatePicker.getValue() : "";
 
             if (!sStartDate || !sEndDate) {
-                sap.m.MessageBox.error("Please select start date and end date");
+                MessageBox.error("Please select start date and end date");
                 return;
             }
 
             // ✅ CRITICAL: Validate dates against project dates
             const oModel = this.getOwnerComponent().getModel();
             if (!oModel) {
-                sap.m.MessageToast.show("Model not found");
+                MessageToast.show("Model not found");
                 return;
             }
 
@@ -2838,7 +2861,7 @@ sap.ui.define([
                     oAllocStart.setHours(0, 0, 0, 0);
                     oProjStart.setHours(0, 0, 0, 0);
                     if (oAllocStart < oProjStart) {
-                        sap.m.MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate})`);
+                        MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate})`);
                         return false;
                     }
                 }
@@ -2849,7 +2872,7 @@ sap.ui.define([
                     oAllocEnd.setHours(0, 0, 0, 0);
                     oProjEnd.setHours(0, 0, 0, 0);
                     if (oAllocEnd > oProjEnd) {
-                        sap.m.MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate})`);
+                        MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate})`);
                         return false;
                     }
                 }
@@ -2861,7 +2884,7 @@ sap.ui.define([
                     oStart.setHours(0, 0, 0, 0);
                     oEnd.setHours(0, 0, 0, 0);
                     if (oStart > oEnd) {
-                        sap.m.MessageBox.error("Start date cannot be later than end date");
+                        MessageBox.error("Start date cannot be later than end date");
                         return false;
                     }
                 }
@@ -2885,7 +2908,7 @@ sap.ui.define([
                 // Method 2: Fragment.byId with dialog ID
                 if (!oPercentageInput) {
                     try {
-                        oPercentageInput = sap.ui.core.Fragment.byId("findResourcesDialog", "allocationPercentage_find");
+                        oPercentageInput = Fragment.byId("findResourcesDialog", "allocationPercentage_find");
                     } catch (e) {
                     }
                 }
@@ -2919,7 +2942,7 @@ sap.ui.define([
                 // Method 4: Try byId with view prefix
                 if (!oPercentageInput) {
                     const sViewId = this.getView().getId();
-                    oPercentageInput = sap.ui.getCore().byId(sViewId + "--allocationPercentage_find");
+                    oPercentageInput = Element.getElementById(sViewId + "--allocationPercentage_find");
                 }
 
                 let sPercentage = "";
@@ -2930,7 +2953,7 @@ sap.ui.define([
                         // Dialog debugging removed
                     }
                     // ✅ CRITICAL: Don't silently default to 100% - show error to user
-                    sap.m.MessageBox.error("Could not find allocation percentage input field. Please refresh the page and try again.");
+                    MessageBox.error("Could not find allocation percentage input field. Please refresh the page and try again.");
                     return;
                 }
 
@@ -2941,7 +2964,7 @@ sap.ui.define([
                     if (!isNaN(iParsed) && iParsed >= 0 && iParsed <= 100) {
                         iPercentage = iParsed;
                     } else {
-                        sap.m.MessageBox.error(`Invalid allocation percentage: "${sPercentage}". Must be a number between 0 and 100.`);
+                        MessageBox.error(`Invalid allocation percentage: "${sPercentage}". Must be a number between 0 and 100.`);
                         return;
                     }
                 } else {
@@ -3030,12 +3053,12 @@ sap.ui.define([
                         if (aValidEmployees.length > 0) {
                             sErrorMessage += `\n${aValidEmployees.length} employee(s) can still be allocated. Continue with only valid employees?`;
 
-                            sap.m.MessageBox.warning(sErrorMessage, {
+                            MessageBox.warning(sErrorMessage, {
                                 title: "Allocation Validation Warning",
-                                actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-                                emphasizedAction: sap.m.MessageBox.Action.YES,
+                                actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                                emphasizedAction: MessageBox.Action.YES,
                                 onClose: (sAction) => {
-                                    if (sAction === sap.m.MessageBox.Action.YES) {
+                                    if (sAction === MessageBox.Action.YES) {
                                         // Continue with valid employees only
                                         this._createAllocationsForFindResources(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, aEmployees);
                                     }
@@ -3044,7 +3067,7 @@ sap.ui.define([
                             return;
                         } else {
                             // No valid employees - show error and return
-                            sap.m.MessageBox.error(sErrorMessage, {
+                            MessageBox.error(sErrorMessage, {
                                 title: "Allocation Validation Error"
                             });
                             return;
@@ -3154,12 +3177,12 @@ sap.ui.define([
                 if (aValidAllocationData.length > 0) {
                     sErrorMessage += `\n${aValidAllocationData.length} employee(s) can still be allocated. Continue with only valid employees?`;
 
-                    sap.m.MessageBox.warning(sErrorMessage, {
+                    MessageBox.warning(sErrorMessage, {
                         title: "Allocation Validation Warning",
-                        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-                        emphasizedAction: sap.m.MessageBox.Action.YES,
+                        actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                        emphasizedAction: MessageBox.Action.YES,
                         onClose: (sAction) => {
-                            if (sAction === sap.m.MessageBox.Action.YES) {
+                            if (sAction === MessageBox.Action.YES) {
                                 // Continue with valid allocations only
                                 this._createValidAllocationsFromFindResources(aValidAllocationData, oModel, aEmployees);
                             }
@@ -3168,7 +3191,7 @@ sap.ui.define([
                     return;
                 } else {
                     // No valid employees - show error and return
-                    sap.m.MessageBox.error(sErrorMessage, {
+                    MessageBox.error(sErrorMessage, {
                         title: "Allocation Validation Error"
                     });
                     return;
@@ -3200,7 +3223,7 @@ sap.ui.define([
                     const iTotalPercentage = aAllocsForEmployee.reduce((sum, alloc) => sum + (alloc.allocationPercentage || 100), 0);
                     if (iTotalPercentage > 100) {
                         const sEmployeeName = aEmployees.find(e => e.ohrId === sEmployeeId)?.fullName || sEmployeeId;
-                        sap.m.MessageBox.error(`Cannot allocate: Multiple allocations for employee ${sEmployeeName} in same batch would exceed 100% (${iTotalPercentage}%). Please allocate employees one at a time or reduce allocation percentages.`);
+                        MessageBox.error(`Cannot allocate: Multiple allocations for employee ${sEmployeeName} in same batch would exceed 100% (${iTotalPercentage}%). Please allocate employees one at a time or reduce allocation percentages.`);
                         return;
                     }
                 }
@@ -3233,7 +3256,7 @@ sap.ui.define([
             }
 
             if (aContexts.length === 0) {
-                sap.m.MessageBox.error("Failed to create any allocation entries.");
+                MessageBox.error("Failed to create any allocation entries.");
                 return;
             }
 
@@ -3254,7 +3277,7 @@ sap.ui.define([
 
                     // Show success message with employee names
                     const aEmployeeNames = aEmployees.map(o => o.fullName).join(", ");
-                    sap.m.MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
+                    MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
 
                     // ✅ CRITICAL: Clear selection from Find Resources table BEFORE closing dialog
                     const oFindResourcesTable = this.byId("findResourcesTable");
@@ -3296,7 +3319,7 @@ sap.ui.define([
                         }, 300);
                     }
                 } else {
-                    sap.m.MessageBox.warning(`${iSuccessCount} of ${aContexts.length} allocation(s) created successfully. Some may have failed.`);
+                    MessageBox.warning(`${iSuccessCount} of ${aContexts.length} allocation(s) created successfully. Some may have failed.`);
                 }
             }).catch((oError) => {
                 // ✅ CRITICAL: Extract error message from batch response with better parsing
@@ -3328,7 +3351,7 @@ sap.ui.define([
                 }
 
                 // ✅ Show error popup with detailed message
-                sap.m.MessageBox.error(sErrorMessage, {
+                MessageBox.error(sErrorMessage, {
                     title: "Allocation Failed"
                 });
             });
@@ -3368,7 +3391,7 @@ sap.ui.define([
                     sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
                     sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
 
-                    sap.m.MessageBox.error(sErrorMessage, {
+                    MessageBox.error(sErrorMessage, {
                         title: "Project Resource Limit Exceeded"
                     });
                     return false; // Validation failed
@@ -3416,7 +3439,7 @@ sap.ui.define([
                     sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
                     sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated to this demand.`;
 
-                    sap.m.MessageBox.error(sErrorMessage, {
+                    MessageBox.error(sErrorMessage, {
                         title: "Demand Resource Limit Exceeded"
                     });
                     return false; // Validation failed
@@ -3456,7 +3479,7 @@ sap.ui.define([
                             sErrorMessage += `• Total After Allocation: ${iTotalAfterAllocation} (exceeds by ${iExcess})\n\n`;
                             sErrorMessage += `Only ${iCanAllocate} employee(s) can be allocated.`;
 
-                            sap.m.MessageBox.error(sErrorMessage, {
+                            MessageBox.error(sErrorMessage, {
                                 title: "Project Resource Limit Exceeded"
                             });
                             return;
@@ -3507,7 +3530,7 @@ sap.ui.define([
             }
 
             if (aContexts.length === 0) {
-                sap.m.MessageBox.error("Failed to create any allocation entries.");
+                MessageBox.error("Failed to create any allocation entries.");
                 return;
             }
 
@@ -3528,7 +3551,7 @@ sap.ui.define([
 
                     // Show success message with employee names
                     const aEmployeeNames = aEmployees.map(o => o.fullName).join(", ");
-                    sap.m.MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
+                    MessageToast.show(`${iSuccessCount} employee(s) allocated successfully: ${aEmployeeNames}`);
 
                     // ✅ CRITICAL: Clear selection from Res table BEFORE closing dialog
                     if (oResTable) {
@@ -3590,7 +3613,7 @@ sap.ui.define([
                         }, 500);
                     }
                 } else {
-                    sap.m.MessageBox.warning(`${iSuccessCount} of ${aContexts.length} allocation(s) created successfully. Some may have failed.`);
+                    MessageBox.warning(`${iSuccessCount} of ${aContexts.length} allocation(s) created successfully. Some may have failed.`);
                 }
             }).catch((oError) => {
                 // ✅ CRITICAL: Extract error message from batch response with better parsing
@@ -3622,7 +3645,7 @@ sap.ui.define([
                 }
 
                 // ✅ Show error popup with detailed message
-                sap.m.MessageBox.error(sErrorMessage, {
+                MessageBox.error(sErrorMessage, {
                     title: "Allocation Failed"
                 });
             });
@@ -3642,7 +3665,7 @@ sap.ui.define([
             const oNewContext = oBinding.create(oAllocationData, "changesGroup");
 
             if (!oNewContext) {
-                sap.m.MessageBox.error("Failed to create allocation entry.");
+                MessageBox.error("Failed to create allocation entry.");
                 return;
             }
 
@@ -3672,7 +3695,7 @@ sap.ui.define([
                         oNewContext.requestObject().then(() => {
                             const oBackendData = oNewContext.getObject();
 
-                            sap.m.MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
+                            MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
 
                             // Close dialog
                             this.onFindResourcesDialogClose();
@@ -3700,23 +3723,23 @@ sap.ui.define([
                                 setTimeout(() => {
                                     const oBinding = oFindResourcesTable.getBinding("items");
                                     if (oBinding) {
-                                        const oBenchFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
+                                        const oBenchFilter = new ModelFilter("status", FilterOperator.EQ, "Unproductive Bench");
                                         oBinding.filter([oBenchFilter]);
                                     }
                                 }, 300);
                             }
                         }).catch((oReadError) => {
                             // Still show success if context exists
-                            sap.m.MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
+                            MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
                             this.onFindResourcesDialogClose();
                         });
                     } else {
-                        sap.m.MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
+                        MessageToast.show(`Employee ${oEmployee.fullName} allocated to project successfully`);
                         this.onFindResourcesDialogClose();
                     }
                 } else {
                     // Context doesn't have data - creation likely failed
-                    sap.m.MessageBox.error("Failed to create allocation. Please check the data and try again.");
+                    MessageBox.error("Failed to create allocation. Please check the data and try again.");
                 }
             }).catch((oError) => {
                 // ✅ CRITICAL: Extract error message from batch response
@@ -3732,9 +3755,9 @@ sap.ui.define([
 
                 // Check for specific validation errors
                 if (sErrorMessage.includes("cannot be earlier than") || sErrorMessage.includes("cannot be later than")) {
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 } else {
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -3792,7 +3815,7 @@ sap.ui.define([
             }
 
             if (aEmployees.length === 0) {
-                sap.m.MessageToast.show("Please select at least one employee from the Employees view first");
+                MessageToast.show("Please select at least one employee from the Employees view first");
                 return;
             }
 
@@ -3809,13 +3832,13 @@ sap.ui.define([
             const sEndDate = oEndDatePicker ? oEndDatePicker.getValue() : "";
 
             if (!sProjectId) {
-                sap.m.MessageToast.show("Please select a project");
+                MessageToast.show("Please select a project");
                 return;
             }
 
             // ✅ NEW: Validate demandId is selected
             if (!iDemandId) {
-                sap.m.MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
+                MessageBox.error("Please select a demand for the allocation.\n\nDemand selection is required to track resource allocation at the demand level.", {
                     title: "Demand Selection Required"
                 });
                 return;
@@ -3823,7 +3846,7 @@ sap.ui.define([
 
             // ✅ CRITICAL: Validate dates are provided
             if (!sStartDate || !sEndDate) {
-                sap.m.MessageBox.error("Please select start date and end date");
+                MessageBox.error("Please select start date and end date");
                 return;
             }
 
@@ -3835,7 +3858,7 @@ sap.ui.define([
                 const oAllocStart = new Date(sStartDate);
                 const oProjStart = new Date(sProjectStartDate);
                 if (oAllocStart < oProjStart) {
-                    sap.m.MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate})`);
+                    MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate})`);
                     return;
                 }
             }
@@ -3844,7 +3867,7 @@ sap.ui.define([
                 const oAllocEnd = new Date(sEndDate);
                 const oProjEnd = new Date(sProjectEndDate);
                 if (oAllocEnd > oProjEnd) {
-                    sap.m.MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate})`);
+                    MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate})`);
                     return;
                 }
             }
@@ -3854,7 +3877,7 @@ sap.ui.define([
                 const oStart = new Date(sStartDate);
                 const oEnd = new Date(sEndDate);
                 if (oStart > oEnd) {
-                    sap.m.MessageBox.error("Start date cannot be later than end date");
+                    MessageBox.error("Start date cannot be later than end date");
                     return;
                 }
             }
@@ -3864,7 +3887,7 @@ sap.ui.define([
             // Create allocation records for all selected employees
             const oModel = this.getOwnerComponent().getModel();
             if (!oModel) {
-                sap.m.MessageToast.show("Model not found");
+                MessageToast.show("Model not found");
                 return;
             }
 
@@ -3896,7 +3919,7 @@ sap.ui.define([
                 if (!isNaN(iParsed) && iParsed >= 0 && iParsed <= 100) {
                     iPercentage = iParsed;
                 } else {
-                    sap.m.MessageBox.error(`Invalid allocation percentage: "${sPercentage}". Must be a number between 0 and 100.`);
+                    MessageBox.error(`Invalid allocation percentage: "${sPercentage}". Must be a number between 0 and 100.`);
                     return;
                 }
             }
@@ -3954,12 +3977,12 @@ sap.ui.define([
                 if (aValidEmployees.length > 0) {
                     sErrorMessage += `\n${aValidEmployees.length} employee(s) can still be allocated. Continue with only valid employees?`;
 
-                    sap.m.MessageBox.warning(sErrorMessage, {
+                    MessageBox.warning(sErrorMessage, {
                         title: "Allocation Validation Warning",
-                        actions: [sap.m.MessageBox.Action.YES, sap.m.MessageBox.Action.NO],
-                        emphasizedAction: sap.m.MessageBox.Action.YES,
+                        actions: [MessageBox.Action.YES, MessageBox.Action.NO],
+                        emphasizedAction: MessageBox.Action.YES,
                         onClose: (sAction) => {
-                            if (sAction === sap.m.MessageBox.Action.YES) {
+                            if (sAction === MessageBox.Action.YES) {
                                 // Continue with valid employees only
                                 this._createAllocationsForValidEmployees(aValidEmployees, sProjectId, iDemandId, sStartDate, sEndDate, iPercentage, oModel, oResTable, aEmployees);
                             }
@@ -3968,7 +3991,7 @@ sap.ui.define([
                     return;
                 } else {
                     // No valid employees - show error and return
-                    sap.m.MessageBox.error(sErrorMessage, {
+                    MessageBox.error(sErrorMessage, {
                         title: "Allocation Validation Error"
                     });
                     return;
@@ -4041,19 +4064,19 @@ sap.ui.define([
             // Get selected employees from Res table
             const oResTable = this.byId("Res");
             if (!oResTable) {
-                oVBox.addItem(new sap.m.Text({ text: "No employees selected" }));
+                oVBox.addItem(new Text({ text: "No employees selected" }));
                 return;
             }
 
             const aSelectedContexts = oResTable.getSelectedContexts();
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
-                oVBox.addItem(new sap.m.Text({ text: "Please select employees from the table first" }));
+                oVBox.addItem(new Text({ text: "Please select employees from the table first" }));
                 return;
             }
 
             const oModel = this.getOwnerComponent().getModel();
             if (!oModel) {
-                oVBox.addItem(new sap.m.Text({ text: "Model not found" }));
+                oVBox.addItem(new Text({ text: "Model not found" }));
                 return;
             }
 
@@ -4067,7 +4090,7 @@ sap.ui.define([
             });
 
             if (aEmployees.length === 0) {
-                oVBox.addItem(new sap.m.Text({ text: "No valid employees found" }));
+                oVBox.addItem(new Text({ text: "No valid employees found" }));
                 return;
             }
 
@@ -4087,7 +4110,7 @@ sap.ui.define([
                 );
 
                 if (aAllocations.length === 0) {
-                    oVBox.addItem(new sap.m.Text({
+                    oVBox.addItem(new Text({
                         text: `${aEmployees.length} employee(s) selected - No active allocations found`
                     }));
                     return;
@@ -4096,12 +4119,12 @@ sap.ui.define([
                 // Group allocations by employee
                 aEmployees.forEach((oEmployee, iIndex) => {
                     if (iIndex > 0) {
-                        oVBox.addItem(new sap.ui.core.HTML({
+                        oVBox.addItem(new HTML({
                             content: "<div style='border-top:1px solid #ccc; margin:10px 0;'></div>"
                         }));
                     }
 
-                    oVBox.addItem(new sap.m.Title({
+                    oVBox.addItem(new Title({
                         text: `${oEmployee.fullName} (${oEmployee.ohrId})`,
                         level: "H5"
                     }));
@@ -4109,19 +4132,19 @@ sap.ui.define([
                     const aEmployeeAllocations = aAllocations.filter(a => a.employeeId === oEmployee.ohrId);
 
                     if (aEmployeeAllocations.length === 0) {
-                        oVBox.addItem(new sap.m.Text({
+                        oVBox.addItem(new Text({
                             text: "No active allocations"
                         }));
                     } else {
-                        const oTable = new sap.m.Table({
+                        const oTable = new Table({
                             inset: false,
                             columns: [
-                                new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
-                                new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
-                                new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
-                                new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                                new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                                new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                                new Column({ header: new Text({ text: "Project ID" }) }),
+                                new Column({ header: new Text({ text: "Project Name" }) }),
+                                new Column({ header: new Text({ text: "Demand" }) }),
+                                new Column({ header: new Text({ text: "Start Date" }) }),
+                                new Column({ header: new Text({ text: "End Date" }) }),
+                                new Column({ header: new Text({ text: "Allocation %" }) })
                             ]
                         });
 
@@ -4133,14 +4156,14 @@ sap.ui.define([
                             const sEndDate = oAlloc.endDate ? new Date(oAlloc.endDate).toLocaleDateString() : "N/A";
                             const iPercent = oAlloc.allocationPercentage || 0;
 
-                            oTable.addItem(new sap.m.ColumnListItem({
+                            oTable.addItem(new ColumnListItem({
                                 cells: [
-                                    new sap.m.Text({ text: sProjectId }),
-                                    new sap.m.Text({ text: sProjectName }),
-                                    new sap.m.Text({ text: sDemand }),
-                                    new sap.m.Text({ text: sStartDate }),
-                                    new sap.m.Text({ text: sEndDate }),
-                                    new sap.m.Text({ text: iPercent + "%" })
+                                    new Text({ text: sProjectId }),
+                                    new Text({ text: sProjectName }),
+                                    new Text({ text: sDemand }),
+                                    new Text({ text: sStartDate }),
+                                    new Text({ text: sEndDate }),
+                                    new Text({ text: iPercent + "%" })
                                 ]
                             }));
                         });
@@ -4149,7 +4172,7 @@ sap.ui.define([
                     }
                 });
             }).catch((oError) => {
-                oVBox.addItem(new sap.m.Text({
+                oVBox.addItem(new Text({
                     text: "Error loading allocation details"
                 }));
             });
@@ -4164,18 +4187,18 @@ sap.ui.define([
 
             if (!sProjectId) {
                 oVBox.removeAllItems();
-                oVBox.addItem(new sap.m.Text({ text: "Select a project to see allocated employees" }));
+                oVBox.addItem(new Text({ text: "Select a project to see allocated employees" }));
                 return;
             }
 
             // Clear previous content
             oVBox.removeAllItems();
-            oVBox.addItem(new sap.m.Text({ text: "Loading..." }));
+            oVBox.addItem(new Text({ text: "Loading..." }));
 
             const oModel = this.getOwnerComponent().getModel();
             if (!oModel) {
                 oVBox.removeAllItems();
-                oVBox.addItem(new sap.m.Text({ text: "Model not found" }));
+                oVBox.addItem(new Text({ text: "Model not found" }));
                 return;
             }
 
@@ -4196,21 +4219,21 @@ sap.ui.define([
                 );
 
                 if (aAllocations.length === 0) {
-                    oVBox.addItem(new sap.m.Text({
+                    oVBox.addItem(new Text({
                         text: "No employees allocated to this project"
                     }));
                     return;
                 }
 
-                const oTable = new sap.m.Table({
+                const oTable = new Table({
                     inset: false,
                     columns: [
-                        new sap.m.Column({ header: new sap.m.Text({ text: "OHR ID" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Demand" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                        new Column({ header: new Text({ text: "OHR ID" }) }),
+                        new Column({ header: new Text({ text: "Employee Name" }) }),
+                        new Column({ header: new Text({ text: "Demand" }) }),
+                        new Column({ header: new Text({ text: "Start Date" }) }),
+                        new Column({ header: new Text({ text: "End Date" }) }),
+                        new Column({ header: new Text({ text: "Allocation %" }) })
                     ]
                 });
 
@@ -4222,25 +4245,25 @@ sap.ui.define([
                     const sEndDate = oAlloc.endDate ? new Date(oAlloc.endDate).toLocaleDateString() : "N/A";
                     const iPercent = oAlloc.allocationPercentage || 0;
 
-                    oTable.addItem(new sap.m.ColumnListItem({
+                    oTable.addItem(new ColumnListItem({
                         cells: [
-                            new sap.m.Text({ text: sOhrId }),
-                            new sap.m.Text({ text: sEmployeeName }),
-                            new sap.m.Text({ text: sDemand }),
-                            new sap.m.Text({ text: sStartDate }),
-                            new sap.m.Text({ text: sEndDate }),
-                            new sap.m.Text({ text: iPercent + "%" })
+                            new Text({ text: sOhrId }),
+                            new Text({ text: sEmployeeName }),
+                            new Text({ text: sDemand }),
+                            new Text({ text: sStartDate }),
+                            new Text({ text: sEndDate }),
+                            new Text({ text: iPercent + "%" })
                         ]
                     }));
                 });
 
-                oVBox.addItem(new sap.m.Text({
+                oVBox.addItem(new Text({
                     text: `${aAllocations.length} employee(s) allocated to this project:`
                 }));
                 oVBox.addItem(oTable);
             }).catch((oError) => {
                 oVBox.removeAllItems();
-                oVBox.addItem(new sap.m.Text({
+                oVBox.addItem(new Text({
                     text: "Error loading employees"
                 }));
             });
@@ -4249,9 +4272,9 @@ sap.ui.define([
         // ✅ NEW: Helper function to get allocation filter (empallocpercentage <= 95 and status != "Resigned")
         _getAllocationFilter: function () {
             // Filter: empallocpercentage <= 95 AND status != "Resigned"
-            const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
-            const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
-            return new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
+            const oPercentageFilter = new ModelFilter("empallocpercentage", FilterOperator.LE, 95);
+            const oStatusFilter = new ModelFilter("status", FilterOperator.NE, "Resigned");
+            return new ModelFilter([oPercentageFilter, oStatusFilter], true); // true = AND
         },
 
         // ✅ NEW: Search handler for Res (Employees) view
@@ -4271,7 +4294,7 @@ sap.ui.define([
 
                 if (sQuery && sQuery.trim() !== "") {
                     // Add search filter on top of allocation filters
-                    aFilters.push(new sap.ui.model.Filter("fullName", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+                    aFilters.push(new ModelFilter("fullName", FilterOperator.Contains, sQuery.trim(), false));
                 }
 
                 oBinding.filter(aFilters);
@@ -4300,12 +4323,12 @@ sap.ui.define([
                     if (sFilterValue && sFilterValue.startsWith("P-")) {
                         sFilterValue = sFilterValue.replace(/^P-0*/, ""); // Remove "P-" and leading zeros
                     }
-                    aFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sFilterValue));
+                    aFilters.push(new ModelFilter("sapPId", FilterOperator.EQ, sFilterValue));
                 }
 
                 // Add search filter if query exists
                 if (sQuery) {
-                    aFilters.push(new sap.ui.model.Filter("skill", sap.ui.model.FilterOperator.Contains, sQuery));
+                    aFilters.push(new ModelFilter("skill", FilterOperator.Contains, sQuery));
                 }
 
                 oBinding.filter(aFilters);
@@ -4331,12 +4354,12 @@ sap.ui.define([
                     if (sFilterValue && sFilterValue.startsWith("P-")) {
                         sFilterValue = sFilterValue.replace(/^P-0*/, ""); // Remove "P-" and leading zeros
                     }
-                    aFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sFilterValue));
+                    aFilters.push(new ModelFilter("sapPId", FilterOperator.EQ, sFilterValue));
                 }
 
                 // Add search filter if query exists
                 if (sQuery) {
-                    aFilters.push(new sap.ui.model.Filter("skill", sap.ui.model.FilterOperator.Contains, sQuery));
+                    aFilters.push(new ModelFilter("skill", FilterOperator.Contains, sQuery));
                 }
 
                 oBinding.filter(aFilters);
@@ -4417,7 +4440,7 @@ sap.ui.define([
             const sCustomerId = this.byId("Resinput_Customer")?.data("selectedId");
 
             if (!sCustomerId) {
-                sap.m.MessageToast.show("Please select a Customer first");
+                MessageToast.show("Please select a Customer first");
                 return;
             }
 
@@ -4435,7 +4458,7 @@ sap.ui.define([
             const sOppId = this.byId("Resinput_Opportunity")?.data("selectedId");
 
             if (!sOppId) {
-                sap.m.MessageToast.show("Please select an Opportunity first");
+                MessageToast.show("Please select an Opportunity first");
                 return;
             }
 
@@ -4445,7 +4468,7 @@ sap.ui.define([
 
             // TODO: Implement Project value help filtered by Opportunity
             // For now, use a simple message
-            sap.m.MessageToast.show("Project value help - filtering by Opportunity: " + sOppId);
+            MessageToast.show("Project value help - filtering by Opportunity: " + sOppId);
         },
 
         // ✅ NEW: Res fragment - Demand value help (filtered by Project)
@@ -4454,7 +4477,7 @@ sap.ui.define([
             const sProjectId = this.byId("Resinput_Project")?.data("selectedId");
 
             if (!sProjectId) {
-                sap.m.MessageToast.show("Please select a Project first");
+                MessageToast.show("Please select a Project first");
                 return;
             }
 
@@ -4463,7 +4486,7 @@ sap.ui.define([
             this._oResDemandInput = oInput;
 
             // TODO: Implement Demand value help filtered by Project
-            sap.m.MessageToast.show("Demand value help - filtering by Project: " + sProjectId);
+            MessageToast.show("Demand value help - filtering by Project: " + sProjectId);
         },
 
         // ✅ REUSABLE: Hard refresh table after CRUD operations to get fresh data from DB
@@ -4557,7 +4580,7 @@ sap.ui.define([
             // ⭐ VALIDATION updated for countryId instead of country text
             // -------------------------------
             if (!sCustName || sCustName.trim() === "") {
-                sap.m.MessageBox.error("Customer Name is required!");
+                MessageBox.error("Customer Name is required!");
                 return;
             }
 
@@ -4567,12 +4590,12 @@ sap.ui.define([
             // }
 
             if (!sStatus) {
-                sap.m.MessageBox.error("Status is required!");
+                MessageBox.error("Status is required!");
                 return;
             }
 
             if (!sVertical) {
-                sap.m.MessageBox.error("Vertical is required!");
+                MessageBox.error("Vertical is required!");
                 return;
             }
 
@@ -4655,7 +4678,7 @@ sap.ui.define([
                             }, 150);
                         });
                 } catch (oSetError) {
-                    sap.m.MessageBox.error("Failed to update customer. Please try again.");
+                    MessageBox.error("Failed to update customer. Please try again.");
                 }
             } else {
                 // CREATE MODE: No row selected, create new customer
@@ -4693,7 +4716,7 @@ sap.ui.define([
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
 
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create customer entry.");
+                            MessageBox.error("Failed to create customer entry.");
                             return;
                         }
 
@@ -4788,7 +4811,7 @@ sap.ui.define([
                     } catch (e) {
                         // Use default message
                     }
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -4821,7 +4844,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Customers", null, [], {
+                            const oBinding = oModel.bindList("/Customers", null, [], [], {
                                 "$orderby": "SAPcustId desc",
                                 "$top": "1"
                             });
@@ -4933,16 +4956,16 @@ sap.ui.define([
                         // Case-insensitive Contains filters using caseSensitive: false
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "SAPcustId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "customerName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
@@ -4968,9 +4991,9 @@ sap.ui.define([
                         //     caseSensitive: false
                         // }));
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "vertical",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
@@ -4979,28 +5002,28 @@ sap.ui.define([
                         // Numeric fields - use EQ only if query is numeric
                         if (isNumericQuery) {
                             const iVal = parseInt(sQueryTrimmed, 10);
-                            aFilters.push(new sap.ui.model.Filter({
+                            aFilters.push(new ModelFilter({
                                 path: "custCountryId",
-                                operator: sap.ui.model.FilterOperator.EQ,
+                                operator: FilterOperator.EQ,
                                 value1: iVal
                             }));
 
-                            aFilters.push(new sap.ui.model.Filter({
+                            aFilters.push(new ModelFilter({
                                 path: "custStateId",
-                                operator: sap.ui.model.FilterOperator.EQ,
+                                operator: FilterOperator.EQ,
                                 value1: iVal
                             }));
 
-                            aFilters.push(new sap.ui.model.Filter({
+                            aFilters.push(new ModelFilter({
                                 path: "custCityId",
-                                operator: sap.ui.model.FilterOperator.EQ,
+                                operator: FilterOperator.EQ,
                                 value1: iVal
                             }));
                         }
 
 
                         // Combine with OR logic (search matches any field)
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5080,50 +5103,50 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "ohrId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "fullName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "mailid",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "role",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "location",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "city",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "gender",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5197,50 +5220,50 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "demandId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "skill",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "band",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sapPId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "quantity",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "allocatedCount",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "remaining",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5317,50 +5340,50 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "ohrId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "fullName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "mailid",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "role",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "location",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "city",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "gender",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5436,50 +5459,50 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sapOpportunityId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sfdcOpportunityId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "opportunityName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "businessUnit",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "salesSPOC",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "deliverySPOC",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "customerId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5553,38 +5576,38 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sapPId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sfdcPId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "projectName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "gpm",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "oppId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5658,38 +5681,38 @@ sap.ui.define([
                         const sQueryTrimmed = sQuery.trim();
                         const aFilters = [];
 
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sapPId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "sfdcPId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "projectName",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "gpm",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
-                        aFilters.push(new sap.ui.model.Filter({
+                        aFilters.push(new ModelFilter({
                             path: "oppId",
-                            operator: sap.ui.model.FilterOperator.Contains,
+                            operator: FilterOperator.Contains,
                             value1: sQueryTrimmed,
                             caseSensitive: false
                         }));
 
-                        const oCombinedFilter = new sap.ui.model.Filter({
+                        const oCombinedFilter = new ModelFilter({
                             filters: aFilters,
                             and: false
                         });
@@ -5963,7 +5986,7 @@ sap.ui.define([
             const aContexts = oTable.getRowBinding().getCurrentContexts();
 
             if (!sFullName || sFullName.trim() === "") {
-                sap.m.MessageBox.error("Full Name is required!");
+                MessageBox.error("Full Name is required!");
                 return;
             }
 
@@ -5971,7 +5994,7 @@ sap.ui.define([
             if (sMailId && sMailId.trim() !== "") {
                 const sEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                 if (!sEmailRegex.test(sMailId.trim())) {
-                    sap.m.MessageBox.error("Please enter a valid email address!");
+                    MessageBox.error("Please enter a valid email address!");
                     return;
                 }
             }
@@ -6048,24 +6071,24 @@ sap.ui.define([
                             }, 150);
                         });
                 } catch (oSetError) {
-                    sap.m.MessageBox.error("Failed to update employee. Please try again.");
+                    MessageBox.error("Failed to update employee. Please try again.");
                 }
             } else {
                 // CREATE MODE: No row selected, create new employee
                 if (!sOHRId || sOHRId.trim() === "") {
-                    sap.m.MessageBox.error("OHR ID is required for new employees!");
+                    MessageBox.error("OHR ID is required for new employees!");
                     return;
                 }
 
                 const bDuplicate = aContexts.some(ctx => ctx.getProperty("ohrId") === sOHRId);
 
                 if (!sOHRId) {
-                    sap.m.MessageBox.error("OHR ID is required");
+                    MessageBox.error("OHR ID is required");
                     return;
                 }
 
                 if (bDuplicate) {
-                    sap.m.MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
+                    MessageBox.error(`Employee with OHR ID "${sOHRId}" already exists.`);
                     return;
                 }
 
@@ -6098,7 +6121,7 @@ sap.ui.define([
                     try {
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create employee entry.");
+                            MessageBox.error("Failed to create employee entry.");
                             return;
                         }
 
@@ -6156,7 +6179,7 @@ sap.ui.define([
                     } catch (e) {
                         // Use default message
                     }
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -6371,7 +6394,7 @@ sap.ui.define([
                 } catch (e) {
                     console.warn("Error parsing backend response:", e);
                 }
-                sap.m.MessageBox.error(sErrorMessage, {
+                MessageBox.error(sErrorMessage, {
                     title: "Error",
                     details: oError.responseText
                 });
@@ -6412,7 +6435,7 @@ sap.ui.define([
 
                 } catch (oSetError) {
                     console.error("Error setting properties:", oSetError);
-                    sap.m.MessageBox.error("Failed to update demand. Please try again.");
+                    MessageBox.error("Failed to update demand. Please try again.");
                 }
 
             } else {
@@ -6438,7 +6461,7 @@ sap.ui.define([
                     try {
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create demand entry.");
+                            MessageBox.error("Failed to create demand entry.");
                             return;
                         }
 
@@ -6492,7 +6515,7 @@ sap.ui.define([
                     }
 
                     // ✅ Show error popup with details
-                    sap.m.MessageBox.error(sErrorMessage, {
+                    MessageBox.error(sErrorMessage, {
                         title: "Create Error",
                         details: oError.responseText, // Optional: full backend response
                         styleClass: "sapUiSizeCompact"
@@ -6535,59 +6558,59 @@ sap.ui.define([
 
             // ✅ Validation for mandatory fields
             if (!sCustomerId || sCustomerId.trim() === "") {
-                sap.m.MessageBox.error("Customer is required!");
+                MessageBox.error("Customer is required!");
                 return;
             }
 
             if (!sOppName || sOppName.trim() === "") {
-                sap.m.MessageBox.error("Opportunity Name is required!");
+                MessageBox.error("Opportunity Name is required!");
                 return;
             }
 
             if (!sBusinessUnit || sBusinessUnit.trim() === "") {
-                sap.m.MessageBox.error("Business Unit is required!");
+                MessageBox.error("Business Unit is required!");
                 return;
             }
 
             if (!sProbability || sProbability.trim() === "") {
-                sap.m.MessageBox.error("Actual Probability % is required!");
+                MessageBox.error("Actual Probability % is required!");
                 return;
             }
 
             // If SFDC Probability is mandatory, fetch and validate it
 
             if (!sStage || sStage.trim() === "") {
-                sap.m.MessageBox.error("SFDC Probability % is required!");
+                MessageBox.error("SFDC Probability % is required!");
                 return;
             }
 
             if (!sSalesSPOC || sSalesSPOC.trim() === "") {
-                sap.m.MessageBox.error("Sales SPOC is required!");
+                MessageBox.error("Sales SPOC is required!");
                 return;
             }
 
             if (!sDeliverySPOC || sDeliverySPOC.trim() === "") {
-                sap.m.MessageBox.error("Delivery SPOC is required!");
+                MessageBox.error("Delivery SPOC is required!");
                 return;
             }
 
             if (!sExpectedStart || sExpectedStart.trim() === "") {
-                sap.m.MessageBox.error("Expected Start is required!");
+                MessageBox.error("Expected Start is required!");
                 return;
             }
 
             if (!sExpectedEnd || sExpectedEnd.trim() === "") {
-                sap.m.MessageBox.error("Expected End is required!");
+                MessageBox.error("Expected End is required!");
                 return;
             }
 
             if (!sTCV || sTCV.trim() === "") {
-                sap.m.MessageBox.error("TCV is required!");
+                MessageBox.error("TCV is required!");
                 return;
             }
 
             if (!sCurrency || sCurrency.trim() === "") {
-                sap.m.MessageBox.error("Currency is required!");
+                MessageBox.error("Currency is required!");
                 return;
             }
 
@@ -6668,7 +6691,7 @@ sap.ui.define([
                             }, 150);
                         });
                 } catch (oSetError) {
-                    sap.m.MessageBox.error("Failed to update opportunity. Please try again.");
+                    MessageBox.error("Failed to update opportunity. Please try again.");
                 }
             } else {
                 // CREATE MODE
@@ -6700,7 +6723,7 @@ sap.ui.define([
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
 
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create opportunity entry.");
+                            MessageBox.error("Failed to create opportunity entry.");
                             return;
                         }
 
@@ -6794,7 +6817,7 @@ sap.ui.define([
                     } catch (e) {
                         // Use default message
                     }
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -6869,7 +6892,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Opportunities", null, [], {
+                            const oBinding = oModel.bindList("/Opportunities", null, [],[], {
                                 "$orderby": "sapOpportunityId desc",
                                 "$top": "1"
                             });
@@ -6953,7 +6976,7 @@ sap.ui.define([
 
             // Validation
             if (!sProjectName || sProjectName.trim() === "") {
-                sap.m.MessageBox.error("Project Name is required!");
+                MessageBox.error("Project Name is required!");
                 return;
             }
 
@@ -7039,7 +7062,7 @@ sap.ui.define([
                             }, 150);
                         });
                 } catch (oSetError) {
-                    sap.m.MessageBox.error("Failed to update project. Please try again.");
+                    MessageBox.error("Failed to update project. Please try again.");
                 }
             } else {
                 // CREATE MODE
@@ -7076,7 +7099,7 @@ sap.ui.define([
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
 
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create project entry.");
+                            MessageBox.error("Failed to create project entry.");
                             return;
                         }
 
@@ -7170,7 +7193,7 @@ sap.ui.define([
                     } catch (e) {
                         // Use default message
                     }
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -7192,7 +7215,7 @@ sap.ui.define([
             // ✅ CRITICAL: Clear the model first (form fields are bound to model)
             let oProjModel = this.getView().getModel("projectModel");
             if (!oProjModel) {
-                oProjModel = new sap.ui.model.json.JSONModel({});
+                oProjModel = new JSONModel({});
                 this.getView().setModel(oProjModel, "projectModel");
             }
             // Clear all model properties
@@ -7262,7 +7285,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Projects", null, [], {
+                            const oBinding = oModel.bindList("/Projects", null, [], [], {
                                 "$orderby": "sapPId desc",
                                 "$top": "1"
                             });
@@ -7320,7 +7343,7 @@ sap.ui.define([
             // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 this._onCustDialogData([]);
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
                 return;
             }
 
@@ -7355,7 +7378,7 @@ sap.ui.define([
             // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 this._onEmpDialogData([]);
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
                 return;
             }
 
@@ -7480,7 +7503,7 @@ sap.ui.define([
                     }
                 }
             } else {
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
             }
         },
 
@@ -7492,7 +7515,7 @@ sap.ui.define([
             // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 this._onOppDialogData([]);
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
                 return;
             }
 
@@ -7528,7 +7551,7 @@ sap.ui.define([
             // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 this._onProjDialogData([]);
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
                 return;
             }
 
@@ -7635,7 +7658,7 @@ sap.ui.define([
 
             // Final validation - if still no ID, show error
             if (!sSapPId || sSapPId.trim() === "") {
-                sap.m.MessageBox.error("Project ID is required! Please navigate from Projects screen to select a project.");
+                MessageBox.error("Project ID is required! Please navigate from Projects screen to select a project.");
                 return;
             }
 
@@ -7647,11 +7670,11 @@ sap.ui.define([
             const sSkill = aSelectedSkills.join(", "); // Join selected skills as comma-separated string
 
             if (!sSkill || sSkill.trim() === "") {
-                sap.m.MessageBox.error("Skill is required!");
+                MessageBox.error("Skill is required!");
                 return;
             }
             if (!sQuantity || parseInt(sQuantity) <= 0) {
-                sap.m.MessageBox.error("Quantity must be greater than 0!");
+                MessageBox.error("Quantity must be greater than 0!");
                 return;
             }
 
@@ -7669,7 +7692,7 @@ sap.ui.define([
                 if (oProject && oProject.requiredResources) {
                     // Get existing demands for this project
                     const oDemandsBinding = oModel.bindList("/Demands", {
-                        filters: [new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sSapPId)]
+                        filters: [new ModelFilter("sapPId", FilterOperator.EQ, sSapPId)]
                     });
 
                     oDemandsBinding.attachEventOnce("dataReceived", function () {
@@ -7696,7 +7719,7 @@ sap.ui.define([
                         if (iNewTotal > oProject.requiredResources) {
                             const iExcess = iNewTotal - oProject.requiredResources;
                             const iAvailable = oProject.requiredResources - iExistingTotal;
-                            sap.m.MessageBox.error(
+                            MessageBox.error(
                                 `Total demand quantity (${iNewTotal}) exceeds required resources (${oProject.requiredResources}) for this project.\n\n` +
                                 `Excess: ${iExcess}\n` +
                                 `Available: ${iAvailable}\n` +
@@ -7775,14 +7798,14 @@ sap.ui.define([
                                         this._hardRefreshTable("Demands");
                                         this.onCancelDemandForm();
                                     } else {
-                                        sap.m.MessageBox.error("Failed to update demand. Please try again.");
+                                        MessageBox.error("Failed to update demand. Please try again.");
                                     }
                                 } catch (e) {
                                 }
                             }, 150);
                         });
                 } catch (oSetError) {
-                    sap.m.MessageBox.error("Failed to update demand. Please try again.");
+                    MessageBox.error("Failed to update demand. Please try again.");
                 }
             } else {
                 // CREATE MODE
@@ -7814,7 +7837,7 @@ sap.ui.define([
                         const oNewContext = oBinding.create(oCreateEntry, "changesGroup");
 
                         if (!oNewContext) {
-                            sap.m.MessageBox.error("Failed to create demand entry.");
+                            MessageBox.error("Failed to create demand entry.");
                             return;
                         }
 
@@ -7900,7 +7923,7 @@ sap.ui.define([
                                     this._hardRefreshTable("Demands");
 
                                     // Show error message
-                                    sap.m.MessageBox.error(sErrorMessage || "Failed to create demand. Please check the quantity doesn't exceed required resources.");
+                                    MessageBox.error(sErrorMessage || "Failed to create demand. Please check the quantity doesn't exceed required resources.");
                                     return;
                                 }
 
@@ -7939,7 +7962,7 @@ sap.ui.define([
                                     }
 
                                     this._hardRefreshTable("Demands");
-                                    sap.m.MessageBox.error("Failed to create demand. Please check the data and try again.");
+                                    MessageBox.error("Failed to create demand. Please check the data and try again.");
                                 }
                             })
                             .catch((oError) => {
@@ -7973,11 +7996,11 @@ sap.ui.define([
 
                                 // Check for specific datatype mismatch error
                                 if (sErrorMessage.includes("datatype mismatch") || sErrorMessage.includes("SQLITE_MISMATCH")) {
-                                    sap.m.MessageBox.error("Datatype mismatch error. The demand ID generation may have failed. Please try again or contact support.");
+                                    MessageBox.error("Datatype mismatch error. The demand ID generation may have failed. Please try again or contact support.");
                                 } else if (sErrorMessage.includes("exceeds required resources") || sErrorMessage.includes("exceed")) {
-                                    sap.m.MessageBox.error(sErrorMessage);
+                                    MessageBox.error(sErrorMessage);
                                 } else {
-                                    sap.m.MessageBox.error(sErrorMessage);
+                                    MessageBox.error(sErrorMessage);
                                 }
                             });
                     } catch (oCreateError) {
@@ -8012,7 +8035,7 @@ sap.ui.define([
                     } catch (e) {
                         // Use default message
                     }
-                    sap.m.MessageBox.error(sErrorMessage);
+                    MessageBox.error(sErrorMessage);
                 }
             });
         },
@@ -8022,7 +8045,7 @@ sap.ui.define([
             // Clear the model first (form fields are bound to model)
             let oDemandModel = this.getView().getModel("demandModel");
             if (!oDemandModel) {
-                oDemandModel = new sap.ui.model.json.JSONModel({});
+                oDemandModel = new JSONModel({});
                 this.getView().setModel(oDemandModel, "demandModel");
             }
 
@@ -8070,7 +8093,7 @@ sap.ui.define([
             // ✅ CRITICAL: If no selection, clear form to ensure fresh dialog
             if (!aSelectedContexts || aSelectedContexts.length === 0) {
                 this._onDemandDialogData([]);
-                sap.m.MessageToast.show("Please select a row to edit.");
+                MessageToast.show("Please select a row to edit.");
                 return;
             }
 
@@ -8443,9 +8466,9 @@ sap.ui.define([
 
             try {
                 // Build filter
-                const oFilter = new sap.ui.model.Filter({
+                const oFilter = new ModelFilter({
                     path: "status",
-                    operator: sap.ui.model.FilterOperator.NE,
+                    operator: FilterOperator.NE,
                     value1: "Resigned"
                 });
 
@@ -8462,7 +8485,7 @@ sap.ui.define([
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 oHomeCountsModel && oHomeCountsModel.setProperty("/totalHeadCount", totalCount);
             } catch (error) {
-                jQuery.sap.log.error("Failed to load total head count (V4)", error);
+                Log.error("Failed to load total head count (V4)", error);
             }
         },
 
@@ -8473,9 +8496,9 @@ sap.ui.define([
 
             try {
                 // Build filter
-                const oFilter = new sap.ui.model.Filter({
+                const oFilter = new ModelFilter({
                     path: "status",
-                    operator: sap.ui.model.FilterOperator.EQ,
+                    operator: FilterOperator.EQ,
                     value1: "Allocated"
                 });
 
@@ -8492,7 +8515,7 @@ sap.ui.define([
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 oHomeCountsModel && oHomeCountsModel.setProperty("/allocatedCount", totalCount);
             } catch (error) {
-                jQuery.sap.log.error("Failed to load Allocated count (V4)", error);
+                Log.error("Failed to load Allocated count (V4)", error);
             }
 
 
@@ -8507,9 +8530,9 @@ sap.ui.define([
 
             try {
                 // Build filter
-                const oFilter = new sap.ui.model.Filter({
+                const oFilter = new ModelFilter({
                     path: "status",
-                    operator: sap.ui.model.FilterOperator.EQ,
+                    operator: FilterOperator.EQ,
                     value1: "Pre Allocated"
                 });
 
@@ -8526,7 +8549,7 @@ sap.ui.define([
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 oHomeCountsModel && oHomeCountsModel.setProperty("/preAllocatedCount", totalCount);
             } catch (error) {
-                jQuery.sap.log.error("Failed to load Pre Allocated count (V4)", error);
+                Log.error("Failed to load Pre Allocated count (V4)", error);
             }
 
 
@@ -8540,9 +8563,9 @@ sap.ui.define([
 
             try {
                 // Build filter
-                const oFilter = new sap.ui.model.Filter({
+                const oFilter = new ModelFilter({
                     path: "status",
-                    operator: sap.ui.model.FilterOperator.EQ,
+                    operator: FilterOperator.EQ,
                     value1: "Unproductive Bench"
                 });
 
@@ -8559,7 +8582,7 @@ sap.ui.define([
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 oHomeCountsModel && oHomeCountsModel.setProperty("/unproductiveBenchCount", totalCount);
             } catch (error) {
-                jQuery.sap.log.error("Failed to load Unproductive Bench count (V4)", error);
+                Log.error("Failed to load Unproductive Bench count (V4)", error);
             }
 
 
@@ -8573,9 +8596,9 @@ sap.ui.define([
 
             try {
                 // Build filter
-                const oFilter = new sap.ui.model.Filter({
+                const oFilter = new ModelFilter({
                     path: "status",
-                    operator: sap.ui.model.FilterOperator.EQ,
+                    operator: FilterOperator.EQ,
                     value1: "Inactive Bench"
                 });
 
@@ -8592,37 +8615,37 @@ sap.ui.define([
                 const oHomeCountsModel = this.getView().getModel("homeCounts");
                 oHomeCountsModel && oHomeCountsModel.setProperty("/onLeaveCount", totalCount);
             } catch (error) {
-                jQuery.sap.log.error("Failed to load total head count (V4)", error);
+                Log.error("Failed to load total head count (V4)", error);
             }
 
 
 
         },
-        
-_loadDemandCount: async function () {
-    const oModel = this.getView().getModel("default") || this.getView().getModel();
-    if (!oModel) return;
 
-    try {
-        // Bind the collection with $count enabled
-        const oListBinding = oModel.bindList("/Demands", /* context */ undefined, /* sorter */ undefined, /* filters */ undefined, {
-            $count: true // ensure server returns total count
-        });
+        _loadDemandCount: async function () {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) return;
 
-        // Trigger the binding without requesting any rows
-        await oListBinding.requestContexts(0, 0);
+            try {
+                // Bind the collection with $count enabled
+                const oListBinding = oModel.bindList("/Demands", /* context */ undefined, /* sorter */ undefined, /* filters */ undefined, {
+                    $count: true // ensure server returns total count
+                });
 
-        // Get the server-evaluated length
-        const totalCount = oListBinding.getLength(); // integer >= 0
+                // Trigger the binding without requesting any rows
+                await oListBinding.requestContexts(0, 0);
 
-        const oHomeCountsModel = this.getView().getModel("homeCounts");
-        if (oHomeCountsModel) {
-            oHomeCountsModel.setProperty("/demandCount", totalCount);
-        }
-    } catch (error) {
-        jQuery.sap.log.error("Failed to load Demand Count (V4)", error);
-    }
-},
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // integer >= 0
+
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/demandCount", totalCount);
+                }
+            } catch (error) {
+                Log.error("Failed to load Demand Count (V4)", error);
+            }
+        },
 
 
         // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
@@ -8858,69 +8881,69 @@ _loadDemandCount: async function () {
             if (!oFiltersPanel) return;
 
             // Common filters for most reports
-            const oVBox = new sap.m.VBox({
+            const oVBox = new VBox({
                 items: []
             });
 
             // Add report-specific filters
             switch (sReportType) {
                 case "EmployeeBenchReport":
-                    oVBox.addItem(new sap.m.Label({ text: "Band Filter" }));
-                    oVBox.addItem(new sap.m.MultiComboBox({
+                    oVBox.addItem(new Label({ text: "Band Filter" }));
+                    oVBox.addItem(new MultiComboBox({
                         id: "bandFilter",
                         placeholder: "Select Bands"
                     }));
-                    oVBox.addItem(new sap.m.Label({ text: "Employee Type Filter" }));
-                    oVBox.addItem(new sap.m.MultiComboBox({
+                    oVBox.addItem(new Label({ text: "Employee Type Filter" }));
+                    oVBox.addItem(new MultiComboBox({
                         id: "employeeTypeFilter",
                         placeholder: "Select Employee Types"
                     }));
-                    oVBox.addItem(new sap.m.Label({ text: "Minimum Days on Bench" }));
-                    oVBox.addItem(new sap.m.Input({
+                    oVBox.addItem(new Label({ text: "Minimum Days on Bench" }));
+                    oVBox.addItem(new Input({
                         id: "minDaysOnBench",
                         type: "Number",
                         placeholder: "Enter minimum days"
                     }));
                     break;
                 case "EmployeeProbableReleaseReport":
-                    oVBox.addItem(new sap.m.Label({ text: "Release Window" }));
-                    oVBox.addItem(new sap.m.Select({
+                    oVBox.addItem(new Label({ text: "Release Window" }));
+                    oVBox.addItem(new Select({
                         id: "releaseWindow",
                         items: [
-                            new sap.ui.core.Item({ key: "30", text: "30 Days" }),
-                            new sap.ui.core.Item({ key: "60", text: "60 Days" }),
-                            new sap.ui.core.Item({ key: "90", text: "90 Days" }),
-                            new sap.ui.core.Item({ key: "All", text: "All" })
+                            new Item({ key: "30", text: "30 Days" }),
+                            new Item({ key: "60", text: "60 Days" }),
+                            new Item({ key: "90", text: "90 Days" }),
+                            new Item({ key: "All", text: "All" })
                         ]
                     }));
                     break;
                 case "RevenueForecastReport":
-                    oVBox.addItem(new sap.m.Label({ text: "Start Month (YYYY-MM)" }));
-                    oVBox.addItem(new sap.m.DatePicker({
+                    oVBox.addItem(new Label({ text: "Start Month (YYYY-MM)" }));
+                    oVBox.addItem(new DatePicker({
                         id: "startMonth",
                         displayFormat: "yyyy-MM"
                     }));
-                    oVBox.addItem(new sap.m.Label({ text: "End Month (YYYY-MM)" }));
-                    oVBox.addItem(new sap.m.DatePicker({
+                    oVBox.addItem(new Label({ text: "End Month (YYYY-MM)" }));
+                    oVBox.addItem(new DatePicker({
                         id: "endMonth",
                         displayFormat: "yyyy-MM"
                     }));
                     break;
                 case "SupervisorTeamAllocationReport":
-                    oVBox.addItem(new sap.m.Label({ text: "Supervisor ID" }));
-                    oVBox.addItem(new sap.m.Input({
+                    oVBox.addItem(new Label({ text: "Supervisor ID" }));
+                    oVBox.addItem(new Input({
                         id: "supervisorId",
                         placeholder: "Enter Supervisor OHR ID"
                     }));
                     break;
                 case "EmployeeAssignmentHistoryReport":
-                    oVBox.addItem(new sap.m.Label({ text: "Employee ID" }));
-                    oVBox.addItem(new sap.m.Input({
+                    oVBox.addItem(new Label({ text: "Employee ID" }));
+                    oVBox.addItem(new Input({
                         id: "employeeId",
                         placeholder: "Enter Employee OHR ID"
                     }));
-                    oVBox.addItem(new sap.m.Label({ text: "Limit" }));
-                    oVBox.addItem(new sap.m.Input({
+                    oVBox.addItem(new Label({ text: "Limit" }));
+                    oVBox.addItem(new Input({
                         id: "limit",
                         type: "Number",
                         value: "50"
@@ -8936,7 +8959,7 @@ _loadDemandCount: async function () {
             const sReportType = oReportTypeSelect ? oReportTypeSelect.getSelectedKey() : "";
 
             if (!sReportType) {
-                sap.m.MessageToast.show("Please select a report type");
+                MessageToast.show("Please select a report type");
                 return;
             }
 
@@ -8946,7 +8969,7 @@ _loadDemandCount: async function () {
             // Call the appropriate report function
             const oModel = this.getOwnerComponent().getModel();
             if (!oModel) {
-                sap.m.MessageToast.show("Model not available");
+                MessageToast.show("Model not available");
                 return;
             }
 
@@ -8970,7 +8993,7 @@ _loadDemandCount: async function () {
                     }
                 },
                 error: (oError) => {
-                    sap.m.MessageToast.show("Error generating report: " + (oError.message || "Unknown error"));
+                    MessageToast.show("Error generating report: " + (oError.message || "Unknown error"));
                     if (oTable) {
                         oTable.setBusy(false);
                     }
@@ -9025,7 +9048,7 @@ _loadDemandCount: async function () {
                     Object.keys(oData.summary).forEach(sKey => {
                         const oValue = oData.summary[sKey];
                         if (typeof oValue === 'number' || typeof oValue === 'string') {
-                            const oCard = new sap.m.GenericTile({
+                            const oCard = new GenericTile({
                                 header: sKey,
                                 subHeader: String(oValue),
                                 frameType: "OneByOne"
@@ -9042,7 +9065,7 @@ _loadDemandCount: async function () {
 
             if (oTable && oData.reportData) {
                 // Create a JSON model for the report data
-                const oReportModel = new sap.ui.model.json.JSONModel({
+                const oReportModel = new JSONModel({
                     results: oData.reportData
                 });
                 oTable.setModel(oReportModel);
@@ -9058,12 +9081,12 @@ _loadDemandCount: async function () {
             const sReportType = oReportTypeSelect ? oReportTypeSelect.getSelectedKey() : "";
 
             if (!sReportType) {
-                sap.m.MessageToast.show("Please select a report type");
+                MessageToast.show("Please select a report type");
                 return;
             }
 
             // Implementation for CSV export
-            sap.m.MessageToast.show("Export functionality will be implemented");
+            MessageToast.show("Export functionality will be implemented");
         },
 
         // For upload functionality function
@@ -9085,9 +9108,9 @@ _loadDemandCount: async function () {
 
             // Create dialog if not exists
             if (!this._oCustomerValueHelpDialog) {
-                this._oCustomerValueHelpDialog = sap.ui.xmlfragment(
-                    "glassboard.view.dialogs.CustomerValueHelp",
-                    this
+                this._oCustomerValueHelpDialog = this.loadFragment({
+                    name: "glassboard.view.dialogs.CustomerValueHelp",
+                }
                 );
                 oView.addDependent(this._oCustomerValueHelpDialog);
             }
@@ -9104,10 +9127,10 @@ _loadDemandCount: async function () {
             const oView = this.getView();
 
             if (!this._oOpportunityValueHelpDialog) {
-                this._oOpportunityValueHelpDialog = sap.ui.xmlfragment(
-                    "glassboard.view.dialogs.OpportunityValueHelp",
-                    this
-                );
+                this._oOpportunityValueHelpDialog = this.loadFragment({
+                    name: "glassboard.view.dialogs.OpportunityValueHelp",
+
+                });
                 oView.addDependent(this._oOpportunityValueHelpDialog);
             }
 
@@ -9120,10 +9143,10 @@ _loadDemandCount: async function () {
             const oView = this.getView();
 
             if (!this._oEmployeeValueHelpDialog) {
-                this._oEmployeeValueHelpDialog = sap.ui.xmlfragment(
-                    "glassboard.view.dialogs.EmployeeValueHelp",
-                    this
-                );
+                this._oEmployeeValueHelpDialog = this.loadFragment({
+                    name: "glassboard.view.dialogs.EmployeeValueHelp",
+
+                });
                 oView.addDependent(this._oEmployeeValueHelpDialog);
             }
 
@@ -9227,9 +9250,9 @@ _loadDemandCount: async function () {
             const oView = this.getView();
 
             if (!this._oProjectValueHelpDialog) {
-                this._oProjectValueHelpDialog = sap.ui.xmlfragment(
-                    "glassboard.view.dialogs.ProjectValueHelp",
-                    this
+                this._oProjectValueHelpDialog = this.loadFragment({
+                    name: "glassboard.view.dialogs.ProjectValueHelp",
+                }
                 );
                 oView.addDependent(this._oProjectValueHelpDialog);
             }
@@ -9247,7 +9270,7 @@ _loadDemandCount: async function () {
                 const sCustomerId = oCustomerInput?.data("selectedId") || this._sAllocateCustomerFilter;
 
                 if (!sCustomerId) {
-                    sap.m.MessageToast.show("Please select a Customer first");
+                    MessageToast.show("Please select a Customer first");
                     return;
                 }
 
@@ -9360,9 +9383,9 @@ _loadDemandCount: async function () {
             if (oInputField) {
                 const sInputId = oInputField.getId();
                 if (sInputId && sInputId.includes("Resinput_proj") && this._sAllocateCustomerFilter) {
-                    aFilters.push(new sap.ui.model.Filter({
+                    aFilters.push(new ModelFilter({
                         path: "to_Opportunity/customerId",
-                        operator: sap.ui.model.FilterOperator.EQ,
+                        operator: FilterOperator.EQ,
                         value1: this._sAllocateCustomerFilter
                     }));
                 }
@@ -9373,21 +9396,21 @@ _loadDemandCount: async function () {
                 const sTerm = sQuery.trim();
 
                 const aSearchFilters = [
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "projectName",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sTerm,
                         caseSensitive: false
                     }),
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "sapPId",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sTerm,
                         caseSensitive: false
                     }),
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "sfdcPId",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sTerm,
                         caseSensitive: false
                     })
@@ -9395,19 +9418,19 @@ _loadDemandCount: async function () {
 
                 // Optional: exact ID match if input looks like an ID (e.g., "P-1234" or digits)
                 if (/^[A-Za-z]-\d{3,}$/.test(sTerm) || /^\d+$/.test(sTerm)) {
-                    aSearchFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sTerm));
-                    aSearchFilters.push(new sap.ui.model.Filter("sfdcPId", sap.ui.model.FilterOperator.EQ, sTerm));
+                    aSearchFilters.push(new ModelFilter("sapPId", FilterOperator.EQ, sTerm));
+                    aSearchFilters.push(new ModelFilter("sfdcPId", FilterOperator.EQ, sTerm));
                 }
 
                 // Wrap with OR
-                aFilters.push(new sap.ui.model.Filter({
+                aFilters.push(new ModelFilter({
                     filters: aSearchFilters,
                     and: false
                 }));
             }
 
             // Use Application filter type consistently
-            oBinding.filter(aFilters.length > 0 ? aFilters : [], sap.ui.model.FilterType.Application);
+            oBinding.filter(aFilters.length > 0 ? aFilters : [], FilterType.Application);
         },
 
         // ✅ Helper function: Apply customer filter to project value help dialog
@@ -9430,9 +9453,9 @@ _loadDemandCount: async function () {
 
             // ✅ Apply customer filter via Opportunity relationship
             if (this._sAllocateCustomerFilter) {
-                aFilters.push(new sap.ui.model.Filter({
+                aFilters.push(new ModelFilter({
                     path: "to_Opportunity/customerId",
-                    operator: sap.ui.model.FilterOperator.EQ,
+                    operator: FilterOperator.EQ,
                     value1: this._sAllocateCustomerFilter
                 }));
             }
@@ -9452,13 +9475,13 @@ _loadDemandCount: async function () {
             const oTable = aItems.find(item => item.getId && item.getId().includes("projectValueHelpTable"));
 
             if (!oTable || !oTable.getSelectedItem) {
-                sap.m.MessageToast.show("Please select a project");
+                MessageToast.show("Please select a project");
                 return;
             }
 
             const oSelectedItem = oTable.getSelectedItem();
             if (!oSelectedItem) {
-                sap.m.MessageToast.show("Please select a project");
+                MessageToast.show("Please select a project");
                 return;
             }
 
@@ -9486,10 +9509,10 @@ _loadDemandCount: async function () {
 
                     // If not found, try Fragment.byId
                     if (!oStartDatePicker) {
-                        oStartDatePicker = sap.ui.core.Fragment.byId(this.getView().getId(), "startDate");
+                        oStartDatePicker = Fragment.byId(this.getView().getId(), "startDate");
                     }
                     if (!oEndDatePicker) {
-                        oEndDatePicker = sap.ui.core.Fragment.byId(this.getView().getId(), "endDate");
+                        oEndDatePicker = Fragment.byId(this.getView().getId(), "endDate");
                     }
 
                     // If still not found, try to get from AllocateDialog
@@ -9579,10 +9602,10 @@ _loadDemandCount: async function () {
             const oView = this.getView();
 
             if (!this._oDemandValueHelpDialog) {
-                this._oDemandValueHelpDialog = sap.ui.xmlfragment(
-                    "glassboard.view.dialogs.DemandValueHelp",
-                    this
-                );
+                this._oDemandValueHelpDialog = this.loadFragment({
+                    name: "glassboard.view.dialogs.DemandValueHelp",
+
+                });
                 oView.addDependent(this._oDemandValueHelpDialog);
             }
 
@@ -9650,7 +9673,7 @@ _loadDemandCount: async function () {
                             if (sProjectFilter) {
                                 // ✅ CRITICAL: Use project ID as-is (P-0001 format) - no conversion needed
                                 // The Demand CSV and database now use "P-0001" format consistently
-                                aFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sProjectFilter));
+                                aFilters.push(new ModelFilter("sapPId", FilterOperator.EQ, sProjectFilter));
                                 oBinding.filter(aFilters);
                             }
                         }
@@ -9687,12 +9710,12 @@ _loadDemandCount: async function () {
             if (sProjectFilter) {
                 // ✅ CRITICAL: Use project ID as-is (P-0001 format) - no conversion needed
                 // The Demand CSV and database now use "P-0001" format consistently
-                aFilters.push(new sap.ui.model.Filter("sapPId", sap.ui.model.FilterOperator.EQ, sProjectFilter));
+                aFilters.push(new ModelFilter("sapPId", FilterOperator.EQ, sProjectFilter));
             }
 
             // Apply search filter
             if (sQuery && sQuery.trim() !== "") {
-                aFilters.push(new sap.ui.model.Filter("skill", sap.ui.model.FilterOperator.Contains, sQuery.trim(), false));
+                aFilters.push(new ModelFilter("skill", FilterOperator.Contains, sQuery.trim(), false));
             }
 
             oBinding.filter(aFilters.length > 0 ? aFilters : []);
@@ -9710,13 +9733,13 @@ _loadDemandCount: async function () {
             const oTable = aItems.find(item => item.getId && item.getId().includes("demandValueHelpTable"));
 
             if (!oTable || !oTable.getSelectedItem) {
-                sap.m.MessageToast.show("Please select a demand");
+                MessageToast.show("Please select a demand");
                 return;
             }
 
             const oSelectedItem = oTable.getSelectedItem();
             if (!oSelectedItem) {
-                sap.m.MessageToast.show("Please select a demand");
+                MessageToast.show("Please select a demand");
                 return;
             }
 
@@ -9764,27 +9787,27 @@ _loadDemandCount: async function () {
             const oTable = aItems.find(item => item.getId && item.getId().includes("customerValueHelpTable"));
 
             if (!oTable) {
-                sap.m.MessageToast.show("Table not found");
+                MessageToast.show("Table not found");
                 return;
             }
 
             // ✅ CRITICAL: Check if a row is actually selected
             const oSelectedItem = oTable.getSelectedItem();
             if (!oSelectedItem) {
-                sap.m.MessageToast.show("Please select a customer");
+                MessageToast.show("Please select a customer");
                 return;
             }
 
             // Also check selected contexts as backup
             const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
             if (aSelectedContexts.length === 0) {
-                sap.m.MessageToast.show("Please select a customer");
+                MessageToast.show("Please select a customer");
                 return;
             }
 
             const oContext = oSelectedItem.getBindingContext();
             if (!oContext) {
-                sap.m.MessageToast.show("Unable to get customer data");
+                MessageToast.show("Unable to get customer data");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -9794,7 +9817,7 @@ _loadDemandCount: async function () {
 
             const oCustomer = oContext.getObject();
             if (!oDialog._oInputField) {
-                sap.m.MessageToast.show("Input field not found");
+                MessageToast.show("Input field not found");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -9816,7 +9839,7 @@ _loadDemandCount: async function () {
             // Also update/create the model with the ID (for backend submission)
             let oModel = this.getView().getModel("opportunityModel");
             if (!oModel) {
-                oModel = new sap.ui.model.json.JSONModel({ customerId: oCustomer.SAPcustId });
+                oModel = new JSONModel({ customerId: oCustomer.SAPcustId });
                 this.getView().setModel(oModel, "opportunityModel");
             } else {
                 oModel.setProperty("/customerId", oCustomer.SAPcustId);
@@ -9920,27 +9943,27 @@ _loadDemandCount: async function () {
             const oTable = aItems.find(item => item.getId && item.getId().includes("opportunityValueHelpTable"));
 
             if (!oTable) {
-                sap.m.MessageToast.show("Table not found");
+                MessageToast.show("Table not found");
                 return;
             }
 
             // ✅ CRITICAL: Check if a row is actually selected
             const oSelectedItem = oTable.getSelectedItem();
             if (!oSelectedItem) {
-                sap.m.MessageToast.show("Please select an opportunity");
+                MessageToast.show("Please select an opportunity");
                 return;
             }
 
             // Also check selected contexts as backup
             const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
             if (aSelectedContexts.length === 0) {
-                sap.m.MessageToast.show("Please select an opportunity");
+                MessageToast.show("Please select an opportunity");
                 return;
             }
 
             const oContext = oSelectedItem.getBindingContext();
             if (!oContext) {
-                sap.m.MessageToast.show("Unable to get opportunity data");
+                MessageToast.show("Unable to get opportunity data");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -9950,7 +9973,7 @@ _loadDemandCount: async function () {
 
             const oOpportunity = oContext.getObject();
             if (!oDialog._oInputField) {
-                sap.m.MessageToast.show("Input field not found");
+                MessageToast.show("Input field not found");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -9965,7 +9988,7 @@ _loadDemandCount: async function () {
             // Also update/create the model with the ID (for backend submission)
             let oModel = this.getView().getModel("projectModel");
             if (!oModel) {
-                oModel = new sap.ui.model.json.JSONModel({ oppId: oOpportunity.sapOpportunityId });
+                oModel = new JSONModel({ oppId: oOpportunity.sapOpportunityId });
                 this.getView().setModel(oModel, "projectModel");
             } else {
                 oModel.setProperty("/oppId", oOpportunity.sapOpportunityId);
@@ -10065,27 +10088,27 @@ _loadDemandCount: async function () {
             const oTable = aItems.find(item => item.getId && item.getId().includes("employeeValueHelpTable"));
 
             if (!oTable) {
-                sap.m.MessageToast.show("Table not found");
+                MessageToast.show("Table not found");
                 return;
             }
 
             // ✅ CRITICAL: Check if a row is actually selected
             const oSelectedItem = oTable.getSelectedItem();
             if (!oSelectedItem) {
-                sap.m.MessageToast.show("Please select a supervisor");
+                MessageToast.show("Please select a supervisor");
                 return;
             }
 
             // Also check selected contexts as backup
             const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
             if (aSelectedContexts.length === 0) {
-                sap.m.MessageToast.show("Please select a supervisor");
+                MessageToast.show("Please select a supervisor");
                 return;
             }
 
             const oContext = oSelectedItem.getBindingContext();
             if (!oContext) {
-                sap.m.MessageToast.show("Unable to get employee data");
+                MessageToast.show("Unable to get employee data");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -10095,7 +10118,7 @@ _loadDemandCount: async function () {
 
             const oEmployee = oContext.getObject();
             if (!oDialog._oInputField) {
-                sap.m.MessageToast.show("Input field not found");
+                MessageToast.show("Input field not found");
                 if (oTable && oTable.clearSelection) {
                     oTable.clearSelection();
                 }
@@ -10234,15 +10257,15 @@ _loadDemandCount: async function () {
 
             if (sValue && sValue.trim()) {
                 const aFilters = [
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "customerName",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sValue.trim(),
                         caseSensitive: false // ✅ Case-insensitive search for value help
                     }),
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "SAPcustId",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sValue.trim(),
                         caseSensitive: false
                     })
@@ -10252,15 +10275,15 @@ _loadDemandCount: async function () {
                 // oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
 
                 if (/^[A-Za-z]-\d{3,}$/.test(sValue.trim())) {
-                    aFilters.push(new sap.ui.model.Filter("SAPcustId", sap.ui.model.FilterOperator.EQ, sValue.trim()));
+                    aFilters.push(new ModelFilter("SAPcustId", FilterOperator.EQ, sValue.trim()));
                 }
 
                 // 1) Use OR by wrapping the two filters
-                const oOrFilter = new sap.ui.model.Filter({ filters: aFilters, and: false });
-                oBinding.filter([oOrFilter], sap.ui.model.FilterType.Application);
+                const oOrFilter = new ModelFilter({ filters: aFilters, and: false });
+                oBinding.filter([oOrFilter], FilterType.Application);
 
             } else {
-                oBinding.filter([], sap.ui.model.FilterType.Application);
+                oBinding.filter([], FilterType.Application);
             }
         },
 
@@ -10286,16 +10309,16 @@ _loadDemandCount: async function () {
 
             if (sValue && sValue.trim()) {
                 const aFilters = [
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "opportunityName",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sValue.trim(),
                         caseSensitive: false // ✅ Case-insensitive search for value help
                     })
                 ];
-                oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
+                oBinding.filter(aFilters, FilterType.Application);
             } else {
-                oBinding.filter([], sap.ui.model.FilterType.Application);
+                oBinding.filter([], FilterType.Application);
             }
         },
 
@@ -10321,16 +10344,16 @@ _loadDemandCount: async function () {
 
             if (sValue && sValue.trim()) {
                 const aFilters = [
-                    new sap.ui.model.Filter({
+                    new ModelFilter({
                         path: "fullName",
-                        operator: sap.ui.model.FilterOperator.Contains,
+                        operator: FilterOperator.Contains,
                         value1: sValue.trim(),
                         caseSensitive: false // ✅ Case-insensitive search for value help
                     })
                 ];
-                oBinding.filter(aFilters, sap.ui.model.FilterType.Application);
+                oBinding.filter(aFilters, FilterType.Application);
             } else {
-                oBinding.filter([], sap.ui.model.FilterType.Application);
+                oBinding.filter([], FilterType.Application);
             }
         },
 
@@ -10359,7 +10382,7 @@ _loadDemandCount: async function () {
 
             // Add country items
             aCountries.forEach((sCountry) => {
-                oEmployeeCountrySelect.addItem(new sap.ui.core.Item({
+                oEmployeeCountrySelect.addItem(new Item({
                     key: sCountry,
                     text: sCountry
                 }));
@@ -10394,7 +10417,7 @@ _loadDemandCount: async function () {
             // Populate cities for selected country
             const aCities = this._mCountryToCities[sSelectedCountry] || [];
             aCities.forEach((sCity) => {
-                oCitySelect.addItem(new sap.ui.core.Item({
+                oCitySelect.addItem(new Item({
                     key: sCity,
                     text: sCity
                 }));
@@ -10459,10 +10482,10 @@ _loadDemandCount: async function () {
                 oStateCombo.bindItems({
                     path: "default>/CustomerStates",
                     filters: [
-                        new sap.ui.model.Filter("country_id", "EQ", Number(countryId))
+                        new ModelFilter("country_id", "EQ", Number(countryId))
                     ],
                     length: 2000,
-                    template: new sap.ui.core.ListItem({
+                    template: new ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
                     })
@@ -10516,11 +10539,11 @@ _loadDemandCount: async function () {
                 oCityCombo.bindItems({
                     path: "default>/CustomerCities",
                     filters: [
-                        new sap.ui.model.Filter("state_id", "EQ", stateId),
-                        new sap.ui.model.Filter("country_id", "EQ", countryId)
+                        new ModelFilter("state_id", "EQ", stateId),
+                        new ModelFilter("country_id", "EQ", countryId)
                     ],
                     length: 2000,
-                    template: new sap.ui.core.ListItem({
+                    template: new ListItem({
                         key: "{default>id}",
                         text: "{default>name}"
                     })
@@ -10567,7 +10590,7 @@ _loadDemandCount: async function () {
             // Populate designations for selected band
             const aDesignations = this.mBandToDesignations[sSelectedBand] || [];
             aDesignations.forEach((sDesignation) => {
-                oDesignationSelect.addItem(new sap.ui.core.Item({
+                oDesignationSelect.addItem(new Item({
                     key: sDesignation,
                     text: sDesignation
                 }));
@@ -11239,7 +11262,7 @@ _loadDemandCount: async function () {
 
         // }
         onTotalHeadPress: function () {
-            sap.m.MessageToast.show("Total Head Count clicked");
+            MessageToast.show("Total Head Count clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11335,7 +11358,7 @@ _loadDemandCount: async function () {
         },
 
         onAllocatedPress: function () {
-            sap.m.MessageToast.show("Allocated Count clicked");
+            MessageToast.show("Allocated Count clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             var oLogButton = this.byId("uploadLogButton");
@@ -11418,7 +11441,7 @@ _loadDemandCount: async function () {
         },
 
         onBenchPress: function () {
-            sap.m.MessageToast.show("Bench Count clicked");
+            MessageToast.show("Bench Count clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11495,7 +11518,7 @@ _loadDemandCount: async function () {
         },
 
         onUnallocatedBenchPress: function () {
-            sap.m.MessageToast.show("Pre Allocated clicked");
+            MessageToast.show("Pre Allocated clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11570,7 +11593,7 @@ _loadDemandCount: async function () {
                         oInnerTable.attachEventOnce("_rowsUpdated", () => {
                             const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
                             if (oBinding) {
-                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Pre Allocated");
+                                const oFilter = new ModelFilter("status", FilterOperator.EQ, "Pre Allocated");
                                 oBinding.filter([oFilter]);
                             }
                         });
@@ -11592,7 +11615,7 @@ _loadDemandCount: async function () {
         },
 
         onUnproductiveBenchPress: function () {
-            sap.m.MessageToast.show("Unproductive Bench clicked");
+            MessageToast.show("Unproductive Bench clicked");
 
 
 
@@ -11663,7 +11686,7 @@ _loadDemandCount: async function () {
                         oInnerTable.attachEventOnce("_rowsUpdated", () => {
                             const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
                             if (oBinding) {
-                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Unproductive Bench");
+                                const oFilter = new ModelFilter("status", FilterOperator.EQ, "Unproductive Bench");
                                 oBinding.filter([oFilter]);
                             }
                         });
@@ -11688,7 +11711,7 @@ _loadDemandCount: async function () {
         },
 
         onNetBenchPress: function () {
-            sap.m.MessageToast.show("Inactive Bench clicked");
+            MessageToast.show("Inactive Bench clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11755,7 +11778,7 @@ _loadDemandCount: async function () {
                         oInnerTable.attachEventOnce("_rowsUpdated", () => {
                             const oBinding = oInnerTable.getBinding("rows"); // For sap.ui.table.Table use "rows"
                             if (oBinding) {
-                                const oFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.EQ, "Inactive Bench");
+                                const oFilter = new ModelFilter("status", FilterOperator.EQ, "Inactive Bench");
                                 oBinding.filter([oFilter]);
                             }
                         });
@@ -11779,7 +11802,7 @@ _loadDemandCount: async function () {
         },
 
         onDemandsPress: function () {
-            sap.m.MessageToast.show("Demands Count clicked");
+            MessageToast.show("Demands Count clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11861,11 +11884,11 @@ _loadDemandCount: async function () {
         },
 
         onYetToJoinPress: function () {
-            sap.m.MessageToast.show("Yet To Join clicked");
+            MessageToast.show("Yet To Join clicked");
         },
 
         onProjectsEndingPress: function () {
-            sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
+            MessageToast.show("Projects Ending (In 2 Weeks) clicked");
         },
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
@@ -11918,8 +11941,8 @@ _loadDemandCount: async function () {
                 });
 
                 // Filter allocations for this project
-                const Filter = sap.ui.model.Filter;
-                oListBinding.filter([new Filter("projectId", sap.ui.model.FilterOperator.EQ, projId)]);
+                const Filter = ModelFilter;
+                oListBinding.filter([new Filter("projectId", FilterOperator.EQ, projId)]);
 
                 // Fetch contexts and objects
                 const aContexts = await oListBinding.requestContexts(0, 100);
@@ -11927,31 +11950,31 @@ _loadDemandCount: async function () {
                 // Clear busy
                 oVBox.removeAllItems();
                 if (!aAllocations.length) {
-                    oVBox.addItem(new sap.m.Text({ text: "No employees allocated to this project." }));
+                    oVBox.addItem(new Text({ text: "No employees allocated to this project." }));
                     return;
                 }
 
                 // Create a simple table for employees
-                const oTable = new sap.m.Table({
+                const oTable = new Table({
                     columns: [
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee ID" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Employee Name" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) })
+                        new Column({ header: new Text({ text: "Employee ID" }) }),
+                        new Column({ header: new Text({ text: "Employee Name" }) }),
+                        new Column({ header: new Text({ text: "Allocation %" }) }),
+                        new Column({ header: new Text({ text: "Start Date" }) }),
+                        new Column({ header: new Text({ text: "End Date" }) })
                     ]
                 });
 
                 const formatDate = d => d ? d : "N/A";
 
                 aAllocations.forEach(alloc => {
-                    oTable.addItem(new sap.m.ColumnListItem({
+                    oTable.addItem(new ColumnListItem({
                         cells: [
-                            new sap.m.Text({ text: alloc.employeeId }),
-                            new sap.m.Text({ text: alloc.to_Employee?.fullName || "N/A" }),
-                            new sap.m.Text({ text: String(alloc.allocationPercentage) }),
-                            new sap.m.Text({ text: formatDate(alloc.startDate) }),
-                            new sap.m.Text({ text: formatDate(alloc.endDate) })
+                            new Text({ text: alloc.employeeId }),
+                            new Text({ text: alloc.to_Employee?.fullName || "N/A" }),
+                            new Text({ text: String(alloc.allocationPercentage) }),
+                            new Text({ text: formatDate(alloc.startDate) }),
+                            new Text({ text: formatDate(alloc.endDate) })
                         ]
                     }));
                 });
@@ -11959,7 +11982,7 @@ _loadDemandCount: async function () {
                 oVBox.addItem(oTable);
 
             } catch (err) {
-                oVBox.addItem(new sap.m.Text({ text: "Error loading employees: " + err.message }));
+                oVBox.addItem(new Text({ text: "Error loading employees: " + err.message }));
             }
         },
         _onProjectChangeCancel: async function () {
@@ -11986,7 +12009,7 @@ _loadDemandCount: async function () {
             if (oPanel && oVBox) {
                 oPanel.setExpanded(false); // collapse the panel
                 oVBox.removeAllItems();    // remove previous allocations
-                oVBox.addItem(new sap.m.Text({ text: "Select a project to see allocated employees" })); // restore default message
+                oVBox.addItem(new Text({ text: "Select a project to see allocated employees" })); // restore default message
             }
 
 
@@ -12019,9 +12042,9 @@ _loadDemandCount: async function () {
                 });
 
                 // Filter allocations for this employee
-                const Filter = sap.ui.model.Filter;
+                const Filter = ModelFilter;
                 oListBinding.filter([
-                    new Filter("employeeId", sap.ui.model.FilterOperator.EQ, empId)
+                    new Filter("employeeId", FilterOperator.EQ, empId)
                 ]);
 
                 // Read contexts -> objects
@@ -12032,7 +12055,7 @@ _loadDemandCount: async function () {
                 oVBox.removeAllItems();
 
                 if (!aAllocations.length) {
-                    oVBox.addItem(new sap.m.Text({
+                    oVBox.addItem(new Text({
                         text: "No allocation record.",
                         design: "Italic"
                     }));
@@ -12049,15 +12072,15 @@ _loadDemandCount: async function () {
                 };
 
                 // Build a compact table to show allocations
-                const oTable = new sap.m.Table({
+                const oTable = new Table({
                     inset: false,
                     columns: [
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Project ID" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Project Name" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Customer" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Start Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "End Date" }) }),
-                        new sap.m.Column({ header: new sap.m.Text({ text: "Allocation %" }) })
+                        new Column({ header: new Text({ text: "Project ID" }) }),
+                        new Column({ header: new Text({ text: "Project Name" }) }),
+                        new Column({ header: new Text({ text: "Customer" }) }),
+                        new Column({ header: new Text({ text: "Start Date" }) }),
+                        new Column({ header: new Text({ text: "End Date" }) }),
+                        new Column({ header: new Text({ text: "Allocation %" }) })
                     ]
                 });
 
@@ -12069,26 +12092,26 @@ _loadDemandCount: async function () {
                     const endDate = formatDate(alloc.endDate);
                     const percent = alloc.allocationPercentage ?? "N/A";
 
-                    oTable.addItem(new sap.m.ColumnListItem({
+                    oTable.addItem(new ColumnListItem({
                         cells: [
-                            new sap.m.Text({ text: projectId }),
-                            new sap.m.Text({ text: projectName }),
-                            new sap.m.Text({ text: customer }),
-                            new sap.m.Text({ text: startDate }),
-                            new sap.m.Text({ text: endDate }),
-                            new sap.m.Text({ text: String(percent) })
+                            new Text({ text: projectId }),
+                            new Text({ text: projectName }),
+                            new Text({ text: customer }),
+                            new Text({ text: startDate }),
+                            new Text({ text: endDate }),
+                            new Text({ text: String(percent) })
                         ]
                     }));
                 });
 
-                oVBox.addItem(new sap.m.Panel({
+                oVBox.addItem(new Panel({
                     content: [oTable]
                 }).addStyleClass("sapUiSmallMarginBottom"));
 
             } catch (err) {
                 oVBox.removeAllItems();
                 console.error("Failed to load allocations:", err);
-                oVBox.addItem(new sap.m.Text({
+                oVBox.addItem(new Text({
                     text: "Error loading allocation details: " + (err.message || "Unknown error")
                 }));
             }
@@ -12116,7 +12139,7 @@ _loadDemandCount: async function () {
             if (oPanel && oVBox) {
                 oPanel.setExpanded(false); // collapse the panel
                 oVBox.removeAllItems();    // remove previous allocations
-                oVBox.addItem(new sap.m.Text({ text: "Select employees from the table first" })); // restore default message
+                oVBox.addItem(new Text({ text: "Select employees from the table first" })); // restore default message
             }
         },
         onAllocateConfirmNew: async function () {
@@ -12131,7 +12154,7 @@ _loadDemandCount: async function () {
 
             // ✅ Validate required fields
             if (!sEmployeeId || !sProjectId || !sCustomerId) {
-                sap.m.MessageBox.error("Please select Customer, Project, and Employee before creating allocation.", {
+                MessageBox.error("Please select Customer, Project, and Employee before creating allocation.", {
                     title: "Required Fields Missing"
                 });
                 return;
@@ -12142,13 +12165,13 @@ _loadDemandCount: async function () {
             if (sAllocationPercentage !== null && sAllocationPercentage !== undefined && sAllocationPercentage !== "") {
                 iAllocationPercentage = parseInt(sAllocationPercentage, 10);
                 if (isNaN(iAllocationPercentage)) {
-                    sap.m.MessageBox.error("Allocation percentage must be a valid number between 0 and 100.", {
+                    MessageBox.error("Allocation percentage must be a valid number between 0 and 100.", {
                         title: "Invalid Allocation Percentage"
                     });
                     return;
                 }
                 if (iAllocationPercentage < 0 || iAllocationPercentage > 100) {
-                    sap.m.MessageBox.error(`Allocation percentage must be between 0 and 100. Current value: ${iAllocationPercentage}`, {
+                    MessageBox.error(`Allocation percentage must be between 0 and 100. Current value: ${iAllocationPercentage}`, {
                         title: "Invalid Allocation Percentage"
                     });
                     return;
@@ -12157,7 +12180,7 @@ _loadDemandCount: async function () {
 
             // ✅ Validate dates
             if (!sStartDate || !sEndDate || sStartDate.trim() === "" || sEndDate.trim() === "") {
-                sap.m.MessageBox.error("Please select both Start Date and End Date for the allocation.", {
+                MessageBox.error("Please select both Start Date and End Date for the allocation.", {
                     title: "Dates Required"
                 });
                 return;
@@ -12167,7 +12190,7 @@ _loadDemandCount: async function () {
             const oStartDate = new Date(sStartDate);
             const oEndDate = new Date(sEndDate);
             if (oStartDate > oEndDate) {
-                sap.m.MessageBox.error(`Start Date (${sStartDate}) cannot be later than End Date (${sEndDate}).`, {
+                MessageBox.error(`Start Date (${sStartDate}) cannot be later than End Date (${sEndDate}).`, {
                     title: "Invalid Date Range"
                 });
                 return;
@@ -12182,7 +12205,7 @@ _loadDemandCount: async function () {
             if (sProjectStartDate) {
                 const oProjStart = new Date(sProjectStartDate);
                 if (oStartDate < oProjStart) {
-                    sap.m.MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate}).`, {
+                    MessageBox.error(`Allocation start date (${sStartDate}) cannot be earlier than project start date (${sProjectStartDate}).`, {
                         title: "Date Validation Error"
                     });
                     return;
@@ -12192,7 +12215,7 @@ _loadDemandCount: async function () {
             if (sProjectEndDate) {
                 const oProjEnd = new Date(sProjectEndDate);
                 if (oEndDate > oProjEnd) {
-                    sap.m.MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate}).`, {
+                    MessageBox.error(`Allocation end date (${sEndDate}) cannot be later than project end date (${sProjectEndDate}).`, {
                         title: "Date Validation Error"
                     });
                     return;
@@ -12243,11 +12266,11 @@ _loadDemandCount: async function () {
                     // If there was an error, the context might be in error state
                     if (oCreatedContext && oCreatedContext.getProperty && oCreatedContext.getProperty("allocationId")) {
                         // Success
-                        sap.m.MessageToast.show("Allocation created!");
+                        MessageToast.show("Allocation created!");
                         this._onCustomerChangeCancel();
                     } else {
                         // Context doesn't have allocationId, likely an error occurred
-                        sap.m.MessageToast.show("Create failed: Unable to verify allocation creation");
+                        MessageToast.show("Create failed: Unable to verify allocation creation");
                         // Clear pending changes on error to prevent error state from persisting
                         if (oModel.resetChanges) {
                             oModel.resetChanges("changesGroup");
@@ -12267,7 +12290,7 @@ _loadDemandCount: async function () {
                     } else if (typeof err === "string") {
                         sErrorMessage = err;
                     }
-                    sap.m.MessageToast.show("Create failed: " + sErrorMessage);
+                    MessageToast.show("Create failed: " + sErrorMessage);
                     // Clear pending changes on error to prevent error state from persisting
                     if (oModel.resetChanges) {
                         oModel.resetChanges("changesGroup");

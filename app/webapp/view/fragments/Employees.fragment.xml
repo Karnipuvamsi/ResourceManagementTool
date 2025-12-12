@@ -265,7 +265,7 @@
                             filter="employeeFilterBar"
                             filterConditions="{filterModel>/Employees/conditions}"
                             selectionChange="onSelectionChange"
-                            type="ResponsiveTable">
+                            >
                             <mdc:type>
                                 <mdct:ResponsiveTableType />
                             </mdc:type>
