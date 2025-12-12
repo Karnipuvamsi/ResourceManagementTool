@@ -12035,7 +12035,7 @@ sap.ui.define([
 
             // ✅ Validate dates
             if (!sStartDate || !sEndDate || sStartDate.trim() === "" || sEndDate.trim() === "") {
-                sap.m.MessageBox.error("Please select both Start Date and End Date for the allocation.", {
+                sap.m.MessageBox.error("Please select both From Date and To Date for the allocation.", {
                     title: "Dates Required"
                 });
                 return;
