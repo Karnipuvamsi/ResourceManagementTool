@@ -514,7 +514,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+    // console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
 };
 
 

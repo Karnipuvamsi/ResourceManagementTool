@@ -278,7 +278,7 @@ sap.ui.define([
                 oBindingInfo.filters = oSearchFilter;
             }
  
-            console.log("✅ MasterDemands ValueHelp search filter applied:", sSearch, "on keys:", aSearchKeys);
+            // console.log("✅ MasterDemands ValueHelp search filter applied:", sSearch, "on keys:", aSearchKeys);
         }
     };
  

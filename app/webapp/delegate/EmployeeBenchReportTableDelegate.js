@@ -25,7 +25,7 @@ sap.ui.define([
     // ✅ Custom header mappings for Employee Bench Report
     EmployeeBenchReportTableDelegate._getCustomHeaders = function (sTableId) {
 
-        console.log(sTableId, "EmployeeBenchReport");
+        // console.log(sTableId, "EmployeeBenchReport");
 
         if (sTableId === "EmployeeBenchReport") {
 
@@ -95,7 +95,7 @@ sap.ui.define([
             })
         ];
 
-        console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
+        // console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
 
 
 

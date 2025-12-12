@@ -98,9 +98,9 @@ where p.status in ('Active', 'Planned');
 // Employee Allocation Report View
 define view EmployeeAllocationReportView as
 select from db.Employee as e
-inner join db.EmployeeProjectAllocation as epa
+inner join db.EmployeeNewAllocation as epa
   on e.ohrId = epa.employeeId
-  and epa.status = 'Active'
+
 inner join db.Project as p
   on epa.projectId = p.sapPId
 inner join db.Opportunity as opp
@@ -109,7 +109,6 @@ inner join db.Customer as c
   on opp.customerId = c.SAPcustId
 {
   key e.ohrId as employeeId,
-  key epa.allocationId,
   
   e.fullName as employeeName,
   e.band,

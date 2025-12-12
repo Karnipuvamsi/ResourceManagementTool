@@ -333,7 +333,7 @@
                             width="100%"
                             p13nMode="Column,Sort,Filter,Group"
                             selectionMode="None"
-                            type="Table"
+                            type="ResponsiveTable"
                             delegate='{
                                 "name": "glassboard/delegate/EmployeeAllocationReportTableDelegate",
                                 "payload": {

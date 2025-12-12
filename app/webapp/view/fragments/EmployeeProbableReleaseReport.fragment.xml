@@ -40,15 +40,16 @@
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
                             <!-- Employee Name Filter -->
+                           
                             <mdc:FilterField
-                                id="filterProbableReleaseEmployeeName"
-                                label="Employee Name"
-                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/employeeName}"
-                                propertyKey="employeeName"
+                                id="filterProbableReleaseOHR"
+                                label="OHR ID"
+                                width="200px"
+                                display="Description"
+                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/ohrId}"
+                                propertyKey="ohrId"
                                 maxConditions="-1"
                                 required="false"
-                             
-                                width="250px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}

@@ -705,7 +705,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("RESOURCES VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+    // console.log("RESOURCES VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
 };
 
 

@@ -1440,7 +1440,7 @@ sap.ui.define([
             } else if (sKey === "demands") {
                 //Check if already loaded to prevent duplicate IDs
                 if (this._bMasterDemandsLoaded) {
-                    console.log("[MasterDemands] Fragment already loaded, skipping");
+                    // console.log("[MasterDemands] Fragment already loaded, skipping");
                     return;
                 }
 
@@ -1451,7 +1451,7 @@ sap.ui.define([
                 if (oMasterDemandsPage && oMasterDemandsPage.getContent) {
                     const aExistingContent = oMasterDemandsPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
-                        console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
+                        // console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
@@ -4617,7 +4617,7 @@ sap.ui.define([
                 const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
 
                 // Debug logging
-                console.log("Converted IDs - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                // console.log("Converted IDs - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
 
                 const oUpdateEntry = {
                     // ⭐ REPLACED your old fields with custCountryId, custStateId, custCityId
@@ -4689,7 +4689,7 @@ sap.ui.define([
                 const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
 
                 // Debug logging
-                console.log("Converted IDs (CREATE) - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                // console.log("Converted IDs (CREATE) - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
 
                 const oCreateEntry = {
                     // ⭐ NEW: cascading IDs
@@ -5269,10 +5269,10 @@ sap.ui.define([
                         });
 
                         oBinding.filter([oCombinedFilter]);
-                        console.log("✅ Master demand search filter applied (case-insensitive):", sQueryTrimmed);
+                        // console.log("✅ Master demand search filter applied (case-insensitive):", sQueryTrimmed);
                     } else {
                         oBinding.filter([]);
-                        console.log("✅ Master demand search filter cleared");
+                        // console.log("✅ Master demand search filter cleared");
                     }
                 } catch (e) {
                     console.error("Error applying master demand search filter:", e);
@@ -6368,7 +6368,7 @@ sap.ui.define([
         //     });
         // },
         onSubmitMasterDemands: function () {
-            console.log("********onsubmit master demands");
+            // console.log("********onsubmit master demands");
 
             const sDemandId = this.byId("inputDemandId").getValue(),
                 aSelectedSkills = this.byId("inputSkills")?.getSelectedKeys() || [],
@@ -6451,7 +6451,7 @@ sap.ui.define([
                     // "remaining": sRemainingCount
                 };
 
-                console.log("Creating demand with data:", oCreateEntry);
+                // console.log("Creating demand with data:", oCreateEntry);
 
                 let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
                     || oTable.getBinding("items")
@@ -6481,17 +6481,17 @@ sap.ui.define([
                         this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
                     }
                 } else {
-                    console.log("Table binding not available, using direct model create");
+                    // console.log("Table binding not available, using direct model create");
                     this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
                 }
             }
         },
         _createMasterDemandsDirect: function (oModel, oCreateEntry, oTable) {
-            console.log("************ Direct create functionality for Demands");
+            // console.log("************ Direct create functionality for Demands");
 
             oModel.create("/Demands", oCreateEntry, {
                 success: (oData) => {
-                    console.log("Demand created successfully (direct):", oData);
+                    // console.log("Demand created successfully (direct):", oData);
                     MessageToast.show("Demand created successfully!");
 
                     // ✅ Refresh table to get latest data
@@ -7458,8 +7458,8 @@ sap.ui.define([
                         // Request fresh data from backend
                         oContext.requestObject().then(() => {
                             const oObj = oContext.getObject();
-                            console.log(oObj);
-                            console.log("✅ Employee fresh data from backend:", oObj);
+                            // console.log(oObj);
+                            // console.log("✅ Employee fresh data from backend:", oObj);
 
                             // Now fetch Supervisor association if needed
                             const sSapPId = oObj && oObj.sapPId;
@@ -8215,7 +8215,7 @@ sap.ui.define([
                 try {
                     oTable.clearSelection();
                 } catch (e) {
-                    console.log("Selection cleared or method not available");
+                    // console.log("Selection cleared or method not available");
                 }
             }
 
@@ -10519,7 +10519,7 @@ sap.ui.define([
             const stateId = cleanState ? parseInt(cleanState, 10) : null;
             const countryId = cleanCountry ? parseInt(cleanCountry, 10) : null;
 
-            console.log("stateIdStr:", stateId, "countryIdStr:", countryId);
+            // console.log("stateIdStr:", stateId, "countryIdStr:", countryId);
 
             // If invalid → disable and stop
             if (isNaN(stateId) || isNaN(countryId)) {
@@ -11262,7 +11262,7 @@ sap.ui.define([
 
         // }
         onTotalHeadPress: function () {
-            MessageToast.show("Total Head Count clicked");
+
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11358,7 +11358,7 @@ sap.ui.define([
         },
 
         onAllocatedPress: function () {
-            MessageToast.show("Allocated Count clicked");
+
             var oLogButton = this.byId("uploadLogButton");
 
             var oLogButton = this.byId("uploadLogButton");
@@ -11441,7 +11441,7 @@ sap.ui.define([
         },
 
         onBenchPress: function () {
-            MessageToast.show("Bench Count clicked");
+
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11518,7 +11518,7 @@ sap.ui.define([
         },
 
         onUnallocatedBenchPress: function () {
-            MessageToast.show("Pre Allocated clicked");
+
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11615,7 +11615,7 @@ sap.ui.define([
         },
 
         onUnproductiveBenchPress: function () {
-            MessageToast.show("Unproductive Bench clicked");
+
 
 
 
@@ -11711,7 +11711,7 @@ sap.ui.define([
         },
 
         onNetBenchPress: function () {
-            MessageToast.show("Inactive Bench clicked");
+
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11802,7 +11802,7 @@ sap.ui.define([
         },
 
         onDemandsPress: function () {
-            MessageToast.show("Demands Count clicked");
+
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11884,11 +11884,15 @@ sap.ui.define([
         },
 
         onYetToJoinPress: function () {
-            MessageToast.show("Yet To Join clicked");
+
+            MessageToast.show("Coming Soon");
         },
 
+        
+
         onProjectsEndingPress: function () {
-            MessageToast.show("Projects Ending (In 2 Weeks) clicked");
+            MessageToast.show("Coming Soon");
+
         },
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
@@ -12180,7 +12184,9 @@ sap.ui.define([
 
             // ✅ Validate dates
             if (!sStartDate || !sEndDate || sStartDate.trim() === "" || sEndDate.trim() === "") {
-                MessageBox.error("Please select both Start Date and End Date for the allocation.", {
+
+                sap.m.MessageBox.error("Please select both From Date and To Date for the allocation.", {
+
                     title: "Dates Required"
                 });
                 return;
@@ -12243,7 +12249,7 @@ sap.ui.define([
                 $$updateGroupId: "changesGroup"
             });
             const oCreatedContext = oListBinding.create(oPayload);
-            console.log(oCreatedContext, "*******oCreatedContext");
+            // console.log(oCreatedContext, "*******oCreatedContext");
             // oCreatedContext.created()
             //     .then((oFinalContext) => {
             //         console.log(oFinalContext, "oFinalContext");
@@ -12256,12 +12262,12 @@ sap.ui.define([
             //         MessageToast.show("Create failed: " + err.message);
             //     });
             // oModel.submitBatch("changesGroup");
-            console.log(oCreatedContext, "*******oCreatedContext");
+            // console.log(oCreatedContext, "*******oCreatedContext");
 
             // Submit batch and handle errors properly
             oModel.submitBatch("changesGroup")
                 .then((oResponse) => {
-                    console.log(oResponse, "Batch response");
+                    // console.log(oResponse, "Batch response");
                     // Verify the context was actually created successfully
                     // If there was an error, the context might be in error state
                     if (oCreatedContext && oCreatedContext.getProperty && oCreatedContext.getProperty("allocationId")) {

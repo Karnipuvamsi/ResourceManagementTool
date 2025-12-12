@@ -13,8 +13,8 @@ sap.ui.define([
  
     SearchValueHelpDelegate.isSearchSupported = function (oValueHelp) {
         
-        console.log("ovalue default",oValueHelp);
-        console.log("ovlue",!!oValueHelp.getPayload()?.searchKeys);
+        // console.log("ovalue default",oValueHelp);
+        // console.log("ovlue",!!oValueHelp.getPayload()?.searchKeys);
 
 
         
@@ -24,7 +24,7 @@ sap.ui.define([
     // this delegate method creates the filters for the search functionality
     SearchValueHelpDelegate.getFilters = function (oValueHelp, oContent) {
 
-        console.log("getFilters");
+        // console.log("getFilters");
         
         const aFilters = ValueHelpDelegate.getFilters.call(this, oValueHelp, oContent);
  

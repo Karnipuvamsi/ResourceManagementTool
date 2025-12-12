@@ -444,7 +444,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("PROJECT VH FILTER APPLIED for", sId, oBindingInfo.filters);
+    // console.log("PROJECT VH FILTER APPLIED for", sId, oBindingInfo.filters);
 };
 
 

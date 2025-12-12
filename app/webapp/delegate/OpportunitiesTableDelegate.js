@@ -384,7 +384,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("OPPORTUNITY VH FILTER APPLIED for", sId, oBindingInfo.filters);
+    // console.log("OPPORTUNITY VH FILTER APPLIED for", sId, oBindingInfo.filters);
 };
 
 
