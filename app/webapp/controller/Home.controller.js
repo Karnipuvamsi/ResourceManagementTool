@@ -125,7 +125,8 @@ sap.ui.define([
                 preAllocatedCount: 0,
                 unproductiveBenchCount: 0,
                 onLeaveCount: 0,
-                benchCount: 0
+                benchCount: 0,
+                demandCount: 0
             });
             this.getView().setModel(oHomeCountsModel, "homeCounts");
         },
@@ -242,7 +243,8 @@ sap.ui.define([
                 "employeeAllocationReport": "EmployeeAllocationReport",
                 "employeeSkillReport": "EmployeeSkillReport",
                 "projectsNearingCompletionReport":"ProjectsNearingCompletionReport",
-                "revenueForecastReport":"RevenueForecastReport"
+                "revenueForecastReport":"RevenueForecastReport",
+                "employeeProbableReleaseReport":"EmployeeProbableReleaseReport"
 
             };
             const sCollectionPath = sCollectionMap[sKey];
@@ -684,7 +686,100 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
-                window.alert("COMING SOON")
+                
+                // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
+                // Check if already loaded to prevent duplicate IDs
+                if (this._bEmployeeProbableReleaseReportTableLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("EmployeeProbableReleaseReportTable");
+                    if (oTable) {
+                        this.initializeTable("EmployeeProbableReleaseReportTable").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
+                    return;
+                }
+
+                this._bEmployeeProbableReleaseReportTableLoaded = true;
+                const oCustomersPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oCustomersPage && oCustomersPage.getContent) {
+                    const aExistingContent = oCustomersPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oCustomersPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.EmployeeProbableReleaseReport",
+                    controller: this
+                }).then(function (oFragment) {
+                    oCustomersPage.addContent(oFragment);
+
+                    const oTable = this.byId("EmployeeProbableReleaseReportTable");
+                    // Ensure table starts with show-less state
+
+                    oTable.addStyleClass("show-less");
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+
+                    // Ensure the table has the correct model
+                    const oModel = this.getOwnerComponent().getModel();
+                    if (oModel) {
+                        oTable.setModel(oModel);
+                    }
+
+
+                    // ✅ Set default filters for Customers FilterBar
+                    const oFilterBar = this.byId("employeeProbableReleaseReportFilterBar");
+                    if (oFilterBar) {
+                        oFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                        }, 2000);
+                    }
+
+                    // Initialize table-specific functionality
+                    this.initializeTable("EmployeeProbableReleaseReportTable").then(() => {
+                        // ✅ Trigger initial data load by firing FilterBar search event
+                        // This ensures table binds even when there are no filter conditions
+                        setTimeout(() => {
+                            if (oFilterBar) {
+                                // Fire search event to trigger table binding
+                                oFilterBar.fireSearch();
+                            } else if (oTable && typeof oTable.rebind === "function") {
+                                // Fallback: rebind table directly if FilterBar not available
+                                oTable.rebind();
+                            }
+                        }, 1000);
+                    });
+
+                    // Reset segmented button to "less" state for this fragment
+                    this._resetSegmentedButtonForFragment("EmployeeProbableReleaseReport");
+
+                }.bind(this));
+                
             } else if (sKey === "projectsNearingCompletionReport") {
                
 
@@ -8331,7 +8426,8 @@ sap.ui.define([
                     this._loadAllocatedCount(),
                     this._loadPreAllocatedCount(),
                     this._loadUnproductiveBenchCount(),
-                    this._loadOnLeaveCount()
+                    this._loadOnLeaveCount(),
+                    this._loadDemandCount()
                 ]);
                 // Calculate Bench Count
                 this._calculateBenchCount();
@@ -8502,6 +8598,32 @@ sap.ui.define([
 
 
         },
+        
+_loadDemandCount: async function () {
+    const oModel = this.getView().getModel("default") || this.getView().getModel();
+    if (!oModel) return;
+
+    try {
+        // Bind the collection with $count enabled
+        const oListBinding = oModel.bindList("/Demands", /* context */ undefined, /* sorter */ undefined, /* filters */ undefined, {
+            $count: true // ensure server returns total count
+        });
+
+        // Trigger the binding without requesting any rows
+        await oListBinding.requestContexts(0, 0);
+
+        // Get the server-evaluated length
+        const totalCount = oListBinding.getLength(); // integer >= 0
+
+        const oHomeCountsModel = this.getView().getModel("homeCounts");
+        if (oHomeCountsModel) {
+            oHomeCountsModel.setProperty("/demandCount", totalCount);
+        }
+    } catch (error) {
+        jQuery.sap.log.error("Failed to load Demand Count (V4)", error);
+    }
+},
+
 
         // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
         _calculateBenchCount: function () {

@@ -12,8 +12,8 @@
         id="employeeSkillReportDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="false"
-        headerExpanded="true"
-        toggleHeaderOnTitleClick="false">
+        headerExpanded="false"
+        toggleHeaderOnTitleClick="true">
        
         <layout:title>
             <layout:DynamicPageTitle>

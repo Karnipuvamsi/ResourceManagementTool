@@ -10,8 +10,8 @@
         id="employeeAllocationReportDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="false"
-        headerExpanded="true"
-        toggleHeaderOnTitleClick="false">
+        headerExpanded="false"
+        toggleHeaderOnTitleClick="true">
        
         <layout:title>
             <layout:DynamicPageTitle>
@@ -61,7 +61,7 @@
                                         id="vhEmployeeName"
                                         delegate="{
                                             name: 'glassboard/delegate/SearchValueHelpDelegate',
-                                            payload: { searchKeys: ['fullName', 'ohrId'] }
+                                            payload: { searchKeys: ['employeeName', 'employeeId'] }
                                         }"
                                     >
                                         <!-- TYPEAHEAD -->
@@ -93,7 +93,7 @@
                                         <!-- DIALOG -->
                                         <mdc:dialog>
                                             <mdcvh:Dialog id="dlgEmployeeVH" title="Select Employee">
-                                                <mdcvc:MDCTable keyPath="fullName" descriptionPath="fullName">
+                                                <mdcvc:MDCTable keyPath="employeeName" descriptionPath="employeeName">
                                                     <mdc:Table
                                                         id="tblEmployeeVH"
                                                         autoBindOnInit="true"
