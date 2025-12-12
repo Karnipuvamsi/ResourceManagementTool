@@ -12,8 +12,8 @@
         id="employeeSkillReportDynamicPage"
         fitContent="false"
         preserveHeaderStateOnScroll="false"
-        headerExpanded="true"
-        toggleHeaderOnTitleClick="false">
+        headerExpanded="false"
+        toggleHeaderOnTitleClick="true">
        
         <layout:title>
             <layout:DynamicPageTitle>
@@ -118,7 +118,7 @@
                                 propertyKey="category"
                                 maxConditions="-1"
                                 required="false"
-                                caseSensitive="false"
+                               
                                 width="200px"
                                 delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
@@ -144,7 +144,7 @@
                             width="100%"
                             p13nMode="Column,Sort,Filter,Group"
                             selectionMode="None"
-                            type="Table"
+                            type="ResponsiveTable"
                             delegate='{
                                 "name": "glassboard/delegate/EmployeeSkillReportTableDelegate",
                                 "payload": {

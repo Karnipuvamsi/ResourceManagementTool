@@ -125,7 +125,8 @@ sap.ui.define([
                 preAllocatedCount: 0,
                 unproductiveBenchCount: 0,
                 onLeaveCount: 0,
-                benchCount: 0
+                benchCount: 0,
+                demandCount: 0
             });
             this.getView().setModel(oHomeCountsModel, "homeCounts");
         },
@@ -242,7 +243,8 @@ sap.ui.define([
                 "employeeAllocationReport": "EmployeeAllocationReport",
                 "employeeSkillReport": "EmployeeSkillReport",
                 "projectsNearingCompletionReport":"ProjectsNearingCompletionReport",
-                "revenueForecastReport":"RevenueForecastReport"
+                "revenueForecastReport":"RevenueForecastReport",
+                "employeeProbableReleaseReport": "EmployeeProbableReleaseReport"
 
             };
             const sCollectionPath = sCollectionMap[sKey];
@@ -605,18 +607,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeBenchReportTableLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeBenchReportTablePage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeBenchReportTablePage && oEmployeeBenchReportTablePage.getContent) {
+                    const aExistingContent = oEmployeeBenchReportTablePage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeBenchReportTablePage.removeAllContent();
                     }
                 }
 
@@ -625,7 +627,7 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeBenchReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeBenchReportTablePage.addContent(oFragment);
 
                     const oTable = this.byId("EmployeeBenchReportTable");
                     // Ensure table starts with show-less state
@@ -644,23 +646,23 @@ sap.ui.define([
 
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeBenchReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeBenchReportTableFilterBar = this.byId("employeeBenchReportFilterBar");
+                    if (oEmployeeBenchReportTableFilterBar) {
+                        oEmployeeBenchReportTableFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeBenchReportTableFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeBenchReportTableFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oEmployeeBenchReportTableFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oEmployeeBenchReportTableFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
@@ -669,9 +671,9 @@ sap.ui.define([
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeBenchReportTableFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeBenchReportTableFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -684,7 +686,101 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
-                window.alert("COMING SOON")
+                
+
+                // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
+                // Check if already loaded to prevent duplicate IDs
+                if (this._bEmployeeProbableReleaseReportTableLoaded) {
+                    // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                    const oTable = this.byId("EmployeeProbableReleaseReportTable");
+                    if (oTable) {
+                        this.initializeTable("EmployeeProbableReleaseReportTable").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
+                    return;
+                }
+
+                this._bEmployeeProbableReleaseReportTableLoaded = true;
+                const oEmployeeProbableReleaseReportPage = this.getView().byId(sPageId);
+
+                // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
+                if (oEmployeeProbableReleaseReportPage && oEmployeeProbableReleaseReportPage.getContent) {
+                    const aExistingContent = oEmployeeProbableReleaseReportPage.getContent();
+                    if (aExistingContent && aExistingContent.length > 0) {
+                        aExistingContent.forEach((oContent) => {
+                            if (oContent && oContent.destroy) {
+                                oContent.destroy();
+                            }
+                        });
+                        oEmployeeProbableReleaseReportPage.removeAllContent();
+                    }
+                }
+
+                Fragment.load({
+                    id: this.getView().getId(),
+                    name: "glassboard.view.fragments.EmployeeProbableReleaseReport",
+                    controller: this
+                }).then(function (oFragment) {
+                    oEmployeeProbableReleaseReportPage.addContent(oFragment);
+
+                    const oTable = this.byId("EmployeeProbableReleaseReportTable");
+                    // Ensure table starts with show-less state
+
+                    oTable.addStyleClass("show-less");
+
+                    if (oLogButton) {
+                        oLogButton.setVisible(false);
+                    }
+
+                    // Ensure the table has the correct model
+                    const oModel = this.getOwnerComponent().getModel();
+                    if (oModel) {
+                        oTable.setModel(oModel);
+                    }
+
+
+                    // ✅ Set default filters for Customers FilterBar
+                    const oEmployeeProbableReleaseReportFilterBar = this.byId("employeeProbableReleaseReportFilterBar");
+                    if (oEmployeeProbableReleaseReportFilterBar) {
+                        oEmployeeProbableReleaseReportFilterBar.setModel(oModel, "default");
+                        const oFilterModel = this.getView().getModel("filterModel");
+                        const oFiltersModel = this.getView().getModel("$filters");
+                        if (oFilterModel) {
+                            oEmployeeProbableReleaseReportFilterBar.setModel(oFilterModel, "filterModel");
+                        }
+                        if (oFiltersModel) {
+                            oEmployeeProbableReleaseReportFilterBar.setModel(oFiltersModel, "$filters");
+                        }
+                        // ✅ Set defaults with multiple retries
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oEmployeeProbableReleaseReportFilterBar, ["ohrId", "band", "skills"]);
+                        }, 1000);
+                        setTimeout(() => {
+                            this._setDefaultFilterFields(oEmployeeProbableReleaseReportFilterBar, ["ohrId", "band", "skills"]);
+                        }, 2000);
+                    }
+
+                    // Initialize table-specific functionality
+                    this.initializeTable("EmployeeProbableReleaseReportTable").then(() => {
+                        // ✅ Trigger initial data load by firing FilterBar search event
+                        // This ensures table binds even when there are no filter conditions
+                        setTimeout(() => {
+                            if (oEmployeeProbableReleaseReportFilterBar) {
+                                // Fire search event to trigger table binding
+                                oEmployeeProbableReleaseReportFilterBar.fireSearch();
+                            } else if (oTable && typeof oTable.rebind === "function") {
+                                // Fallback: rebind table directly if FilterBar not available
+                                oTable.rebind();
+                            }
+                        }, 1000);
+                    });
+
+                    // Reset segmented button to "less" state for this fragment
+                    this._resetSegmentedButtonForFragment("EmployeeProbableReleaseReport");
+
+                }.bind(this));
+
             } else if (sKey === "projectsNearingCompletionReport") {
                
 
@@ -703,18 +799,18 @@ sap.ui.define([
                 }
 
                 this._projectsNearingCompletionReport = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oProjectsNearingCompletionReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oProjectsNearingCompletionReportPage && oProjectsNearingCompletionReportPage.getContent) {
+                    const aExistingContent = oProjectsNearingCompletionReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oProjectsNearingCompletionReportPage.removeAllContent();
                     }
                 }
 
@@ -723,7 +819,7 @@ sap.ui.define([
                     name: "glassboard.view.fragments.ProjectsNearingCompletionReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oProjectsNearingCompletionReportPage.addContent(oFragment);
 
                     const oTable = this.byId("ProjectsNearingCompletionReportTable");
                     // Ensure table starts with show-less state
@@ -742,23 +838,23 @@ sap.ui.define([
 
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeProbableReleaseReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oProjectsNearingCompletionReportFilterBar = this.byId("employeeProbableReleaseReportFilterBar");
+                    if (oProjectsNearingCompletionReportFilterBar) {
+                        oProjectsNearingCompletionReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oProjectsNearingCompletionReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oProjectsNearingCompletionReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oProjectsNearingCompletionReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oProjectsNearingCompletionReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
@@ -767,9 +863,9 @@ sap.ui.define([
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oProjectsNearingCompletionReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oProjectsNearingCompletionReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -800,18 +896,18 @@ sap.ui.define([
                 }
 
                 this._revenueForecastReport = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oRevenueForecastReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oRevenueForecastReportPage && oRevenueForecastReportPage.getContent) {
+                    const aExistingContent = oRevenueForecastReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oRevenueForecastReportPage.removeAllContent();
                     }
                 }
 
@@ -820,7 +916,7 @@ sap.ui.define([
                     name: "glassboard.view.fragments.RevenueForecastReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oRevenueForecastReportPage.addContent(oFragment);
 
                     const oTable = this.byId("RevenueForecastReportTable");
                     // Ensure table starts with show-less state
@@ -839,23 +935,23 @@ sap.ui.define([
 
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("revenueForecastReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oRevenueForecastReportFilterBar = this.byId("revenueForecastReportFilterBar");
+                    if (oRevenueForecastReportFilterBar) {
+                        oRevenueForecastReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oRevenueForecastReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oRevenueForecastReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oRevenueForecastReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["ohrId", "band", "skills"]);
+                            this._setDefaultFilterFields(oRevenueForecastReportFilterBar, ["ohrId", "band", "skills"]);
                         }, 2000);
                     }
 
@@ -864,9 +960,9 @@ sap.ui.define([
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oRevenueForecastReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oRevenueForecastReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -895,18 +991,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeAllocationReportLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeAllocationReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeAllocationReportPage && oEmployeeAllocationReportPage.getContent) {
+                    const aExistingContent = oEmployeeAllocationReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeAllocationReportPage.removeAllContent();
                     }
                 }
 
@@ -915,7 +1011,7 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeAllocationReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeAllocationReportPage.addContent(oFragment);
 
                     const oTable = this.byId("EmployeeAllocationReportTable");
                     // Ensure table starts with show-less state
@@ -936,23 +1032,23 @@ sap.ui.define([
                     this._populateCountryDropdown();
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeAllocationReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeAllocationReportFilterBar = this.byId("employeeAllocationReportFilterBar");
+                    if (oEmployeeAllocationReportFilterBar) {
+                        oEmployeeAllocationReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeAllocationReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeAllocationReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                            this._setDefaultFilterFields(oEmployeeAllocationReportFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["employeeName", "currentProject", "customer"]);
+                            this._setDefaultFilterFields(oEmployeeAllocationReportFilterBar, ["employeeName", "currentProject", "customer"]);
                         }, 2000);
                     }
 
@@ -961,9 +1057,9 @@ sap.ui.define([
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeAllocationReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeAllocationReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -990,18 +1086,18 @@ sap.ui.define([
                 }
 
                 this._bEmployeeSkillReportTableLoaded = true;
-                const oCustomersPage = this.getView().byId(sPageId);
+                const oEmployeeSkillReportPage = this.getView().byId(sPageId);
 
                 // ✅ CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
-                if (oCustomersPage && oCustomersPage.getContent) {
-                    const aExistingContent = oCustomersPage.getContent();
+                if (oEmployeeSkillReportPage && oEmployeeSkillReportPage.getContent) {
+                    const aExistingContent = oEmployeeSkillReportPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
                             }
                         });
-                        oCustomersPage.removeAllContent();
+                        oEmployeeSkillReportPage.removeAllContent();
                     }
                 }
 
@@ -1010,7 +1106,7 @@ sap.ui.define([
                     name: "glassboard.view.fragments.EmployeeSkillReport",
                     controller: this
                 }).then(function (oFragment) {
-                    oCustomersPage.addContent(oFragment);
+                    oEmployeeSkillReportPage.addContent(oFragment);
 
                     const oTable = this.byId("EmployeeSkillReportTable");
                     // Ensure table starts with show-less state
@@ -1031,23 +1127,23 @@ sap.ui.define([
                     this._populateCountryDropdown();
 
                     // ✅ Set default filters for Customers FilterBar
-                    const oFilterBar = this.byId("employeeSkillReportFilterBar");
-                    if (oFilterBar) {
-                        oFilterBar.setModel(oModel, "default");
+                    const oEmployeeSkillReportFilterBar = this.byId("employeeSkillReportFilterBar");
+                    if (oEmployeeSkillReportFilterBar) {
+                        oEmployeeSkillReportFilterBar.setModel(oModel, "default");
                         const oFilterModel = this.getView().getModel("filterModel");
                         const oFiltersModel = this.getView().getModel("$filters");
                         if (oFilterModel) {
-                            oFilterBar.setModel(oFilterModel, "filterModel");
+                            oEmployeeSkillReportFilterBar.setModel(oFilterModel, "filterModel");
                         }
                         if (oFiltersModel) {
-                            oFilterBar.setModel(oFiltersModel, "$filters");
+                            oEmployeeSkillReportFilterBar.setModel(oFiltersModel, "$filters");
                         }
                         // ✅ Set defaults with multiple retries
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["skillName", "category"]);
+                            this._setDefaultFilterFields(oEmployeeSkillReportFilterBar, ["skillName", "category"]);
                         }, 1000);
                         setTimeout(() => {
-                            this._setDefaultFilterFields(oFilterBar, ["skillName", "category"]);
+                            this._setDefaultFilterFields(oEmployeeSkillReportFilterBar, ["skillName", "category"]);
                         }, 2000);
                     }
 
@@ -1056,9 +1152,9 @@ sap.ui.define([
                         // ✅ Trigger initial data load by firing FilterBar search event
                         // This ensures table binds even when there are no filter conditions
                         setTimeout(() => {
-                            if (oFilterBar) {
+                            if (oEmployeeSkillReportFilterBar) {
                                 // Fire search event to trigger table binding
-                                oFilterBar.fireSearch();
+                                oEmployeeSkillReportFilterBar.fireSearch();
                             } else if (oTable && typeof oTable.rebind === "function") {
                                 // Fallback: rebind table directly if FilterBar not available
                                 oTable.rebind();
@@ -1070,8 +1166,6 @@ sap.ui.define([
                     this._resetSegmentedButtonForFragment("EmployeeSkillReport");
 
                 }.bind(this));
-            } else if (sKey === "projectsNearingCompletionReport") {
-                // this._loadReportFragment(sPageId, "ProjectsNearingCompletionReport", "ProjectsNearingCompletionReport", oLogButton);
             } else if (sKey === "employees") {
                 // Check if already loaded to prevent duplicate IDs
                 if (this._bEmployeesLoaded) {
@@ -1322,7 +1416,7 @@ sap.ui.define([
             } else if (sKey === "demands") {
                 //Check if already loaded to prevent duplicate IDs
                 if (this._bMasterDemandsLoaded) {
-                    console.log("[MasterDemands] Fragment already loaded, skipping");
+                    // console.log("[MasterDemands] Fragment already loaded, skipping");
                     return;
                 }
 
@@ -1333,7 +1427,7 @@ sap.ui.define([
                 if (oMasterDemandsPage && oMasterDemandsPage.getContent) {
                     const aExistingContent = oMasterDemandsPage.getContent();
                     if (aExistingContent && aExistingContent.length > 0) {
-                        console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
+                        // console.log("[MasterDemands] Removing existing content to prevent duplicate IDs");
                         aExistingContent.forEach((oContent) => {
                             if (oContent && oContent.destroy) {
                                 oContent.destroy();
@@ -4499,7 +4593,7 @@ sap.ui.define([
                 const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
 
                 // Debug logging
-                console.log("Converted IDs - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                // console.log("Converted IDs - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
 
                 const oUpdateEntry = {
                     // ⭐ REPLACED your old fields with custCountryId, custStateId, custCityId
@@ -4571,7 +4665,7 @@ sap.ui.define([
                 const nCityId = (sCustCityId && sCustCityId !== "") ? parseInt(sCustCityId, 10) : null;
 
                 // Debug logging
-                console.log("Converted IDs (CREATE) - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
+                // console.log("Converted IDs (CREATE) - Country:", nCountryId, "State:", nStateId, "City:", nCityId);
 
                 const oCreateEntry = {
                     // ⭐ NEW: cascading IDs
@@ -4726,7 +4820,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Customers", null, [], {
+                            const oBinding = oModel.bindList("/Customers", null, [], [],{
                                 "$orderby": "SAPcustId desc",
                                 "$top": "1"
                             });
@@ -5151,10 +5245,10 @@ sap.ui.define([
                         });
 
                         oBinding.filter([oCombinedFilter]);
-                        console.log("✅ Master demand search filter applied (case-insensitive):", sQueryTrimmed);
+                        // console.log("✅ Master demand search filter applied (case-insensitive):", sQueryTrimmed);
                     } else {
                         oBinding.filter([]);
-                        console.log("✅ Master demand search filter cleared");
+                        // console.log("✅ Master demand search filter cleared");
                     }
                 } catch (e) {
                     console.error("Error applying master demand search filter:", e);
@@ -6250,7 +6344,7 @@ sap.ui.define([
         //     });
         // },
         onSubmitMasterDemands: function () {
-            console.log("********onsubmit master demands");
+            // console.log("********onsubmit master demands");
 
             const sDemandId = this.byId("inputDemandId").getValue(),
                 aSelectedSkills = this.byId("inputSkills")?.getSelectedKeys() || [],
@@ -6333,7 +6427,7 @@ sap.ui.define([
                     // "remaining": sRemainingCount
                 };
 
-                console.log("Creating demand with data:", oCreateEntry);
+                // console.log("Creating demand with data:", oCreateEntry);
 
                 let oBinding = (oTable.getRowBinding && oTable.getRowBinding())
                     || oTable.getBinding("items")
@@ -6363,17 +6457,17 @@ sap.ui.define([
                         this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
                     }
                 } else {
-                    console.log("Table binding not available, using direct model create");
+                    // console.log("Table binding not available, using direct model create");
                     this._createMasterDemandsDirect(oModel, oCreateEntry, oTable);
                 }
             }
         },
         _createMasterDemandsDirect: function (oModel, oCreateEntry, oTable) {
-            console.log("************ Direct create functionality for Demands");
+            // console.log("************ Direct create functionality for Demands");
 
             oModel.create("/Demands", oCreateEntry, {
                 success: (oData) => {
-                    console.log("Demand created successfully (direct):", oData);
+                    // console.log("Demand created successfully (direct):", oData);
                     MessageToast.show("Demand created successfully!");
 
                     // ✅ Refresh table to get latest data
@@ -6774,7 +6868,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Opportunities", null, [], {
+                            const oBinding = oModel.bindList("/Opportunities", null, [],[], {
                                 "$orderby": "sapOpportunityId desc",
                                 "$top": "1"
                             });
@@ -7167,7 +7261,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Projects", null, [], {
+                            const oBinding = oModel.bindList("/Projects", null, [], [],{
                                 "$orderby": "sapPId desc",
                                 "$top": "1"
                             });
@@ -7340,8 +7434,8 @@ sap.ui.define([
                         // Request fresh data from backend
                         oContext.requestObject().then(() => {
                             const oObj = oContext.getObject();
-                            console.log(oObj);
-                            console.log("✅ Employee fresh data from backend:", oObj);
+                            // console.log(oObj);
+                            // console.log("✅ Employee fresh data from backend:", oObj);
 
                             // Now fetch Supervisor association if needed
                             const sSapPId = oObj && oObj.sapPId;
@@ -8097,7 +8191,7 @@ sap.ui.define([
                 try {
                     oTable.clearSelection();
                 } catch (e) {
-                    console.log("Selection cleared or method not available");
+                    // console.log("Selection cleared or method not available");
                 }
             }
 
@@ -8331,7 +8425,8 @@ sap.ui.define([
                     this._loadAllocatedCount(),
                     this._loadPreAllocatedCount(),
                     this._loadUnproductiveBenchCount(),
-                    this._loadOnLeaveCount()
+                    this._loadOnLeaveCount(),
+                    this._loadDemandCount()
                 ]);
                 // Calculate Bench Count
                 this._calculateBenchCount();
@@ -8501,6 +8596,30 @@ sap.ui.define([
 
 
 
+        },
+        _loadDemandCount: async function () {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) return;
+
+            try {
+                // Bind the collection with $count enabled
+                const oListBinding = oModel.bindList("/Demands", /* context */ undefined, /* sorter */ undefined, /* filters */ undefined, {
+                    $count: true // ensure server returns total count
+                });
+
+                // Trigger the binding without requesting any rows
+                await oListBinding.requestContexts(0, 0);
+
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // integer >= 0
+
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/demandCount", totalCount);
+                }
+            } catch (error) {
+                Log.error("Failed to load Demand Count (V4)", error);
+            }
         },
 
         // ✅ Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
@@ -10374,7 +10493,7 @@ sap.ui.define([
             const stateId = cleanState ? parseInt(cleanState, 10) : null;
             const countryId = cleanCountry ? parseInt(cleanCountry, 10) : null;
 
-            console.log("stateIdStr:", stateId, "countryIdStr:", countryId);
+            // console.log("stateIdStr:", stateId, "countryIdStr:", countryId);
 
             // If invalid → disable and stop
             if (isNaN(stateId) || isNaN(countryId)) {
@@ -11117,7 +11236,7 @@ sap.ui.define([
 
         // }
         onTotalHeadPress: function () {
-            sap.m.MessageToast.show("Total Head Count clicked");
+            // sap.m.MessageToast.show("Total Head Count clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11213,7 +11332,7 @@ sap.ui.define([
         },
 
         onAllocatedPress: function () {
-            sap.m.MessageToast.show("Allocated Count clicked");
+            // sap.m.MessageToast.show("Allocated Count clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             var oLogButton = this.byId("uploadLogButton");
@@ -11296,7 +11415,7 @@ sap.ui.define([
         },
 
         onBenchPress: function () {
-            sap.m.MessageToast.show("Bench Count clicked");
+            // sap.m.MessageToast.show("Bench Count clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11373,7 +11492,7 @@ sap.ui.define([
         },
 
         onUnallocatedBenchPress: function () {
-            sap.m.MessageToast.show("Pre Allocated clicked");
+            // sap.m.MessageToast.show("Pre Allocated clicked");
 
             var oLogButton = this.byId("uploadLogButton");
 
@@ -11470,7 +11589,7 @@ sap.ui.define([
         },
 
         onUnproductiveBenchPress: function () {
-            sap.m.MessageToast.show("Unproductive Bench clicked");
+            // sap.m.MessageToast.show("Unproductive Bench clicked");
 
 
 
@@ -11566,7 +11685,7 @@ sap.ui.define([
         },
 
         onNetBenchPress: function () {
-            sap.m.MessageToast.show("Inactive Bench clicked");
+            // sap.m.MessageToast.show("Inactive Bench clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11657,7 +11776,7 @@ sap.ui.define([
         },
 
         onDemandsPress: function () {
-            sap.m.MessageToast.show("Demands Count clicked");
+            // sap.m.MessageToast.show("Demands Count clicked");
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11739,11 +11858,11 @@ sap.ui.define([
         },
 
         onYetToJoinPress: function () {
-            sap.m.MessageToast.show("Yet To Join clicked");
+            sap.m.MessageToast.show("Coming Soon");
         },
 
         onProjectsEndingPress: function () {
-            sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
+            sap.m.MessageToast.show("Coming Soon");
         },
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
@@ -12098,7 +12217,7 @@ sap.ui.define([
                 $$updateGroupId: "changesGroup"
             });
             const oCreatedContext = oListBinding.create(oPayload);
-            console.log(oCreatedContext, "*******oCreatedContext");
+            // console.log(oCreatedContext, "*******oCreatedContext");
             // oCreatedContext.created()
             //     .then((oFinalContext) => {
             //         console.log(oFinalContext, "oFinalContext");
@@ -12111,12 +12230,12 @@ sap.ui.define([
             //         MessageToast.show("Create failed: " + err.message);
             //     });
             // oModel.submitBatch("changesGroup");
-            console.log(oCreatedContext, "*******oCreatedContext");
+            // console.log(oCreatedContext, "*******oCreatedContext");
 
             // Submit batch and handle errors properly
             oModel.submitBatch("changesGroup")
                 .then((oResponse) => {
-                    console.log(oResponse, "Batch response");
+                    // console.log(oResponse, "Batch response");
                     // Verify the context was actually created successfully
                     // If there was an error, the context might be in error state
                     if (oCreatedContext && oCreatedContext.getProperty && oCreatedContext.getProperty("allocationId")) {

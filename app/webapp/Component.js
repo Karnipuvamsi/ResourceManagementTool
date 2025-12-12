@@ -22,7 +22,6 @@ sap.ui.define([
             // enable routing
             this.getRouter().initialize();
             sap.ui.getCore().loadLibrary("sap.ui.core");
-            jQuery.sap.includeStyleSheet("glassboard/css/style.css");
         }
     });
 });

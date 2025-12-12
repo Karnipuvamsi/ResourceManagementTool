@@ -23,8 +23,8 @@ select from db.Employee as e {
             case 
                 when e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated') 
                 then days_between(current_date, coalesce(
-                    (select max(epa.endDate) as maxEndDate from db.EmployeeProjectAllocation as epa
-                     where epa.employeeId = e.ohrId and epa.status = 'Completed'), 
+                    (select max(epa.endDate) as maxEndDate from db.EmployeeNewAllocation as epa
+                     where epa.employeeId = e.ohrId), 
                     e.doj
                 ))
                 else 0
@@ -45,12 +45,12 @@ where e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated');
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as
 select from db.Employee as e
-    inner join db.EmployeeProjectAllocation as epa on e.ohrId = epa.employeeId
+    inner join db.EmployeeNewAllocation as epa on e.ohrId = epa.employeeId
     inner join db.Project as p on epa.projectId = p.sapPId
     inner join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
     inner join db.Customer as c on opp.customerId = c.SAPcustId {
     key e.ohrId,
-    key epa.allocationId,
+    
         e.fullName as employeeName,
         e.band,
         p.projectName as currentProject,
@@ -59,10 +59,9 @@ select from db.Employee as e
         cast(days_between(epa.endDate, current_date) as Integer) as daysToRelease,
         e.skills,
         e.location,
-        epa.status as allocationStatus
+        
 }
-where epa.status = 'Active'
-  and epa.endDate >= current_date;
+where epa.endDate >= current_date;
 
 // Revenue Forecast Report View
 define view RevenueForecastView as
@@ -98,9 +97,9 @@ where p.status in ('Active', 'Planned');
 // Employee Allocation Report View
 define view EmployeeAllocationReportView as
 select from db.Employee as e
-inner join db.EmployeeProjectAllocation as epa
+inner join db.EmployeeNewAllocation as epa
   on e.ohrId = epa.employeeId
-  and epa.status = 'Active'
+  
 inner join db.Project as p
   on epa.projectId = p.sapPId
 inner join db.Opportunity as opp
@@ -109,7 +108,7 @@ inner join db.Customer as c
   on opp.customerId = c.SAPcustId
 {
   key e.ohrId as employeeId,
-  key epa.allocationId,
+  
   
   e.fullName as employeeName,
   e.band,
@@ -150,9 +149,9 @@ select from db.Skills as s {
         cast(
             (select count(distinct es3.employeeId) from db.EmployeeSkill as es3
              join db.Employee as e3 on es3.employeeId = e3.ohrId
-             join db.EmployeeProjectAllocation as epa3 on e3.ohrId = epa3.employeeId
+             join db.EmployeeNewAllocation as epa3 on e3.ohrId = epa3.employeeId
              where es3.skillId = s.id 
-               and epa3.status = 'Active')
+               )
             as Integer
         ) as allocatedEmployees
 };
@@ -182,8 +181,8 @@ select from db.Project as p
         ) as completionRisk,
         // Count employees on project
         cast(
-            (select count(*) from db.EmployeeProjectAllocation as epa
-             where epa.projectId = p.sapPId and epa.status = 'Active')
+            (select count(*) from db.EmployeeNewAllocation as epa
+             where epa.projectId = p.sapPId )
             as Integer
         ) as employeeCount,
         e.fullName as projectManager,
@@ -200,8 +199,8 @@ where p.status = 'Active'
 
 // Supervisor Team Allocation Report View
 view SupervisorTeamAllocationView as select from db.Employee as e
-    left outer join db.EmployeeProjectAllocation as epa on e.ohrId = epa.employeeId 
-        and epa.status = 'Active'
+    left outer join db.EmployeeNewAllocation as epa on e.ohrId = epa.employeeId 
+        
     left outer join db.Project as p on epa.projectId = p.sapPId {
     key e.ohrId,
         e.fullName as employeeName,
@@ -239,11 +238,11 @@ view CustomerProjectPortfolioView as select from db.Customer as c {
         (select sum(opp4.tcv) as totalRev from db.Opportunity as opp4
          where opp4.customerId = c.SAPcustId) as totalRevenue,
         // Engaged employees
-        (select count(distinct epa.employeeId) as empCount from db.EmployeeProjectAllocation as epa
+        (select count(distinct epa.employeeId) as empCount from db.EmployeeNewAllocation as epa
          join db.Project as p4 on epa.projectId = p4.sapPId
          join db.Opportunity as opp5 on p4.oppId = opp5.sapOpportunityId
          where opp5.customerId = c.SAPcustId
-           and epa.status = 'Active') as engagedEmployees
+           ) as engagedEmployees
 };
 
 // Utilization Trend Report View (simplified - would need date aggregation in service)
@@ -254,10 +253,10 @@ view UtilizationTrendView as select from db.Employee as e {
         e.status,
         e.doj,
         // Allocation info
-        (select count(*) as cnt from db.EmployeeProjectAllocation as epa
-         where epa.employeeId = e.ohrId and epa.status = 'Active') as activeAllocations,
-        (select sum(epa2.allocationPercentage) as totalPct from db.EmployeeProjectAllocation as epa2
-         where epa2.employeeId = e.ohrId and epa2.status = 'Active') as totalAllocationPercentage
+        (select count(*) as cnt from db.EmployeeNewAllocation as epa
+         where epa.employeeId = e.ohrId ) as activeAllocations,
+        (select sum(epa2.allocationPercentage) as totalPct from db.EmployeeNewAllocation as epa2
+         where epa2.employeeId = e.ohrId  ) as totalAllocationPercentage
 };
 
 // Skills Gap Analysis Report View

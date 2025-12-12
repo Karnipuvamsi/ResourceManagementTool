@@ -234,7 +234,8 @@ sap.ui.define([
                                     template: new Item({
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
-                                    })
+                                    }),
+                                     templateShareable:false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
@@ -510,7 +511,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+    // console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
 };
 
 

@@ -732,7 +732,7 @@ sap.ui.define([
             const oView = oController.getView();
             const aMessages = oView.getModel("message").getData();
 
-            console.log("aMessages",aMessages);
+            // console.log("aMessages",aMessages);
             
 
             const oButton = oView.byId("uploadLogButton");

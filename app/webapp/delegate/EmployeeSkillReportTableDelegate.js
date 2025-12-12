@@ -78,7 +78,7 @@ sap.ui.define([
             })
         ];
  
-        console.log("✅ EmployeeSkillReport custom search filter applied:", sSearch);
+        // console.log("✅ EmployeeSkillReport custom search filter applied:", sSearch);
     };
  
     return EmployeeSkillReportTableDelegate;

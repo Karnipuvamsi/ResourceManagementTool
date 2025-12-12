@@ -628,7 +628,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("ALLOCATIONS VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+    // console.log("ALLOCATIONS VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
 };
 
 

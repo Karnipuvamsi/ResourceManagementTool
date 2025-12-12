@@ -92,7 +92,7 @@ sap.ui.define([
         })
     ];
 
-    console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
+    // console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
 };
 
 
