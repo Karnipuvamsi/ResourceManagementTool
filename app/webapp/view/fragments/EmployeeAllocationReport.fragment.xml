@@ -106,7 +106,7 @@
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
                                                                 collectionPath: 'EmployeeAllocationReport',
-                                                                searchKeys: ['employeeName', 'ohrId']
+                                                                searchKeys: ['employeeName', 'employeeId']
                                                             }
                                                         }"
                                                     >
@@ -117,16 +117,16 @@
                                                             <mdct:Column
                                                                 id="AllocVHcolEmployeeName"
                                                                 header="Employee Name"
-                                                                propertyKey="fullName"
+                                                                propertyKey="employeeName"
                                                             >
-                                                                <Text text="{fullName}" />
+                                                                <Text text="{employeeName}" />
                                                             </mdct:Column>
                                                             <mdct:Column
                                                                 id="AllocVHcolOHRId"
                                                                 header="OHR ID"
-                                                                propertyKey="ohrId"
+                                                                propertyKey="employeeId"
                                                             >
-                                                                <Text text="{ohrId}" />
+                                                                <Text text="{employeeId}" />
                                                             </mdct:Column>
                                                         </mdc:columns>
                                                     </mdc:Table>
@@ -156,7 +156,7 @@
                                         id="vhCurrentProject"
                                         delegate="{
                                             name: 'glassboard/delegate/SearchValueHelpDelegate',
-                                            payload: { searchKeys: ['projectName', 'sapPId'] }
+                                            payload: { searchKeys: ['currentProject'] }
                                         }"
                                     >
                                         <!-- TYPEAHEAD -->
@@ -188,7 +188,7 @@
                                         <!-- DIALOG -->
                                         <mdc:dialog>
                                             <mdcvh:Dialog id="dlgProjectVH1" title="Select Project">
-                                                <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                                                <mdcvc:MDCTable keyPath="currentProject" descriptionPath="currentProject">
                                                     <mdc:Table
                                                         id="tblProjectVH1"
                                                         autoBindOnInit="true"
@@ -201,7 +201,7 @@
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
                                                                 collectionPath: 'EmployeeAllocationReport',
-                                                                searchKeys: ['projectName', 'sapPId']
+                                                                searchKeys: ['currentProject']
                                                             }
                                                         }"
                                                     >
@@ -212,17 +212,11 @@
                                                             <mdct:Column
                                                                 id="AllocVHcolProjectName"
                                                                 header="Project Name"
-                                                                propertyKey="projectName"
+                                                                propertyKey="currentProject"
                                                             >
-                                                                <Text text="{projectName}" />
+                                                                <Text text="{currentProject}" />
                                                             </mdct:Column>
-                                                            <mdct:Column
-                                                                id="AllocVHcolSapPID"
-                                                                header="SAP PID"
-                                                                propertyKey="sapPId"
-                                                            >
-                                                                <Text text="{sapPId}" />
-                                                            </mdct:Column>
+
                                                         </mdc:columns>
                                                     </mdc:Table>
                                                 </mdcvc:MDCTable>
@@ -251,7 +245,7 @@
                                         id="vhCustomer"
                                         delegate="{
                                             name: 'glassboard/delegate/SearchValueHelpDelegate',
-                                            payload: { searchKeys: ['customerName', 'vertical'] }
+                                            payload: { searchKeys: ['customer'] }
                                         }"
                                     >
                                         <!-- TYPEAHEAD -->
@@ -283,7 +277,7 @@
                                         <!-- DIALOG -->
                                         <mdc:dialog>
                                             <mdcvh:Dialog id="dlgCustomerVH1" title="Select Customer">
-                                                <mdcvc:MDCTable keyPath="customerName" descriptionPath="customerName">
+                                                <mdcvc:MDCTable keyPath="customer" descriptionPath="customer">
                                                     <mdc:Table
                                                         id="tblCustomerVH1"
                                                         autoBindOnInit="true"
@@ -296,7 +290,7 @@
                                                             name: 'glassboard/delegate/EmployeeAllocationReportTableDelegate',
                                                             payload: {
                                                                 collectionPath: 'EmployeeAllocationReport',
-                                                                searchKeys: ['customerName', 'vertical']
+                                                                searchKeys: ['customer']
                                                             }
                                                         }"
                                                     >
@@ -307,17 +301,12 @@
                                                             <mdct:Column
                                                                 id="AllocVHcolCustomerName"
                                                                 header="Customer Name"
-                                                                propertyKey="customerName"
+                                                                propertyKey="customer"
                                                             >
-                                                                <Text text="{customerName}" />
+                                                                <Text text="{customer}" />
                                                             </mdct:Column>
-                                                            <mdct:Column
-                                                                id="AllocVHcolVertical"
-                                                                header="Vertical"
-                                                                propertyKey="vertical"
-                                                            >
-                                                                <Text text="{vertical}" />
-                                                            </mdct:Column>
+                                                           
+                                                        
                                                         </mdc:columns>
                                                     </mdc:Table>
                                                 </mdcvc:MDCTable>

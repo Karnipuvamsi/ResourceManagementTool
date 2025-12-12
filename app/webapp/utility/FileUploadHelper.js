@@ -147,7 +147,16 @@ sap.ui.define([
                                 // Convert to ISO format
                                 const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
 
-                                oRecord[sHeader] = oDate.toISOString().split("T")[0];
+
+                                // Add +5:30 hours (IST) to the timestamp
+                                const ist = new Date(oDate);
+
+                                const yyyy = ist.getFullYear();
+                                const mm = String(ist.getMonth() + 1).padStart(2, '0');
+                                const dd = String(ist.getDate()).padStart(2, '0');
+
+                                oRecord[sHeader] = `${mm}-${dd}-${yyyy}`;
+
                             }
 
 
@@ -163,8 +172,8 @@ sap.ui.define([
 
 
 
-                    console.log("records",oRecord);
-                    
+                    console.log("records", oRecord);
+
                     aPayloadArray.push(oRecord);
                 }
 
