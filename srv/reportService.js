@@ -261,7 +261,7 @@ module.exports = cds.service.impl(async function() {
         
         const totalEmployees = results.length;
         const allocated = results.filter(e => e.status === 'Allocated' || e.status === 'PreAllocated').length;
-        const bench = results.filter(e => e.status === 'UnproductiveBench' || e.status === 'InactiveBench').length;
+        const bench = results.filter(e => e.status === 'Unproductive Bench' || e.status === 'Inactive Bench').length;
         const utilizationPercentage = totalEmployees > 0 ? (allocated / totalEmployees) * 100 : 0;
         
         // Summary by band
@@ -271,7 +271,7 @@ module.exports = cds.service.impl(async function() {
                 utilizationByBand[emp.band] = { total: 0, allocated: 0 };
             }
             utilizationByBand[emp.band].total++;
-            if (emp.status === 'Allocated' || emp.status === 'PreAllocated') {
+            if (emp.status === 'Allocated' || emp.status === 'Pre Allocated') {
                 utilizationByBand[emp.band].allocated++;
             }
         });
@@ -283,7 +283,7 @@ module.exports = cds.service.impl(async function() {
                 utilizationByEmployeeType[emp.employeeType] = { total: 0, allocated: 0 };
             }
             utilizationByEmployeeType[emp.employeeType].total++;
-            if (emp.status === 'Allocated' || emp.status === 'PreAllocated') {
+            if (emp.status === 'Allocated' || emp.status === 'Pre Allocated') {
                 utilizationByEmployeeType[emp.employeeType].allocated++;
             }
         });

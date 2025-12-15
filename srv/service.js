@@ -2317,9 +2317,9 @@ module.exports = cds.service.impl(async function () {
 
             // ✅ If no active allocations, revert to Bench
             if (!aActiveNewAllocations || aActiveNewAllocations.length === 0) {
-                if (oEmployee.status !== 'UnproductiveBench' && oEmployee.status !== 'InactiveBench') {
+                if (oEmployee.status !== 'Unproductive Bench' && oEmployee.status !== 'Inactive Bench') {
                     // Default to UnproductiveBench if not already on bench
-                    await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'UnproductiveBench' });
+                    await UPDATE(Employees).where({ ohrId: sEmployeeId }).with({ status: 'Unproductive Bench' });
                 }
                 return;
             }

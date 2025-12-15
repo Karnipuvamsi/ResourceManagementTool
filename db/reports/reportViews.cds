@@ -18,29 +18,61 @@ select from db.Employee as e {
     key e.ohrId,
         e.fullName as employeeName,
         e.band,
-        // Calculate days on bench
-        cast(
-            case 
-                when e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated') 
-                then days_between(current_date, coalesce(
-                    (select max(epa.endDate) as maxEndDate from db.EmployeeNewAllocation as epa
-                     where epa.employeeId = e.ohrId), 
-                    e.doj
-                ))
-                else 0
-            end
-            as Integer
-        ) as daysOnBench,
+
+        /* --- Days on bench: robust logic with guards and date casts --- */
+        
+            
+      
+
+cast(
+  case
+    /* If there is a latest past allocation end date (<= today), use it */
+    when (
+      select max(cast(epa.endDate as Date))
+      from db.EmployeeNewAllocation as epa
+      where epa.employeeId = e.ohrId
+        and epa.endDate is not null
+        and cast(epa.endDate as Date) <= current_date
+    ) is not null
+    then days_between(
+      /* days_between(date1, date2) = date1 - date2 */
+      (
+        select max(cast(epa.endDate as Date))
+        from db.EmployeeNewAllocation as epa
+        where epa.employeeId = e.ohrId
+          and epa.endDate is not null
+          and cast(epa.endDate as Date) <= current_date
+      ),
+      current_date
+      
+    )
+
+    /* Else: use DOJ if present */
+    when e.doj is not null
+    then days_between(cast(e.doj as Date),current_date)
+
+    /* Fallback: missing dates -> 0 */
+    else 0
+  end
+  as Integer
+) as daysOnBench,
+
+
+
+
+        /* --- other fields --- */
         e.unit,
         e.employeeType,
         e.location,
         e.skills,
         e.supervisorOHR,
         e.mailid as email,
-        e.status,
-
+        e.status
 }
-where e.status in ('Unproductive Bench', 'Inactive Bench', 'Pre Allocated');
+where e.status in ('Unproductive Bench', 'Inactive Bench');
+
+
+
 
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as

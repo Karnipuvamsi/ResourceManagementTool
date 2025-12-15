@@ -8509,7 +8509,7 @@ sap.ui.define([
                 const oFilter = new sap.ui.model.Filter({
                     path: "status",
                     operator: sap.ui.model.FilterOperator.EQ,
-                    value1: "Pre Allocated"
+                    value1: "PreAllocated"
                 });
 
                 // Bind the list with $count enabled
