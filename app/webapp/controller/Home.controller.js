@@ -67,7 +67,7 @@ sap.ui.define([
             this._mCountryToCities = {
                 "South Africa": ["Johannesburg (Gauteng)"],
                 "China": ["Dalian", "Foshan (Guangdong)", "Kunshan (Jiangsu)"],
-                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)","Hyd","Onsite","Chennai","Kol","GGN","Noida","BLR","Pune","Mumbai","Jaipur"],
+                "India": ["Bangalore (Karnataka)", "Chennai (Tamil Nadu)", "Gurgaon/Haryana (NCR)", "Hyderabad (Telangana)", "Jaipur (Rajasthan)", "Jodhpur (Rajasthan)", "Kolkata (West Bengal)", "Madurai (Tamil Nadu)", "Mumbai (Maharashtra)", "New Delhi (Delhi)", "Noida (Uttar Pradesh)", "Pune (Maharashtra)", "Warangal (Telangana)", "Hyd", "Onsite", "Chennai", "Kol", "GGN", "Noida", "BLR", "Pune", "Mumbai", "Jaipur"],
                 "Japan": ["Tokyo (Chiyoda-ku)", "Yokohama (Kanagawa)"],
                 "Malaysia": ["Kuala Lumpur / Petaling Jaya (Selangor)"],
                 "Philippines": ["Bataan", "Manila / Quezon City"],
@@ -97,7 +97,7 @@ sap.ui.define([
                 "United Kingdom": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
                 "UK": ["London (England)", "Manchester (Greater Manchester)", "Bellshill (Scotland)"],
                 "Slovakia": [],
-                "Belgium" : []
+                "Belgium": []
             };
 
             // ✅ Initialize Band-Designation mapping for dependent dropdowns
@@ -242,8 +242,8 @@ sap.ui.define([
                 "employeeBenchReport": "EmployeeBenchReport",
                 "employeeAllocationReport": "EmployeeAllocationReport",
                 "employeeSkillReport": "EmployeeSkillReport",
-                "projectsNearingCompletionReport":"ProjectsNearingCompletionReport",
-                "revenueForecastReport":"RevenueForecastReport",
+                "projectsNearingCompletionReport": "ProjectsNearingCompletionReport",
+                "revenueForecastReport": "RevenueForecastReport",
                 "employeeProbableReleaseReport": "EmployeeProbableReleaseReport"
 
             };
@@ -686,7 +686,7 @@ sap.ui.define([
 
                 }.bind(this));
             } else if (sKey === "employeeProbableReleaseReport") {
-                
+
 
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
@@ -782,7 +782,7 @@ sap.ui.define([
                 }.bind(this));
 
             } else if (sKey === "projectsNearingCompletionReport") {
-               
+
 
 
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
@@ -879,7 +879,7 @@ sap.ui.define([
                 }.bind(this));
                 // this._loadReportFragment(sPageId, "EmployeeProbableReleaseReport", "EmployeeProbableReleaseReport", oLogButton);
             } else if (sKey === "revenueForecastReport") {
-                
+
 
 
                 // this._loadReportFragment(sPageId, "EmployeeBenchReport", "EmployeeBenchReport", oLogButton);
@@ -974,8 +974,8 @@ sap.ui.define([
                     this._resetSegmentedButtonForFragment("RevenueForecastReport");
 
                 }.bind(this));
-               
-               // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
+
+                // this._loadReportFragment(sPageId, "RevenueForecastReport", "RevenueForecastReport", oLogButton);
             } else if (sKey === "employeeAllocationReport") {
                 // this._loadReportFragment(sPageId, "EmployeeAllocationReport", "EmployeeAllocationReport", oLogButton);
                 // Check if already loaded to prevent duplicate IDs
@@ -1417,6 +1417,12 @@ sap.ui.define([
                 //Check if already loaded to prevent duplicate IDs
                 if (this._bMasterDemandsLoaded) {
                     // console.log("[MasterDemands] Fragment already loaded, skipping");
+                    const oTable = this.byId("Demands");
+                    if (oTable) {
+                        this.initializeTable("Demands").catch(() => {
+                            // Ignore errors during re-initialization
+                        });
+                    }
                     return;
                 }
 
@@ -4820,7 +4826,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Customers", null, [], [],{
+                            const oBinding = oModel.bindList("/Customers", null, [], [], {
                                 "$orderby": "SAPcustId desc",
                                 "$top": "1"
                             });
@@ -6868,7 +6874,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Opportunities", null, [],[], {
+                            const oBinding = oModel.bindList("/Opportunities", null, [], [], {
                                 "$orderby": "sapOpportunityId desc",
                                 "$top": "1"
                             });
@@ -7273,7 +7279,7 @@ sap.ui.define([
                         const oModel = this.getOwnerComponent().getModel();
                         if (oModel) {
                             // ✅ FIXED: Use OData V4 bindList instead of oModel.read()
-                            const oBinding = oModel.bindList("/Projects", null, [], [],{
+                            const oBinding = oModel.bindList("/Projects", null, [], [], {
                                 "$orderby": "sapPId desc",
                                 "$top": "1"
                             });
@@ -11256,8 +11262,19 @@ sap.ui.define([
             oNavContainer.to(this.byId("employeesPage"));
 
             const oEmployeesPage = this.getView().byId("employeesPage");
+            if (this._bEmployeesLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("Employees");
+                if (oTable) {
+                    this.initializeTable("Employees").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
 
-            this._bEmployeesLoaded = false;
+
+            this._bEmployeesLoaded = true;
 
             oEmployeesPage.destroyContent();
 
@@ -11352,8 +11369,19 @@ sap.ui.define([
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeAllocationReportPage"));
 
+            if (this._bEmployeeAllocationReportLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("EmployeeAllocationReportTable");
+                if (oTable) {
+                    this.initializeTable("EmployeeAllocationReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
 
-            this._bEmployeeAllocationReportLoaded = false;
+            this._bEmployeeAllocationReportLoaded = true;
+
             const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
             oCustomersPage.destroyContent();
 
@@ -11435,7 +11463,18 @@ sap.ui.define([
             oNavContainer.to(this.byId("employeeBenchReportPage"));
 
             const oBenchPage = this.byId("employeeBenchReportPage");
-            this._bEmployeeBenchReportTableLoaded = false;
+            if (this._bEmployeeBenchReportTableLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("EmployeeBenchReportTable");
+                if (oTable) {
+                    this.initializeTable("EmployeeBenchReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+
+            this._bEmployeeBenchReportTableLoaded = true;
             oBenchPage.destroyContent();
 
             Fragment.load({
@@ -11514,7 +11553,18 @@ sap.ui.define([
             oNavContainer.to(this.byId("employeeAllocationReportPage"));
 
 
-            this._bEmployeeAllocationReportLoaded = false;
+            if (this._bEmployeeAllocationReportLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("EmployeeAllocationReportTable");
+                if (oTable) {
+                    this.initializeTable("EmployeeAllocationReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+
+            this._bEmployeeAllocationReportLoaded = true;
             const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
             oCustomersPage.destroyContent();
 
@@ -11612,7 +11662,18 @@ sap.ui.define([
             oNavContainer.to(this.byId("employeeBenchReportPage"));
 
             const oBenchPage = this.byId("employeeBenchReportPage");
-            this._bEmployeeBenchReportTableLoaded = false;
+            if (this._bEmployeeBenchReportTableLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("EmployeeBenchReportTable");
+                if (oTable) {
+                    this.initializeTable("EmployeeBenchReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+
+            this._bEmployeeBenchReportTableLoaded = true;
             oBenchPage.destroyContent();
 
             Fragment.load({
@@ -11704,7 +11765,18 @@ sap.ui.define([
             oNavContainer.to(this.byId("employeeBenchReportPage"));
 
             const oBenchPage = this.byId("employeeBenchReportPage");
-            this._bEmployeeBenchReportTableLoaded = false;
+            if (this._bEmployeeBenchReportTableLoaded) {
+                // ✅ Even if already loaded, re-initialize table to refresh p13n state
+                const oTable = this.byId("EmployeeBenchReportTable");
+                if (oTable) {
+                    this.initializeTable("EmployeeBenchReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+
+            this._bEmployeeBenchReportTableLoaded = true;
             oBenchPage.destroyContent();
 
             Fragment.load({
@@ -11796,7 +11868,18 @@ sap.ui.define([
 
 
             const oMasterDemandsPage = this.byId("demandsPage");
-            this._bMasterDemandsLoaded = false;
+            if (this._bMasterDemandsLoaded) {
+                // console.log("[MasterDemands] Fragment already loaded, skipping");
+                const oTable = this.byId("Demands");
+                if (oTable) {
+                    this.initializeTable("Demands").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+
+            this._bMasterDemandsLoaded = true;
             oMasterDemandsPage.destroyContent();
 
 
