@@ -377,7 +377,7 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
-                                    <Label text="Opportunity" />
+                                    <Label text="Opportunity" required="true" />
                                     <Input 
                                         id="inputOppId_proj" 
                                         width="100%"
@@ -392,7 +392,7 @@
                                     <Input id="inputSapProjId_proj" value="{projectModel>/sapPId}" width="100%" enabled="false" placeholder="Auto-generated" visible="false"/>
                                     <Label text="Actual Project ID" />
                                     <Input id="inputSfdcProjId_proj" value="{projectModel>/sfdcPId}" width="100%" />
-                                    <Label text="Project Name" />
+                                    <Label text="Project Name" required="true" />
                                     <Input id="inputProjectName_proj" value="{projectModel>/projectName}" width="100%" />
                                     <Label text="GPM" />
                                     <Input 
@@ -527,9 +527,9 @@
                                     <Input id="inputAllocatedResources_proj" value="{projectModel>/allocatedResources}" width="100%" type="Number" />
                                     <Label text="To Be Allocated" />
                                     <Input id="inputToBeAllocated_proj" value="{projectModel>/toBeAllocated}" width="100%" type="Number" />
-                                    <Label text="Start Date" />
+                                    <Label text="Start Date" required="true" />
                                     <DatePicker id="inputStartDate_proj" value="{projectModel>/startDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
-                                    <Label text="End Date" />
+                                    <Label text="End Date" required="true" />
                                     <DatePicker id="inputEndDate_proj" value="{projectModel>/endDate}" valueFormat="yyyy-MM-dd" displayFormat="short" width="100%" />
                                 </f:SimpleForm>
                             </VBox>

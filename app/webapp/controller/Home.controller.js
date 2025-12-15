@@ -6951,8 +6951,20 @@ sap.ui.define([
                 sPOReceived = this.byId("inputPOReceived_proj").getSelectedKey();
 
             // Validation
+            if (!sOppId || sOppId.trim() === "") {
+                sap.m.MessageBox.error("Please Select Opportunity!");
+                return;
+            }
             if (!sProjectName || sProjectName.trim() === "") {
                 sap.m.MessageBox.error("Project Name is required!");
+                return;
+            }
+            if (!sStartDate || sStartDate.trim() === "") {
+                sap.m.MessageBox.error("Project Start Date is required!");
+                return;
+            }
+            if (!sEndDate || sEndDate.trim() === "") {
+                sap.m.MessageBox.error("Project End Date is required!");
                 return;
             }
 
