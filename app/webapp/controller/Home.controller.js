@@ -12042,19 +12042,26 @@ sap.ui.define([
                     ]
                 });
 
-                const formatDate = d => d ? d : "N/A";
-
-                aAllocations.forEach(alloc => {
-                    oTable.addItem(new sap.m.ColumnListItem({
-                        cells: [
-                            new sap.m.Text({ text: alloc.employeeId }),
-                            new sap.m.Text({ text: alloc.to_Employee?.fullName || "N/A" }),
-                            new sap.m.Text({ text: String(alloc.allocationPercentage) }),
-                            new sap.m.Text({ text: formatDate(alloc.startDate) }),
-                            new sap.m.Text({ text: formatDate(alloc.endDate) })
-                        ]
-                    }));
-                });
+                const formatDate = (d) => {
+    if (!d) return "N/A";
+    const dt = new Date(d);
+    const year = String(dt.getFullYear()).slice(-2);
+    const month = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${month}/${day}/${year}`;
+};
+ 
+aAllocations.forEach(alloc => {
+    oTable.addItem(new sap.m.ColumnListItem({
+        cells: [
+            new sap.m.Text({ text: alloc.employeeId }),
+            new sap.m.Text({ text: alloc.to_Employee?.fullName || "N/A" }),
+            new sap.m.Text({ text: String(alloc.allocationPercentage) }),
+            new sap.m.Text({ text: formatDate(alloc.startDate) }),
+            new sap.m.Text({ text: formatDate(alloc.endDate) })
+        ]
+    }));
+});
 
                 oVBox.addItem(oTable);
 

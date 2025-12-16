@@ -117,16 +117,6 @@
                             icon="sap-icon://group"
                         />
                         <tnt:NavigationListItem
-                            key="employeeProbableReleaseReport"
-                            text="Employee Probable Release Report"
-                            icon="sap-icon://calendar"
-                        />
-                        <tnt:NavigationListItem
-                            key="revenueForecastReport"
-                            text="Revenue Forecast Report"
-                            icon="sap-icon://money-bills"
-                        />
-                        <tnt:NavigationListItem
                             key="employeeAllocationReport"
                             text="Employee Allocation Report"
                             icon="sap-icon://employee-approvals"
@@ -141,6 +131,17 @@
                             text="Projects Nearing Completion Report"
                             icon="sap-icon://complete"
                         />
+                        <tnt:NavigationListItem
+                            key="employeeProbableReleaseReport"
+                            text="Employee Probable Release Report"
+                            icon="sap-icon://calendar"
+                        />
+                        <tnt:NavigationListItem
+                            key="revenueForecastReport"
+                            text="Revenue Forecast Report"
+                            icon="sap-icon://money-bills"
+                        />
+                        
                     </tnt:NavigationListGroup>
                 </tnt:NavigationList>
             </tnt:SideNavigation>
@@ -149,10 +150,10 @@
         <tnt:mainContents>
             <NavContainer
                 id="pageContainer"
-                initialPage="root1"
+                
             >
                 <pages>
-                   <Page id="root1" showHeader="false" visible="true">
+                   <Page id="root1" showHeader="false" >
                         <!-- First Row -->
 <HBox id="_homeTile1" justifyContent="Start" alignItems="Start">
     <VBox id="totalHeadVBox" class="benchC Card clickable">
@@ -242,21 +243,7 @@
                         showHeader="false"
                     >
                     </Page>
-                    <Page
-                        id="employeeProbableReleaseReportPage"
-                        showHeader="false"
-                        
-      
-   
-
-                    >
-                    </Page>
-                    <Page
-                        id="revenueForecastReportPage"
-                        showHeader="false"
-                    >
-                    </Page>
-                    <Page
+                     <Page
                         id="employeeAllocationReportPage"
                         showHeader="false"
                     >
@@ -271,6 +258,20 @@
                         showHeader="false"
                     >
                     </Page>
+                    <Page
+                        id="employeeProbableReleaseReportPage"
+                        showHeader="false" 
+      
+   
+
+                    >
+                    </Page>
+                    <Page
+                        id="revenueForecastReportPage"
+                        showHeader="false"
+                    >
+                    </Page>
+                   
                 </pages>
             </NavContainer>
         </tnt:mainContents>

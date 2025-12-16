@@ -24,41 +24,38 @@ select from db.Employee as e {
             
       
 
-cast(
-  case
-    /* If there is a latest past allocation end date (<= today), use it */
-    when (
-      select max(cast(epa.endDate as Date))
-      from db.EmployeeNewAllocation as epa
-      where epa.employeeId = e.ohrId
-        and epa.endDate is not null
-        and cast(epa.endDate as Date) <= current_date
-    ) is not null
-    then days_between(
-      /* days_between(date1, date2) = date1 - date2 */
-      (
-        select max(cast(epa.endDate as Date))
-        from db.EmployeeNewAllocation as epa
-        where epa.employeeId = e.ohrId
-          and epa.endDate is not null
-          and cast(epa.endDate as Date) <= current_date
-      ),
-      current_date
-      
-    )
+        cast(
+          case
+            /* If there is a latest past allocation end date (<= today), use it */
+            when (
+              select max(cast(epa.endDate as Date))
+              from db.EmployeeNewAllocation as epa
+              where epa.employeeId = e.ohrId
+                and epa.endDate is not null
+                and cast(epa.endDate as Date) <= current_date
+            ) is not null
+            then days_between(
+              /* days_between(date1, date2) = date1 - date2 */
+              (
+                select max(cast(epa.endDate as Date))
+                from db.EmployeeNewAllocation as epa
+                where epa.employeeId = e.ohrId
+                  and epa.endDate is not null
+                  and cast(epa.endDate as Date) <= current_date
+              ),
+              current_date
+              
+            )
 
-    /* Else: use DOJ if present */
-    when e.doj is not null
-    then days_between(cast(e.doj as Date),current_date)
+            /* Else: use DOJ if present */
+            when e.doj is not null
+            then days_between(cast(e.doj as Date),current_date)
 
-    /* Fallback: missing dates -> 0 */
-    else 0
-  end
-  as Integer
-) as daysOnBench,
-
-
-
+            /* Fallback: missing dates -> 0 */
+            else 0
+          end
+          as Integer
+        ) as daysOnBench,
 
         /* --- other fields --- */
         e.unit,
@@ -150,7 +147,7 @@ inner join db.Customer as c
   c.customerName as customer,
   epa.startDate as allocationStartDate,
   epa.endDate as allocationEndDate,
-  cast(days_between(epa.endDate, current_date) as Integer) as daysRemaining,
+  cast(days_between(current_date, epa.endDate) as Integer) as daysRemaining,
   epa.allocationPercentage as utilizationPercentage
 }
 where
