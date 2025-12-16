@@ -324,9 +324,9 @@
                                     columnsL="1"
                                     columnsM="1"
                                     class="sapUiNoContentPadding">
-                                    <Label text="OHR ID" />
+                                    <Label text="OHR ID" required="true"/>
                                     <Input id="inputOHRId_emp" value="{employeeModel>/ohrId}" width="100%" enabled="false" />
-                                    <Label text="Full Name" />
+                                    <Label text="Full Name" required="true" />
                                     <Input id="inputFullName_emp" value="{employeeModel>/fullName}" width="100%" />
                                     <Label text="Email ID" />
                                     <Input id="inputMailId_emp" value="{employeeModel>/mailid}" width="100%" />

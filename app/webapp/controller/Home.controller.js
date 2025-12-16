@@ -5967,6 +5967,11 @@ sap.ui.define([
             const oTable = this.byId("Employees");
             const aContexts = oTable.getRowBinding().getCurrentContexts();
 
+            if (!sOHRId || sOHRId.trim() === "") {
+                sap.m.MessageBox.error("OHR ID is required for new employees!");
+                return;
+            }
+            
             if (!sFullName || sFullName.trim() === "") {
                 sap.m.MessageBox.error("Full Name is required!");
                 return;
