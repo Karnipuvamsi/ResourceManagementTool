@@ -9132,7 +9132,9 @@ sap.ui.define([
 
         onEmployeeValueHelpRequest: function (oEvent) {
             const oInput = oEvent.getSource();
+
             const oView = this.getView();
+
 
             if (!this._oEmployeeValueHelpDialog) {
                 this._oEmployeeValueHelpDialog = sap.ui.xmlfragment(
@@ -9147,6 +9149,7 @@ sap.ui.define([
             const bIsGPMField = sInputId && sInputId.includes("inputGPM_proj");
             const bIsSalesSPOC = sInputId && sInputId.includes("inputSalesSPOC_oppr");
             const bIsDeliverySPOC = sInputId && sInputId.includes("inputDeliverySPOC_oppr");
+            const bResinput_emp= sInputId && sInputId.includes("Resinput_emp");
 
             // Set dialog title based on which field is calling
             let sDialogTitle = "Select Supervisor"; // Default for supervisor field
@@ -9156,6 +9159,10 @@ sap.ui.define([
                 sDialogTitle = "Select Sales SPOC";
             } else if (bIsDeliverySPOC) {
                 sDialogTitle = "Select Delivery SPOC";
+            }
+            else if (bResinput_emp){
+                 sDialogTitle = "Select Employee";
+
             }
 
             // Update dialog title
@@ -11986,6 +11993,7 @@ sap.ui.define([
         // },
 
         _onProjectChange: async function () {
+        
             // Enable Employee input (your existing logic)
             this.byId("Resinput_emp").setEnabled(true);
 
