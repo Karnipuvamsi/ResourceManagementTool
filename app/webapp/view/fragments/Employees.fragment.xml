@@ -398,7 +398,7 @@
                                             <core:Item key="" text="Select Location..." />
                                             <core:Item key="Nearshore" text="Nearshore" />
                                             <core:Item key="Offshore" text="Offshore" />
-                                            <core:Item key="Onshore" text="Onshore" />
+                                            <core:Item key="Onsite" text="Onsite" />
                                         </items>
                                     </Select>
                                     <Label text="Country" />
