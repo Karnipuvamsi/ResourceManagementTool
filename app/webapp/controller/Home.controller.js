@@ -10690,7 +10690,6 @@ sap.ui.define([
                                 skillId: skillId
                             };
 
-
                             //  Use same pattern as Allocations creation
                             const oNewContext = oBinding.create(oNewSkill, "changesGroup");
                             if (oNewContext) {
@@ -10774,19 +10773,13 @@ sap.ui.define([
         },
         // onTotalHeadPress: function () {
         //     sap.m.MessageToast.show("Total Head Count clicked");
-
         //     var oLogButton = this.byId("uploadLogButton");
-
         //     let oNavContainer = this.byId("pageContainer");
         //     oNavContainer.to(this.byId("employeesPage"));
-
         //     const oEmployeesPage = this.getView().byId("employeesPage");
 
         //     this._bEmployeesLoaded = false;
-
         //     oEmployeesPage.destroyContent();
-
-
         //     //  CRITICAL: Remove existing content before adding new fragment to prevent duplicate IDs
 
 
@@ -10871,12 +10864,9 @@ sap.ui.define([
         // onAllocatedPress: function () {
         //     sap.m.MessageToast.show("Allocated Count clicked");
         //     var oLogButton = this.byId("uploadLogButton");
-
         //     var oLogButton = this.byId("uploadLogButton");
-
         //     let oNavContainer = this.byId("pageContainer");
         //     oNavContainer.to(this.byId("employeeAllocationReportPage"));
-
 
         //     this._bEmployeeAllocationReportLoaded = false;
         //     const oCustomersPage = this.getView().byId("employeeAllocationReportPage");
@@ -10953,9 +10943,7 @@ sap.ui.define([
 
         // onBenchPress: function () {
         //     sap.m.MessageToast.show("Bench Count clicked");
-
         //     var oLogButton = this.byId("uploadLogButton");
-
         //     let oNavContainer = this.byId("pageContainer");
         //     oNavContainer.to(this.byId("employeeBenchReportPage"));
 
@@ -10983,7 +10971,6 @@ sap.ui.define([
         //         if (oModel) {
         //             oTable.setModel(oModel);
         //         }
-
 
         //         //  Set default filters for Customers FilterBar
         //         const oFilterBar = this.byId("employeeBenchReportFilterBar");
@@ -11023,23 +11010,12 @@ sap.ui.define([
 
         //         // Reset segmented button to "less" state for this fragment
         //         this._resetSegmentedButtonForFragment("EmployeeBenchReport");
-
         //     }.bind(this));
-
-        // },
-
-        // onUnallocatedBenchPress: function () {
-        //     sap.m.MessageToast.show("Pre Allocated clicked");
         // },
 
         // onUnproductiveBenchPress: function () {
         //     sap.m.MessageToast.show("Unproductive Bench clicked");
-
-
-
-
         //     var oLogButton = this.byId("uploadLogButton");
-
         //     let oNavContainer = this.byId("pageContainer");
         //     oNavContainer.to(this.byId("employeeBenchReportPage"));
 
@@ -11067,7 +11043,6 @@ sap.ui.define([
         //         if (oModel) {
         //             oTable.setModel(oModel);
         //         }
-
 
         //         //  Set default filters for Customers FilterBar
         //         const oFilterBar = this.byId("employeeBenchReportFilterBar");
@@ -11109,9 +11084,6 @@ sap.ui.define([
         //         this._resetSegmentedButtonForFragment("EmployeeBenchReport");
 
         //     }.bind(this));
-
-
-
         // },
 
         // onNetBenchPress: function () {
@@ -11287,20 +11259,7 @@ sap.ui.define([
 
         // },
 
-        // onYetToJoinPress: function () {
-        //     sap.m.MessageToast.show("Yet To Join clicked");
-        // },
-
-        // onProjectsEndingPress: function () {
-        //     sap.m.MessageToast.show("Projects Ending (In 2 Weeks) clicked");
-        // },
-        // onCustomerChange: function () {
-
-
-        // }
         onTotalHeadPress: function () {
-            // sap.m.MessageToast.show("Total Head Count clicked");
-
             var oLogButton = this.byId("uploadLogButton");
 
             let oNavContainer = this.byId("pageContainer");
@@ -11406,11 +11365,8 @@ sap.ui.define([
         },
 
         onAllocatedPress: function () {
-            // sap.m.MessageToast.show("Allocated Count clicked");
             var oLogButton = this.byId("uploadLogButton");
-
             var oLogButton = this.byId("uploadLogButton");
-
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeAllocationReportPage"));
 
@@ -11500,10 +11456,7 @@ sap.ui.define([
         },
 
         onBenchPress: function () {
-            // sap.m.MessageToast.show("Bench Count clicked");
-
             var oLogButton = this.byId("uploadLogButton");
-
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeBenchReportPage"));
 
@@ -11690,7 +11643,6 @@ sap.ui.define([
         },
 
         onUnproductiveBenchPress: function () {
-            // sap.m.MessageToast.show("Unproductive Bench clicked");
             var oLogButton = this.byId("uploadLogButton");
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeBenchReportPage"));
@@ -11787,9 +11739,7 @@ sap.ui.define([
         },
 
         onNetBenchPress: function () {
-            // sap.m.MessageToast.show("Inactive Bench clicked");
             var oLogButton = this.byId("uploadLogButton");
-
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("employeeBenchReportPage"));
 
@@ -11885,7 +11835,6 @@ sap.ui.define([
         },
 
         onDemandsPress: function () {
-            // sap.m.MessageToast.show("Demands Count clicked");
             var oLogButton = this.byId("uploadLogButton");
             let oNavContainer = this.byId("pageContainer");
             oNavContainer.to(this.byId("demandsPage"));
