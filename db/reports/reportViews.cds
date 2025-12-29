@@ -19,10 +19,7 @@ select from db.Employee as e {
         e.fullName as employeeName,
         e.band,
 
-        /* --- Days on bench: robust logic with guards and date casts --- */
-        
-            
-      
+        /* --- Days on bench --- */     
 
         cast(
           case
@@ -43,8 +40,7 @@ select from db.Employee as e {
                   and epa.endDate is not null
                   and cast(epa.endDate as Date) <= current_date
               ),
-              current_date
-              
+              current_date              
             )
 
             /* Else: use DOJ if present */

@@ -198,7 +198,7 @@
     </VBox>
     <VBox id="projectsEndingVBox" class="projectsEndingC Card clickable">
         <Text id="projectsEndingTitle" text="Projects Ending (In 2 Weeks)" class="myCardTitle"/>
-        <Text id="projectsEndingValue" text="5" class="myCardValue"/>
+        <Text id="projectsEndingValue" text="{homeCounts>/projectsCount}" class="myCardValue"/>
     </VBox>
 </HBox>
  

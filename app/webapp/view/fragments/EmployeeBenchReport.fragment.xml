@@ -176,20 +176,25 @@
  
                             <!-- Skills Filter with Value Help -->
                             <mdc:FilterField
-                                id="filterEmployeeBenchSkills"
-                                label="Skills"
+                                id="filterEmployeeBenchAge"
+                                label="Bench Age"
                                 width="250px"
-                                propertyKey="skills"
+                                propertyKey="daysOnBench"
                                 maxConditions="-1"
-                                conditions="{filterModel>/EmployeeBenchReport/conditions/skills}"
-                                valueHelp="vhSkills"
+                                conditions="{filterModel>/EmployeeBenchReport/conditions/daysOnBench}"
+                              
+                                    delegate='{
+                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
+                                    "payload": {}
+                                }'
+
                             >
-                                <mdc:dependents>
+                                <!-- <mdc:dependents>
                                     <mdc:ValueHelp
                                         id="vhSkills"
                                         delegate="{
                                             name: 'glassboard/delegate/SearchValueHelpDelegate',
-                                            payload: { searchKeys: ['skills', 'ohrId', 'band'] }
+                                            payload: { searchKeys: ['daysOnBench', 'ohrId', 'band'] }
                                         }"
                                     >
                                         <mdc:dialog>
@@ -227,7 +232,7 @@
                                             </mdcvh:Dialog>
                                         </mdc:dialog>
                                     </mdc:ValueHelp>
-                                </mdc:dependents>
+                                </mdc:dependents> -->
                             </mdc:FilterField>
                         </mdc:filterItems>
                     </mdc:FilterBar>

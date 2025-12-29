@@ -126,7 +126,8 @@ sap.ui.define([
                 unproductiveBenchCount: 0,
                 onLeaveCount: 0,
                 benchCount: 0,
-                demandCount: 0
+                demandCount: 0,
+                projectsCount: 0,
             });
             this.getView().setModel(oHomeCountsModel, "homeCounts");
         },
@@ -8489,7 +8490,8 @@ sap.ui.define([
                     this._loadPreAllocatedCount(),
                     this._loadUnproductiveBenchCount(),
                     this._loadOnLeaveCount(),
-                    this._loadDemandCount()
+                    this._loadDemandCount(),
+                    this._loadProjectsCount()
                 ]);
                 // Calculate Bench Count
                 this._calculateBenchCount();
@@ -8677,6 +8679,31 @@ sap.ui.define([
                 Log.error("Failed to load Demand Count (V4)", error);
             }
         },
+         _loadProjectsCount: async function () {
+            const oModel = this.getView().getModel("default") || this.getView().getModel();
+            if (!oModel) return;
+
+            try {
+                // Bind the collection with $count enabled
+                const oListBinding = oModel.bindList("/ProjectsNearingCompletionReport", /* context */ undefined, /* sorter */ undefined, /* filters */ undefined, {
+                    $count: true // ensure server returns total count
+                });
+
+                // Trigger the binding without requesting any rows
+                await oListBinding.requestContexts(0, 0);
+
+                // Get the server-evaluated length
+                const totalCount = oListBinding.getLength(); // integer >= 0
+
+                const oHomeCountsModel = this.getView().getModel("homeCounts");
+                if (oHomeCountsModel) {
+                    oHomeCountsModel.setProperty("/projectsCount", totalCount);
+                }
+            } catch (error) {
+                Log.error("Failed to load Demand Count (V4)", error);
+            }
+        },
+
 
         //  Calculate Bench Count (Pre Allocated + Unproductive Bench + On Leave)
         _calculateBenchCount: function () {
@@ -11925,7 +11952,90 @@ sap.ui.define([
         },
 
         onProjectsEndingPress: function () {
-            sap.m.MessageToast.show("Coming Soon");
+           // sap.m.MessageToast.show("Coming Soon");
+             var oLogButton = this.byId("uploadLogButton");
+            let oNavContainer = this.byId("pageContainer");
+            oNavContainer.to(this.byId("projectsNearingCompletionReportPage"));
+
+            const oProjectsNearingCompletionReportPage = this.byId("projectsNearingCompletionReportPage");
+            if (this._projectsNearingCompletionReport) {
+                // console.log("[MasterDemands] Fragment already loaded, skipping");
+                const oTable = this.byId("ProjectsNearingCompletionReportTable");
+                if (oTable) {
+                    this.initializeTable("ProjectsNearingCompletionReportTable").catch(() => {
+                        // Ignore errors during re-initialization
+                    });
+                }
+                return;
+            }
+            this._projectsNearingCompletionReport = true;
+            oProjectsNearingCompletionReportPage.destroyContent();
+
+            Fragment.load({
+                id: this.getView().getId(),
+                name: "glassboard.view.fragments.ProjectsNearingCompletionReport",
+                controller: this
+            }).then(function (oFragment) {
+                oProjectsNearingCompletionReportPage.addContent(oFragment);
+
+                const oTable = this.byId("ProjectsNearingCompletionReportTable");
+                // Ensure table starts with show-less state
+                oTable.removeStyleClass("show-more");
+                oTable.addStyleClass("show-less");
+
+                if (oLogButton) {
+                    oLogButton.setVisible(false);
+                }
+                // Ensure the table has the correct model
+                const oModel = this.getOwnerComponent().getModel();
+                if (oModel) {
+                    oTable.setModel(oModel);
+                }
+
+                //  Set default filters for Opportunities FilterBar
+                const oProjectsNearingCompletionReportFilterBar = this.byId("projectsNearingCompletionReportFilterBar");
+                if (oProjectsNearingCompletionReportFilterBar) {
+                    oProjectsNearingCompletionReportFilterBar.setModel(oModel, "default");
+                    const oFilterModel = this.getView().getModel("filterModel");
+                    const oFiltersModel = this.getView().getModel("$filters");
+                    if (oFilterModel) {
+                        oProjectsNearingCompletionReportFilterBar.setModel(oFilterModel, "filterModel");
+                    }
+                    if (oFiltersModel) {
+                        oProjectsNearingCompletionReportFilterBar.setModel(oFiltersModel, "$filters");
+                    }
+                    //  Set defaults with multiple retries
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oProjectsNearingCompletionReportFilterBar, ["SapPId"]);
+                    }, 1000);
+                    setTimeout(() => {
+                        this._setDefaultFilterFields(oProjectsNearingCompletionReportFilterBar, ["SapPId"]);
+                    }, 2000);
+                }
+
+                // Initialize table-specific functionality
+                this.initializeTable("ProjectsNearingCompletionReportTable");
+                // Reset segmented button to "less" state for this fragment
+                this._resetSegmentedButtonForFragment("ProjectsNearingCompletionReport");
+
+                //  Initialize Opportunity ID field and form
+                setTimeout(() => {
+                    oTable.initialized().then(() => {
+                        setTimeout(() => {
+                            this._initializeOpportunityIdField();
+                            const aSelectedContexts = oTable.getSelectedContexts ? oTable.getSelectedContexts() : [];
+                            if (aSelectedContexts.length === 0) {
+                                this._onOppDialogData([]);
+                            }
+                        }, 500);
+                    }).catch(() => {
+                        setTimeout(() => {
+                            this._initializeOpportunityIdField();
+                        }, 1000);
+                    });
+                }, 300);
+            }.bind(this));
+
         },
         _onCustomerChange: function () {
             this.byId("Resinput_proj").setEnabled(true);
