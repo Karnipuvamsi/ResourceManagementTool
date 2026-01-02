@@ -81,7 +81,7 @@ select from db.Employee as e
         p.projectName as currentProject,
         c.customerName as customer,
         epa.endDate as releaseDate,
-        cast(days_between(epa.endDate, current_date) as Integer) as daysToRelease,
+        cast(days_between(current_date,epa.endDate) as Integer) as daysToRelease,
         e.skills,
         e.location,
         
@@ -192,14 +192,22 @@ select from db.Project as p
         p.projectName,
         p.projectType,
         p.endDate as completionDate,
-        cast(days_between(p.endDate, current_date) as Integer) as daysToCompletion,
+       
+cast(
+  case
+    when p.endDate < current_date then 0
+    else days_between(current_date,p.endDate)
+  end
+  as Integer
+) as daysToCompletion,
+
         p.status,
         // Calculate completion risk
         cast(
             case 
-                when days_between(p.endDate, current_date) <= 30 then 'Critical'
-                when days_between(p.endDate, current_date) <= 60 then 'High'
-                when days_between(p.endDate, current_date) <= 90 then 'Medium'
+                when days_between(current_date,p.endDate) <= 30 then 'Critical'
+                when days_between(current_date,p.endDate) <= 60 then 'High'
+                when days_between(current_date,p.endDate) <= 90 then 'Medium'
                 else 'Low'
             end
             as String
@@ -214,9 +222,10 @@ select from db.Project as p
         e.mailid as projectManagerEmail,
         c.customerName as customer
 }
-where p.status = 'Active'
-  and p.endDate >= current_date
-  and days_between(p.endDate, current_date) <= 90;
+where p.endDate >= current_date
+and p.status = 'Active';
+//   and p.endDate >= current_date;
+  // and days_between(current_date,p.endDate) <= 90;
 
 // ============================================
 // ADDITIONAL REPORT VIEWS
