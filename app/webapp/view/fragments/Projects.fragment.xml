@@ -183,34 +183,16 @@
             >
                 <mdc:dialog>
                     <mdcvh:Dialog id="dlgProjectType" title="Select Project Type">
-                        <mdcvc:MDCTable keyPath="projectType" descriptionPath="projectType">
-                            <mdc:Table
-                                id="tblProjectTypeVH"
-                                autoBindOnInit="true"
-                                selectionMode="Multi"
-                                p13nMode="Column,Sort"
-                                enableAutoColumnWidth="true"
-                                threshold="20"
-                                filter="projectFilterBar"
-                                filterConditions="{filterModel>/Projects/conditions}"
-                                width="100%"
-                                delegate="{
-                                    name: 'glassboard/delegate/ProjectsTableDelegate',
-                                    payload: { collectionPath: 'Projects', searchKeys: ['projectType'] }
-                                }"
-                            >  <mdc:type>
-                                <table:GridTableType rowCountMode="Auto" />
-                            </mdc:type>
-                                <mdc:columns>
-                                    <mdct:Column header="Project Type" propertyKey="projectType">
-                                        <Text text="{projectType}" />
-                                    </mdct:Column>
-                                    <mdct:Column header="Internal PID" propertyKey="sapPId">
-                                        <Text text="{sapPId}" />
-                                    </mdct:Column>
-                                </mdc:columns>
-                            </mdc:Table>
-                        </mdcvc:MDCTable>
+                       <mdcvc:FixedList >
+          <mdcvc:items>
+            <mdcvc:FixedListItem key="FixedPrice" text="FixedPrice"/>
+            <mdcvc:FixedListItem key="PassThru" text="PassThru"/>
+            <mdcvc:FixedListItem key="Divine" text="Divine"/>
+             <mdcvc:FixedListItem key="T and M" text="T and M"/>
+             <mdcvc:FixedListItem key="TransactionBased" text="TransactionBased"/>
+             <mdcvc:FixedListItem key="Support" text="Support"/>
+          </mdcvc:items>
+        </mdcvc:FixedList>
                     </mdcvh:Dialog>
                 </mdc:dialog>
             </mdc:ValueHelp>

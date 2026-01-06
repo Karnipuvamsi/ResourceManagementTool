@@ -132,9 +132,7 @@ inner join db.Opportunity as opp
 inner join db.Customer as c
   on opp.customerId = c.SAPcustId
 {
-  key e.ohrId as employeeId,
-  
-  
+  key e.ohrId as employeeId,  
   e.fullName as employeeName,
   e.band,
   e.employeeType,

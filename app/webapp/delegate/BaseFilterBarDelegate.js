@@ -56,6 +56,12 @@ sap.ui.define([
             return "EmployeeBenchReport";
         } else if (sFilterBarId.includes("employeeSkillReportFilterBar")) {
             return "EmployeeSkillReport";
+        } else if (sFilterBarId.includes("projectsNearingCompletionReportFilterBar")) {
+            return "ProjectsNearingCompletionReport";
+        }else if (sFilterBarId.includes("employeeProbableReleaseReportFilterBar")) {
+            return "EmployeeProbableReleaseReport";
+        }else if (sFilterBarId.includes("revenueForecastReportFilterBar")) {
+            return "RevenueForecastReport";
         }
         // Default fallback
         return "Customers";

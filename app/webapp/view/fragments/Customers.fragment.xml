@@ -183,52 +183,25 @@
             <!-- DIALOG - exactly like the Customer Name one -->
             <mdc:dialog>
                 <mdcvh:Dialog id="dlgVerticalVH" title="Select Vertical">
-                    <mdcvc:MDCTable 
-                        keyPath="vertical" 
-                        descriptionPath="vertical"
-                    >
-                        <mdc:Table
-                            id="tblVerticalVH"
-                            autoBindOnInit="true"
-                            width="100%"
-                            selectionMode="Multi"
-                            p13nMode="Column,Sort"
-                            enableAutoColumnWidth="true"
-                            threshold="20"
-                            filter="customerFilterBar"
-                            filterConditions="{filterModel>/Customers/conditions}"
-                            delegate="{
-                                name: 'glassboard/delegate/CustomersTableDelegate',
-                                payload: {
-                                    collectionPath: 'Customers',
-                                    searchKeys: ['vertical','customerName']
-                                }
-                            }"
-                        >
-                            <mdc:type>
-                                <table:GridTableType rowCountMode="Auto" />
-                            </mdc:type>
-
-                            <!-- SAME TWO COLUMNS AS IN CUSTOMER NAME DIALOG -->
-                            <mdc:columns>
-                                <mdct:Column
-                                    id="VHcolVertical1"
-                                    header="Vertical"
-                                    propertyKey="vertical"
-                                >
-                                    <Text text="{vertical}" />
-                                </mdct:Column>
-
-                                <mdct:Column 
-                                    id="VHcolCustName1"
-                                    header="Customer Name" 
-                                    propertyKey="customerName"
-                                >
-                                    <Text text="{customerName}" />
-                                </mdct:Column>
-                            </mdc:columns>
-                        </mdc:Table>
-                    </mdcvc:MDCTable>
+                   <mdcvc:FixedList >
+          <mdcvc:items>
+         
+<mdcvc:FixedListItem key="" text="Select Vertical..." />
+<mdcvc:FixedListItem key="BFS" text="BFS" />
+<mdcvc:FixedListItem key="CapitalMarkets" text="Capital Markets" />
+<mdcvc:FixedListItem key="CPG" text="CPG" />
+<mdcvc:FixedListItem key="Healthcare" text="Healthcare" />
+<mdcvc:FixedListItem key="HighTech" text="High Tech" />
+<mdcvc:FixedListItem key="Insurance" text="Insurance" />
+<mdcvc:FixedListItem key="LifeSciences" text="Life Sciences" />
+<mdcvc:FixedListItem key="Manufacturing" text="Manufacturing" />
+<mdcvc:FixedListItem key="Retail" text="Retail" />
+<mdcvc:FixedListItem key="Services" text="Services" />
+<mdcvc:FixedListItem key="Corporate-CMITS-9634" text="Corporate-CMITS-9634" />
+ 
+ 
+          </mdcvc:items>
+        </mdcvc:FixedList>
                 </mdcvh:Dialog>
             </mdc:dialog>
         </mdc:ValueHelp>

@@ -1,9 +1,13 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition   
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="employeeProbableReleaseReportDynamicPage"
         fitContent="false"
@@ -39,35 +43,115 @@
                         <!-- Static filter items - Default filters -->
                         <mdc:filterItems>
                             <!-- Employee Name Filter -->
-                            <mdc:FilterField
-                                id="filterProbableReleaseEmployeeName"
-                                label="Employee Name"
-                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/employeeName}"
-                                propertyKey="employeeName"
+<mdc:FilterField
+       id="filterProbableReleaseOHRID"
+                                label="OHR ID"
+                                conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/ohrId}"
+                                propertyKey="ohrId"
                                 maxConditions="-1"
                                 required="false"
                              
                                 width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                valueHelp="vhProbableReleaseOHRID"
+      >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhProbableReleaseOHRID"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['ohrId','employeeName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgProbableReleaseOHRID" title="Select OHR ID">
+                    <mdcvc:MDCTable keyPath="ohrId" descriptionPath="ohrId">
+                            <mdc:Table
+                                id="tblProbableReleaseOHRIDVH"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                 p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="20"
+                                filter="employeeFilterBar"
+                                filterConditions="{filterModel>/Employees/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/EmployeeProbableReleaseReportTableDelegate',
+                                    payload: { collectionPath: 'EmployeeProbableReleaseReport', searchKeys: ['ohrId','employeeName'] }
+                                }"
+                            >    <mdc:type>
+                                    <table:GridTableType rowCountMode="Auto" />
+                                    </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="OHR ID" propertyKey="ohrId">
+                                        <Text text="{ohrId}" />
+                                    </mdct:Column>
+                                    <mdct:Column header="Employee name" propertyKey="employeeName">
+                                        <Text text="{employeeName}" />
+                                    </mdct:Column>
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+ 
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+</mdc:FilterField>
                             <!-- Current Project Filter -->
-                            <mdc:FilterField
-                                id="filterProbableReleaseCurrentProject"
-                                label="Current Project"
+   <mdc:FilterField
+       id="filterProbableReleaseCurrentProject"
+                                label="Project"
                                 conditions="{filterModel>/EmployeeProbableReleaseReport/conditions/currentProject}"
                                 propertyKey="currentProject"
                                 maxConditions="-1"
                                 required="false"
                              
                                 width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+                                valueHelp="vhProbableReleaseCurrentProject"
+      >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhProbableReleaseCurrentProject"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['projectName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgProbableReleaseCurrentProject" title="Select OHR ID">
+                    <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                            <mdc:Table
+                                id="tblProbableReleaseCurrentProject"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                 p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="20"
+                                filter="employeeFilterBar"
+                                filterConditions="{filterModel>/Employees/conditions}"
+                                width="100%"
+                                delegate="{
+                                    name: 'glassboard/delegate/EmployeeProbableReleaseReportTableDelegate',
+                                    payload: { collectionPath: 'EmployeeProbableReleaseReport', searchKeys: ['projectName'] }
+                                }"
+                            >    <mdc:type>
+                                    <table:GridTableType rowCountMode="Auto" />
+                                    </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Project Name" propertyKey="projectName">
+                                        <Text text="{projectName}" />
+                                    </mdct:Column>
+                                    
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+ 
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+</mdc:FilterField>                      
                             <!-- Days To Release Filter -->
                             <mdc:FilterField
                                 id="filterProbableReleaseDaysToRelease"

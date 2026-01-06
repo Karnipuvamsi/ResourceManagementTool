@@ -3,43 +3,43 @@ using {com.company.resourceallocation.reports as reports} from '../db/reports/re
 
 service MyService {
   // Master Data Entities - MDC Responsive Tables
-  entity Customers                       as projection on db.Customer;
-  entity Opportunities                   as projection on db.Opportunity;
-  entity Projects                        as projection on db.Project;
+  entity Customers as projection on db.Customer excluding { createdAt, createdBy, modifiedAt, modifiedBy };
+  entity Opportunities as projection on db.Opportunity excluding { createdAt, createdBy, modifiedAt, modifiedBy };
+  entity Projects as projection on db.Project excluding { createdAt, createdBy, modifiedAt, modifiedBy };
 
   @cds.redirection.target: true
-  entity Employees                       as projection on db.Employee;
+  entity Employees as projection on db.Employee excluding { createdAt, createdBy, modifiedAt, modifiedBy };
 
-  entity Demands                         as projection on db.Demand;
+  entity Demands as projection on db.Demand excluding { createdAt, createdBy, modifiedAt, modifiedBy };
 
   // Skills Master Data
   @cds.redirection.target: true
-  entity Skills                          as projection on db.Skills;
+  entity Skills as projection on db.Skills excluding { createdAt, createdBy, modifiedAt, modifiedBy };
 
   // Employee-Skills Junction Table (Many-to-Many)
   entity EmployeeSkills                  as projection on db.EmployeeSkill;
 
   // Employee-Project Allocations
-  entity Allocations                     as projection on db.EmployeeProjectAllocation;
-  entity newAllocations                  as projection on db.EmployeeNewAllocation;  
+  entity Allocations as projection on db.EmployeeProjectAllocation;
+  entity newAllocations as projection on db.EmployeeNewAllocation excluding { createdAt, createdBy, modifiedAt, modifiedBy };  
 
   // ============================================
   // REPORT ENTITIES (from ReportService)
   // ============================================
   @readonly
-  entity EmployeeBenchReport             as projection on reports.EmployeeBenchReportView;
+  entity EmployeeBenchReport as projection on reports.EmployeeBenchReportView;
 
   @readonly
-  entity EmployeeProbableReleaseReport   as projection on reports.EmployeeProbableReleaseView;
+  entity EmployeeProbableReleaseReport as projection on reports.EmployeeProbableReleaseView;
 
   @readonly
-  entity RevenueForecastReport           as projection on reports.RevenueForecastView;
+  entity RevenueForecastReport as projection on reports.RevenueForecastView;
 
   @readonly
-  entity EmployeeAllocationReport        as projection on reports.EmployeeAllocationReportView;
+  entity EmployeeAllocationReport as projection on reports.EmployeeAllocationReportView;
 
   @readonly
-  entity EmployeeSkillReport             as projection on reports.EmployeeSkillReportView;
+  entity EmployeeSkillReport as projection on reports.EmployeeSkillReportView;
 
   @readonly
   entity ProjectsNearingCompletionReport as projection on reports.ProjectsNearingCompletionView;

@@ -138,36 +138,21 @@
                                     >
                                         <mdc:dialog>
                                             <mdcvh:Dialog id="dlgBandVH" title="Select Band">
-                                                <mdcvc:MDCTable keyPath="band" descriptionPath="band">
-                                                    <mdc:Table
-                                                        id="tblBandVH"
-                                                        autoBindOnInit="true"
-                                                        selectionMode="Multi"
-                                                        p13nMode="Column,Sort"
-                                                        enableAutoColumnWidth="true"
-                                                        threshold="20"
-                                                        width="100%"
-                                                        delegate="{
-                                                            name: 'glassboard/delegate/EmployeeBenchReportTableDelegate',
-                                                            payload: { collectionPath: 'EmployeeBenchReport', searchKeys: ['band', 'ohrId', 'skills'] }
-                                                        }"
-                                                    >
-                                                        <mdc:type>
-                                                            <table:GridTableType rowCountMode="Auto" />
-                                                        </mdc:type>
-                                                        <mdc:columns>
-                                                            <mdct:Column header="Band" propertyKey="band">
-                                                                <Text text="{band}" />
-                                                            </mdct:Column>
-                                                            <mdct:Column header="OHR ID" propertyKey="ohrId">
-                                                                <Text text="{ohrId}" />
-                                                            </mdct:Column>
-                                                            <mdct:Column header="Skills" propertyKey="skills">
-                                                                <Text text="{skills}" />
-                                                            </mdct:Column>
-                                                        </mdc:columns>
-                                                    </mdc:Table>
-                                                </mdcvc:MDCTable>
+                                                   <mdcvc:FixedList >
+          <mdcvc:items>
+            <mdcvc:FixedListItem key="1" text="1"/>
+            <mdcvc:FixedListItem key="2" text="2"/>
+            <mdcvc:FixedListItem key="3" text="3"/>
+            <mdcvc:FixedListItem key="4A" text="4A"/>
+            <mdcvc:FixedListItem key="4B-C" text="4B-C"/>
+            <mdcvc:FixedListItem key="4B-LC" text="4B-LC"/>
+            <mdcvc:FixedListItem key="4C" text="4C"/>
+            <mdcvc:FixedListItem key="4D" text="4D"/>
+            <mdcvc:FixedListItem key="5A" text="5A"/>
+            <mdcvc:FixedListItem key="5B" text="5B"/>
+             <mdcvc:FixedListItem key="Subcon" text="Subcon"/>
+          </mdcvc:items>
+        </mdcvc:FixedList>
                                             </mdcvh:Dialog>
                                         </mdc:dialog>
                                     </mdc:ValueHelp>

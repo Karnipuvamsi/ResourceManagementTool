@@ -55,7 +55,7 @@
         maxConditions="-1"
         conditions="{filterModel>/Employees/conditions/ohrId}"
         valueHelp="vhEmployeeOHRId"
-    >
+       >
         <mdc:dependents>
             <mdc:ValueHelp
                 id="vhEmployeeOHRId"
@@ -99,14 +99,14 @@
                 </mdc:dialog>
             </mdc:ValueHelp>
         </mdc:dependents>
-         </mdc:FilterField>
+</mdc:FilterField>
 
 
 
     <!-- ============================
          BAND (VALUE HELP)
     ============================ -->
-    <mdc:FilterField
+<mdc:FilterField
         id="filterEmployeeBand"
         label="Band"
         width="200px"
@@ -125,47 +125,34 @@
             >
                 <mdc:dialog>
                     <mdcvh:Dialog id="dlgEmployeeBand" title="Select Band">
-                        <mdcvc:MDCTable keyPath="band" descriptionPath="band">
-                            <mdc:Table
-                                id="tblEmployeeBandVH"
-                                autoBindOnInit="true"
-                                selectionMode="Multi"
-                                width="100%"
-                                 p13nMode="Column,Sort"
-                                enableAutoColumnWidth="true"
-                                threshold="20"
-                                filter="employeeFilterBar"
-                                filterConditions="{filterModel>/Employees/conditions}"
-                                delegate="{
-                                    name: 'glassboard/delegate/EmployeesTableDelegate',
-                                    payload: { collectionPath: 'Employees', searchKeys: ['band','ohrId'] }
-                                }"
-                            > 
-                                <mdc:type>
-                                    <table:GridTableType rowCountMode="Auto" />
-                                    </mdc:type>
-                                <mdc:columns>
-                                    <mdct:Column header="Band" propertyKey="band">
-                                        <Text text="{band}" />
-                                    </mdct:Column>
-                                    <mdct:Column header="OHR ID" propertyKey="ohrId">
-                                        <Text text="{ohrId}" />
-                                    </mdct:Column>
-                                </mdc:columns>
-                            </mdc:Table>
-                        </mdcvc:MDCTable>
+                           <mdcvc:FixedList >
+          <mdcvc:items>
+            <mdcvc:FixedListItem key="1" text="1"/>
+            <mdcvc:FixedListItem key="2" text="2"/>
+            <mdcvc:FixedListItem key="3" text="3"/>
+            <mdcvc:FixedListItem key="4A" text="4A"/>
+            <mdcvc:FixedListItem key="4B-C" text="4B-C"/>
+            <mdcvc:FixedListItem key="4B-LC" text="4B-LC"/>
+            <mdcvc:FixedListItem key="4C" text="4C"/>
+            <mdcvc:FixedListItem key="4D" text="4D"/>
+            <mdcvc:FixedListItem key="5A" text="5A"/>
+            <mdcvc:FixedListItem key="5B" text="5B"/>
+             <mdcvc:FixedListItem key="Subcon" text="Subcon"/>
+          </mdcvc:items>
+        </mdcvc:FixedList>
+ 
                     </mdcvh:Dialog>
                 </mdc:dialog>
             </mdc:ValueHelp>
         </mdc:dependents>
-    </mdc:FilterField>
+</mdc:FilterField>
 
 
 
     <!-- ============================
          SKILLS (VALUE HELP)
     ============================ -->
-    <mdc:FilterField
+<mdc:FilterField
         id="filterEmployeeSkills"
         label="Skills"
         width="250px"
@@ -173,7 +160,7 @@
         maxConditions="-1"
         conditions="{filterModel>/Employees/conditions/skills}"
         valueHelp="vhEmployeeSkills"
-    >
+      >
         <mdc:dependents>
             <mdc:ValueHelp
                 id="vhEmployeeSkills"
@@ -184,7 +171,7 @@
             >
                 <mdc:dialog>
                     <mdcvh:Dialog id="dlgEmployeeSkills" title="Select Skill">
-                        <mdcvc:MDCTable keyPath="skills" descriptionPath="skills">
+                    <mdcvc:MDCTable keyPath="name" descriptionPath="name">
                             <mdc:Table
                                 id="tblEmployeeSkillsVH"
                                 autoBindOnInit="true"
@@ -196,30 +183,25 @@
                                 filterConditions="{filterModel>/Employees/conditions}"
                                 width="100%"
                                 delegate="{
-                                    name: 'glassboard/delegate/EmployeesTableDelegate',
-                                    payload: { collectionPath: 'Employees', searchKeys: ['skills','ohrId','band'] }
+                                    name: 'glassboard/delegate/SkillsTableDelegate',
+                                    payload: { collectionPath: 'Skills', searchKeys: ['name'] }
                                 }"
                             >    <mdc:type>
                                     <table:GridTableType rowCountMode="Auto" />
                                     </mdc:type>
                                 <mdc:columns>
-                                    <mdct:Column header="Skill" propertyKey="skills">
-                                        <Text text="{skills}" />
-                                    </mdct:Column>
-                                    <mdct:Column header="Band" propertyKey="band">
-                                        <Text text="{band}" />
-                                    </mdct:Column>
-                                    <mdct:Column header="OHR ID" propertyKey="ohrId">
-                                        <Text text="{ohrId}" />
+                                    <mdct:Column header="Skill" propertyKey="name">
+                                        <Text text="{name}" />
                                     </mdct:Column>
                                 </mdc:columns>
                             </mdc:Table>
                         </mdcvc:MDCTable>
+ 
                     </mdcvh:Dialog>
                 </mdc:dialog>
             </mdc:ValueHelp>
         </mdc:dependents>
-    </mdc:FilterField>
+</mdc:FilterField>
 
 </mdc:filterItems>
 

@@ -1,9 +1,13 @@
-<core:FragmentDefinition xmlns:core="sap.ui.core"
-                         xmlns="sap.m"
-                         xmlns:f="sap.ui.layout.form"
-                         xmlns:mdc="sap.ui.mdc"
-                         xmlns:mdct="sap.ui.mdc.table"
-                         xmlns:layout="sap.f">
+<core:FragmentDefinition 
+   xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:mdc="sap.ui.mdc"
+    xmlns:table="sap.ui.mdc.table"
+    xmlns:mdct="sap.ui.mdc.table"
+    xmlns:mdcvh="sap.ui.mdc.valuehelp"
+    xmlns:mdcvc="sap.ui.mdc.valuehelp.content"
+    xmlns:layout="sap.f">
     <layout:DynamicPage
         id="projectsNearingCompletionReportDynamicPage"
         fitContent="false"
@@ -40,7 +44,7 @@
                         <mdc:filterItems>
                             <!-- Project Name Filter -->
                             <mdc:FilterField
-                                id="filterProjectsCompletionProjectName"
+       id="filterProjectsCompletionProjectName"
                                 label="Project Name"
                                 conditions="{filterModel>/ProjectsNearingCompletionReport/conditions/projectName}"
                                 propertyKey="projectName"
@@ -48,14 +52,53 @@
                                 required="false"
                                
                                 width="250px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+        valueHelp="vhProjectsCompletionProjectName"
+       >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhProjectsCompletionProjectName"
+                delegate="{
+                    name: 'glassboard/delegate/SearchValueHelpDelegate',
+                    payload: { searchKeys: ['projectName'] }
+                }"
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgEmployeeprojectName" title="Select projectName">
+                        <mdcvc:MDCTable keyPath="projectName" descriptionPath="projectName">
+                            <mdc:Table
+                                id="tblProjectsCompletionProjectName"
+                                autoBindOnInit="true"
+                                selectionMode="Multi"
+                                width="100%"
+                                p13nMode="Column,Sort"
+                                enableAutoColumnWidth="true"
+                                threshold="20"
+                                filter="employeeFilterBar"
+                                filterConditions="{filterModel>/ProjectsNearingCompletionReport/conditions}"
+                                delegate="{
+                                    name: 'glassboard/delegate/ProjectsNearingCompletionReportTableDelegate',
+                                    payload: { collectionPath: 'ProjectsNearingCompletionReport', searchKeys: ['projectName'] }
+                                }"
+                            >
+                                  <mdc:type>
+                                    <table:GridTableType rowCountMode="Auto" />
+                                    </mdc:type>
+                                <mdc:columns>
+                                    <mdct:Column header="Project Name" propertyKey="projectName">
+                                        <Text text="{projectName}" />
+                                    </mdct:Column>
+                                    
+                                </mdc:columns>
+                            </mdc:Table>
+                        </mdcvc:MDCTable>
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+</mdc:FilterField>
                             <!-- Completion Risk Filter -->
-                            <mdc:FilterField
-                                id="filterProjectsCompletionRisk"
+                        <mdc:FilterField
+        id="filterProjectsCompletionRisk"
                                 label="Completion Risk"
                                 conditions="{filterModel>/ProjectsNearingCompletionReport/conditions/completionRisk}"
                                 propertyKey="completionRisk"
@@ -63,25 +106,45 @@
                                 required="false"
                                
                                 width="200px"
-                                delegate='{
-                                    "name": "sap/ui/mdc/field/FieldBaseDelegate",
-                                    "payload": {}
-                                }'
-                            />
+        valueHelp="vhProjectsCompletionRisk"
+    >
+        <mdc:dependents>
+            <mdc:ValueHelp
+                id="vhProjectsCompletionRisk"
+               
+            >
+                <mdc:dialog>
+                    <mdcvh:Dialog id="dlgCompletionRisk" title="Completion Risk">
+                           <mdcvc:FixedList >
+          <mdcvc:items>
+            <mdcvc:FixedListItem key="Critical" text="Critical"/>
+            <mdcvc:FixedListItem key="High" text="High"/>
+            <mdcvc:FixedListItem key="Medium" text="Medium"/>
+            <mdcvc:FixedListItem key="Low" text="Low"/>
+           
+          </mdcvc:items>
+        </mdcvc:FixedList>
+ 
+                    </mdcvh:Dialog>
+                </mdc:dialog>
+            </mdc:ValueHelp>
+        </mdc:dependents>
+</mdc:FilterField>
                             <!-- Customer Filter -->
                             <mdc:FilterField
-                                id="filterProjectsCompletionCustomer"
-                                label="Customer"
-                                conditions="{filterModel>/ProjectsNearingCompletionReport/conditions/customer}"
-                                propertyKey="customer"
+                                id="filterProjectsCompletion"
+                                label="Days to Completion"
+                                conditions="{filterModel>/ProjectsNearingCompletionReport/conditions/daysToCompletion}"
+                                propertyKey="daysToCompletion"
                                 maxConditions="-1"
                                 required="false"
                                
                                 width="250px"
-                                delegate='{
+                                   delegate='{
                                     "name": "sap/ui/mdc/field/FieldBaseDelegate",
                                     "payload": {}
                                 }'
+                               
                             />
                         </mdc:filterItems>
                     </mdc:FilterBar>

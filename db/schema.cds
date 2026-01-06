@@ -12,34 +12,34 @@ namespace db;
 using {managed} from '@sap/cds/common';
 
 
-type CustomerStatusEnum   : String enum {
-    Active = 'Active';
-    Inactive = 'Inactive';
-    Prospect = 'Prospect'
-}
+// type CustomerStatusEnum   : String enum {
+//     Active = 'Active';
+//     Inactive = 'Inactive';
+//     Prospect = 'Prospect'
+// }
 
 // ✅ CONVERTED: Vertical entity to enum (fixed values)
-type VerticalEnum         : String enum {
-    BFS = 'BFS';
-    CapitalMarkets = 'Capital Markets';
-    CPG = 'CPG';
-    Healthcare = 'Healthcare';
-    HighTech = 'High Tech';
-    Insurance = 'Insurance';
-    LifeSciences = 'Life Sciences';
-    Manufacturing = 'Manufacturing';
-    Retail = 'Retail';
-    Services = 'Services';
-}
+// type VerticalEnum         : String enum {
+//     BFS = 'BFS';
+//     CapitalMarkets = 'Capital Markets';
+//     CPG = 'CPG';
+//     Healthcare = 'Healthcare';
+//     HighTech = 'High Tech';
+//     Insurance = 'Insurance';
+//     LifeSciences = 'Life Sciences';
+//     Manufacturing = 'Manufacturing';
+//     Retail = 'Retail';
+//     Services = 'Services';
+// }
 
-entity Customer {
+entity Customer : managed {
     key SAPcustId        : String;
         customerName     : String(100);
         custCountryId    : Integer; // ✅ CHANGED: Now using Integer ID instead of String (optional/nullable by default)
         custStateId      : Integer; // ✅ CHANGED: Now using Integer ID instead of String (optional/nullable by default)
         custCityId       : Integer; // ✅ NEW: City ID (optional/nullable by default)
-        status           : CustomerStatusEnum;
-        vertical         : VerticalEnum; // ✅ CHANGED: Now using enum instead of entity
+        status           : String;
+        vertical         : String; // ✅ CHANGED: Now using enum instead of entity
         startDate        : Date; // ✅ NEW: Customer start date (optional/nullable by default)
         endDate          : Date; // ✅ NEW: Customer end date (optional/nullable by default)
 
@@ -56,130 +56,134 @@ entity Customer {
 
 // -------------------- Opportunity --------------------
 
-type ProbabilityEnum      : String enum {
-    ProposalStage = '0%-ProposalStage'; // Proposal Stage
-    SoWSent = '33%-SoWSent'; // SoW is Sent
-    SoWSigned = '85%-SoWSigned'; // SoW is Signed
-    PurchaseOrderReceived = '100%-PurchaseOrderReceived'; // Purchase Order is received
-}
+// type ProbabilityEnum      : String enum {
+//     ProposalStage = '0%-ProposalStage'; // Proposal Stage
+//     SoWSent = '33%-SoWSent'; // SoW is Sent
+//     SoWSigned = '85%-SoWSigned'; // SoW is Signed
+//     PurchaseOrderReceived = '100%-PurchaseOrderReceived'; // Purchase Order is received
+// }
 
-type OpportunityStageEnum : String enum {
-    Discover = 'Discover';
-    Define = 'Define';
-    OnBid = 'On Bid';
-    DownSelect = 'Down Select';
-    SignedDeal = 'Signed Deal';
-    Confirmed = 'Confirmed';
-}
+// type OpportunityStageEnum : String enum {
+//     Discover = 'Discover';
+//     Define = 'Define';
+//     OnBid = 'On Bid';
+//     DownSelect = 'Down Select';
+//     SignedDeal = 'Signed Deal';
+//     Confirmed = 'Confirmed';
+// }
 
 // Currency Enum for Opportunities
-type CurrencyEnum         : String enum {
-    USD = 'USD';
-    EUR = 'EUR';
-    GBP = 'GBP';
-    INR = 'INR';
-    JPY = 'JPY';
-    AUD = 'AUD';
-    CAD = 'CAD';
-    CHF = 'CHF';
-    CNY = 'CNY';
-    SGD = 'SGD';
-}
+// type CurrencyEnum         : String enum {
+//     USD = 'USD';
+//     EUR = 'EUR';
+//     GBP = 'GBP';
+//     INR = 'INR';
+//     JPY = 'JPY';
+//     AUD = 'AUD';
+//     CAD = 'CAD';
+//     CHF = 'CHF';
+//     CNY = 'CNY';
+//     SGD = 'SGD';
+// }
 
-entity Opportunity {
+entity Opportunity : managed {
     key sapOpportunityId  : String;
         sfdcOpportunityId : String;
         opportunityName   : String;
         businessUnit      : String;
-        probability       : ProbabilityEnum;
+        probability       : String; //Actual
         salesSPOC         : String;
         deliverySPOC      : String;
         expectedStart     : Date;
         expectedEnd       : Date;
         tcv               : Decimal(15, 2);
-        currency          : CurrencyEnum; // ✅ NEW: Currency for TCV
-        Stage             : OpportunityStageEnum;
+        currency          : String; // ✅ NEW: Currency for TCV
+        Stage             : String; //SFDC
         customerId        : String;
 
         to_Customer       : Association to one Customer
                                 on to_Customer.SAPcustId = $self.customerId;
         to_Project        : Association to many Project
                                 on to_Project.oppId = $self.sapOpportunityId;
+
+        
+    
+
 }
 
 // -------------------- Project --------------------
 
-type ProjectTypeEnum      : String enum {
-    FixedPrice = 'Fixed Price';
-    TransactionBased = 'Transaction Based';
-    FixedMonthly = 'Fixed Monthly';
-    PassThru = 'Pass Thru';
-    Divine = 'Divine';
-    TimeAndMaterial = 'Time & Material';
-}
+// type ProjectTypeEnum      : String enum {
+//     FixedPrice = 'Fixed Price';
+//     TransactionBased = 'Transaction Based';
+//     FixedMonthly = 'Fixed Monthly';
+//     PassThru = 'Pass Thru';
+//     Divine = 'Divine';
+//     TimeAndMaterial = 'Time & Material';
+// }
 
-type ProjectStatusEnum    : String enum {
-    Active = 'Active';
-    Closed = 'Closed';
-    ToBeCreated = 'TO BE CREATED';
-}
+// type ProjectStatusEnum    : String enum {
+//     Active = 'Active';
+//     Closed = 'Closed';
+//     ToBeCreated = 'TO BE CREATED';
+// }
 
-type SowEnum              : String enum {
-    Yes = 'Yes';
-    No = 'No';
-}
+// type SowEnum              : String enum {
+//     Yes = 'Yes';
+//     No = 'No';
+// }
 
-type PoEnum               : String enum {
-    Yes = 'Yes';
-    No = 'No';
-}
+// type PoEnum               : String enum {
+//     Yes = 'Yes';
+//     No = 'No';
+// }
 
-type Segment              : String enum {
-    Data = 'Data';
-    Tech = 'Tech';
-    AI = 'AI';
-}
+// type Segment              : String enum {
+//     Data = 'Data';
+//     Tech = 'Tech';
+//     AI = 'AI';
+// }
 
-type Vertical             : String enum {
-    HMS = 'HMS';
-    CNH = 'CNH';
-    FS = 'FS';
-}
+// type Vertical             : String enum {
+//     HMS = 'HMS';
+//     CNH = 'CNH';
+//     FS = 'FS';
+// }
 
-type SubVertical          : String enum {
-    SAP = 'SAP';
-    Digital = 'Digital';
-}
+// type SubVertical          : String enum {
+//     SAP = 'SAP';
+//     Digital = 'Digital';
+// }
 
-type Unit                 : String enum {
-    GEV = 'GEV';
-    HMS = 'HMS';
-    CNH = 'CNH';
-    FS = 'FS';
-}
+// type Unit                 : String enum {
+//     GEV = 'GEV';
+//     HMS = 'HMS';
+//     CNH = 'CNH';
+//     FS = 'FS';
+// }
 
 
-entity Project {
+entity Project : managed {
     key sapPId             : String;
         sfdcPId            : String;
         projectName        : String(256);
         startDate          : Date;
         endDate            : Date;
         gpm                : String;
-        projectType        : ProjectTypeEnum;
+        projectType        : String;
         oppId              : String;
         
-        segment            : Segment;
-        vertical           : Vertical;
-        subVertical        : SubVertical;
-        unit               : Unit;
+        segment            : String;
+        vertical           : String;
+        subVertical        : String;
+        unit               : String;
 
-        status             : ProjectStatusEnum;
+        status             : String;
         requiredResources  : Integer;
         allocatedResources : Integer;
         toBeAllocated      : Integer;
-        SOWReceived        : SowEnum;
-        POReceived         : PoEnum;
+        SOWReceived        : String;
+        POReceived         : String;
 
         to_Opportunity     : Association to one Opportunity
                                  on to_Opportunity.sapOpportunityId = $self.oppId;
@@ -187,13 +191,13 @@ entity Project {
                                  on to_GPM.ohrId = $self.gpm;
         to_Demand          : Association to many Demand
                                  on to_Demand.sapPId = $self.sapPId;
-        to_Allocations     : Association to many EmployeeProjectAllocation // ✅ NEW
+        to_Allocations     : Association to many EmployeeNewAllocation // ✅ NEW
                                  on to_Allocations.projectId = $self.sapPId;
 }
 
 // ----------------------- Demand -------------------------------------
 
-entity Demand {
+entity Demand : managed{
     key demandId       : Integer; // ✅ Changed from UUID to Integer for simplicity
         skill          : String; // Skill name (simple string field)
         band           : String;
@@ -208,44 +212,44 @@ entity Demand {
 
 // -------------------- Employee --------------------
 
-type EmployeeTypeEnum     : String enum {
-    FullTime = 'Full Time';
-    SubCon = 'Subcon';
-    Intern = 'Intern';
-    YTJ = 'Yet To Join';
-}
+// type EmployeeTypeEnum     : String enum {
+//     FullTime = 'Full Time';
+//     SubCon = 'Subcon';
+//     Intern = 'Intern';
+//     YTJ = 'Yet To Join';
+// }
 
-type EmployeeStatusEnum   : String enum {
-    PreAllocated = 'Pre Allocated';
-    Allocated = 'Allocated';
-    Resigned = 'Resigned';
-    UnproductiveBench = 'Unproductive Bench';
-    ProductiveBench = 'Inactive Bench';
-}
+// type EmployeeStatusEnum   : String enum {
+//     PreAllocated = 'Pre Allocated';
+//     Allocated = 'Allocated';
+//     Resigned = 'Resigned';
+//     UnproductiveBench = 'Unproductive Bench';
+//     ProductiveBench = 'Inactive Bench';
+// }
 
-type GenderEnum           : String enum {
-    Male = 'Male';
-    Female = 'Female';
-    Others = 'Others';
-}
+// type GenderEnum           : String enum {
+//     Male = 'Male';
+//     Female = 'Female';
+//     Others = 'Others';
+// }
 
-type EmployeeBandEnum     : String enum {
-    Band1 = '1';
-    Band2 = '2';
-    Band3 = '3';
-    Band4A = '4A';
-    Band4BC = '4B-C';
-    Band4BLC = '4B-LC';
-    Band4C = '4C';
-    Band4D = '4D';
-    Band5A = '5A';
-    Band5B = '5B';
-    BandSubcon = 'Subcon';
-}
+// type EmployeeBandEnum     : String enum {
+//     Band1 = '1';
+//     Band2 = '2';
+//     Band3 = '3';
+//     Band4A = '4A';
+//     Band4BC = '4B-C';
+//     Band4BLC = '4B-LC';
+//     Band4C = '4C';
+//     Band4D = '4D';
+//     Band5A = '5A';
+//     Band5B = '5B';
+//     BandSubcon = 'Subcon';
+// }
 
 // ✅ Employee-Skills Junction Table (Many-to-Many)
 // This is the PRIMARY way to track employee skills - links Employee to Skills master data
-entity EmployeeSkill {
+entity EmployeeSkill  {
     key employeeId  : String;
     key skillId     : Integer; // Foreign key to Skills (Integer)
 
@@ -256,11 +260,11 @@ entity EmployeeSkill {
 }
 
 // ✅ NEW: Allocation Status Enum
-type AllocationStatusEnum : String enum {
-    Active = 'Active';
-    Completed = 'Completed';
-    Cancelled = 'Cancelled';
-}
+// type AllocationStatusEnum : String enum {
+//     Active = 'Active';
+//     Completed = 'Completed';
+//     Cancelled = 'Cancelled';
+// }
 
 // ✅ NEW: Allocation entity for Employee-Project relationship
 entity EmployeeProjectAllocation {
@@ -273,7 +277,7 @@ entity EmployeeProjectAllocation {
         endDate              : Date; // ✅ Allocation end date (defaults to project end, but cannot exceed project end)
         allocationDate       : Date; // ✅ Date when allocation was created
         allocationPercentage : Integer; // ✅ NEW: Percentage of employee time allocated (0-100), default 100
-        status               : AllocationStatusEnum;
+        status               : String;
 
         to_Employee          : Association to one Employee
                                    on to_Employee.ohrId = $self.employeeId;
@@ -283,7 +287,7 @@ entity EmployeeProjectAllocation {
                                    on to_Demand.demandId = $self.demandId;
 }
 
-entity EmployeeNewAllocation {
+entity EmployeeNewAllocation : managed {
     key allocationId         : UUID;
         employeeId           : String;
         projectId            : String;
@@ -303,17 +307,17 @@ entity EmployeeNewAllocation {
                                    on to_Customer.SAPcustId = $self.customerId;
 }
  
-entity Employee {
+entity Employee : managed {
     key ohrId              : String;
         fullName           : String;
         city               : String;
-        band               : EmployeeBandEnum;
+        band               : String;
         supervisorOHR      : String;
-        status             : EmployeeStatusEnum;
+        status             : String;
         mailid             : String;
-        gender             : GenderEnum;
-        employeeType       : EmployeeTypeEnum;
-        unit               : Unit;
+        gender             : String;
+        employeeType       : String;
+        unit               : String;
         doj                : Date;
         
         role               : String;
@@ -333,13 +337,13 @@ entity Employee {
                                  on to_Subordinates.supervisorOHR = $self.ohrId;
 
         // Project allocations
-        to_Allocations     : Association to many EmployeeProjectAllocation
+        to_Allocations     : Association to many EmployeeNewAllocation
                                  on to_Allocations.employeeId = $self.ohrId;
 }
 
 //-------------Skills--------------------
 
-entity Skills {
+entity Skills : managed{
     key id                : Integer; // Changed from UUID to Integer for simplicity
         name              : String;
         category          : String;
