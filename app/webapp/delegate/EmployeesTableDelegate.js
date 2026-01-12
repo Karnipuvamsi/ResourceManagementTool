@@ -18,13 +18,39 @@ sap.ui.define([
      */
     const EmployeesTableDelegate = Object.assign({}, BaseTableDelegate);
 
+
+
+
     // ✅ Override default table ID for Employees
-    EmployeesTableDelegate._getDefaultTableId = function() {
+    EmployeesTableDelegate._getDefaultTableId = function () {
         return "Employees";
     };
 
+    EmployeesTableDelegate.fetchProperties = function (oTable) {
+        return Promise.resolve([
+
+            { name: "ohrId", label: "OHR ID", dataType: "String" },
+            { name: "fullName", label: "Full Name", dataType: "String" },
+            { name: "mailid", label: "Email", dataType: "String" },
+            { name: "gender", label: "Gender", dataType: "String" },
+            { name: "employeeType", label: "Employee Type", dataType: "String" },
+            { name: "doj", label: "Date of Joining", dataType: "Date" },
+            { name: "band", label: "Band", dataType: "String" },
+            { name: "role", label: "Role", dataType: "String" },
+            { name: "location", label: "Location", dataType: "String" },
+            { name: "supervisorOHR", label: "Supervisor", dataType: "String" },
+            { name: "skills", label: "Skills", dataType: "String" },
+            { name: "country", label: "Country", dataType: "String" },
+            { name: "unit", label: "Unit", dataType: "String" },
+            { name: "city", label: "City", dataType: "String" },
+            { name: "lwd", label: "Last Working Date", dataType: "Date" },
+            { name: "status", label: "Status", dataType: "String" },
+            { name: "empallocpercentage", label: "Allocation %", dataType: "Integer" }
+        ]);
+    };
+
     // ✅ Override delegate name for logging
-    EmployeesTableDelegate._getDelegateName = function() {
+    EmployeesTableDelegate._getDelegateName = function () {
         return "EmployeesTableDelegate";
     };
 
@@ -38,44 +64,44 @@ sap.ui.define([
 
         const sPath = oTable.getPayload()?.collectionPath || "Employees";
         const sCollectionPath = sPath.replace(/^\//, "");
-        
+
         // ✅ Employees-specific: Expand Supervisor association
         if (sCollectionPath === "Employees") {
             // Expand Supervisor association for Employee table
             oBindingInfo.parameters.$expand = "to_Supervisor($select=fullName,ohrId)";
-            
+
             // ✅ For Res table (Employees in Allocation Overview), ALWAYS apply base allocation filter
             // Filter: empallocpercentage <= 95 AND status != "Resigned"
             const sTableId = oTable.getId ? oTable.getId() : "";
-            
+
             // Res table uses "Employees" collection and has "Res" in its ID
             const bIsResTable = sTableId.includes("Res") || sTableId.includes("res") || sTableId.endsWith("Res") || sTableId === "Res";
-            
+
             if (bIsResTable) {
                 const oPercentageFilter = new sap.ui.model.Filter("empallocpercentage", sap.ui.model.FilterOperator.LE, 95);
                 const oStatusFilter = new sap.ui.model.Filter("status", sap.ui.model.FilterOperator.NE, "Resigned");
                 const oAllocationFilter = new sap.ui.model.Filter([oPercentageFilter, oStatusFilter], true); // true = AND
-                
+
                 // Initialize filters array if it doesn't exist
                 if (!oBindingInfo.filters) {
                     oBindingInfo.filters = [];
                 }
-                
+
                 // Convert to array if it's a single filter
                 let aFilters = Array.isArray(oBindingInfo.filters) ? oBindingInfo.filters : (oBindingInfo.filters ? [oBindingInfo.filters] : []);
-                
+
                 // Check if allocation filter is already present (avoid duplicates)
                 const bHasAllocationFilter = aFilters.some(f => {
                     if (!f || !f.getFilters) return false;
                     const aSubFilters = f.getFilters();
                     if (!aSubFilters || !Array.isArray(aSubFilters) || aSubFilters.length !== 2) return false;
-                    return aSubFilters.some(sf => 
+                    return aSubFilters.some(sf =>
                         sf.getPath() === "empallocpercentage" && (sf.getOperator() === "LT" || sf.getOperator() === "LE") && sf.getValue1() === 95
-                    ) && aSubFilters.some(sf => 
+                    ) && aSubFilters.some(sf =>
                         sf.getPath() === "status" && sf.getOperator() === "NE" && sf.getValue1() === "Resigned"
                     );
                 });
-                
+
                 // Add allocation filter if not already present
                 if (!bHasAllocationFilter) {
                     aFilters = aFilters.filter(f => f !== null && f !== undefined); // Remove null/undefined
@@ -149,14 +175,14 @@ sap.ui.define([
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     // ✅ FIXED: Get table ID from collectionPath for table-specific edit state
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Employees";
-                    
+
                     // ✅ STEP 1: Check if enum field (fixed values)
                     const oEnumConfig = EmployeesTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
 
                     // ✅ STEP 2: Check if association field (dynamic from OData)
                     const oAssocPromise = EmployeesTableDelegate._detectAssociation(oTable, sPropertyName);
-                    
+
                     // Helper function for edit mode formatter
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
@@ -181,13 +207,13 @@ sap.ui.define([
                         }
                     };
 
-                    oAssocPromise.then(function(oAssocConfig) {
+                    oAssocPromise.then(function (oAssocConfig) {
                         const bIsAssoc = !!oAssocConfig;
                         let oField;
 
                         if (bIsEnum) {
                             // ✅ METHOD 1: ENUM - ComboBox with static values
-                            const aItems = oEnumConfig.values.map(function(sVal, iIndex) {
+                            const aItems = oEnumConfig.values.map(function (sVal, iIndex) {
                                 return new Item({
                                     key: sVal,
                                     text: oEnumConfig.labels[iIndex] || sVal
@@ -195,7 +221,7 @@ sap.ui.define([
                             });
 
                             // ✅ Create formatter to display label instead of key in display mode
-                            const fnEnumFormatter = function(sKey) {
+                            const fnEnumFormatter = function (sKey) {
                                 if (!sKey) return "";
                                 const iIndex = oEnumConfig.values.indexOf(sKey);
                                 return iIndex >= 0 ? oEnumConfig.labels[iIndex] : sKey;
@@ -225,7 +251,7 @@ sap.ui.define([
                             // ✅ METHOD 2: ASSOCIATION - ComboBox bound to OData (compatible with UI5 1.141.1)
                             const oModel = oTable.getModel();
                             const sCollectionPath = "/" + oAssocConfig.targetEntity;
-                            
+
                             const oComboBox = new ComboBox({
                                 selectedKey: "{" + sPropertyName + "}",
                                 value: "{" + sPropertyName + "}",
@@ -235,14 +261,14 @@ sap.ui.define([
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
                                     }),
-                                     templateShareable:false
+                                    templateShareable: false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
                                 filterSecondaryValues: true,
                                 placeholder: "Select " + oAssocConfig.displayField
                             });
-                            
+
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
@@ -278,7 +304,7 @@ sap.ui.define([
                         });
 
                         resolve(oColumn);
-                    }).catch(function(oError) {
+                    }).catch(function (oError) {
                         // Fallback to regular field
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
@@ -368,7 +394,7 @@ sap.ui.define([
                         bIsString = true;
                     }
                 }
-                
+
                 const oFilterFieldConfig = {
                     label: String(sName)
                         .replace(/([A-Z])/g, ' $1')
@@ -378,141 +404,141 @@ sap.ui.define([
                     conditions: "{$filters>/conditions/" + sName + "}",
                     dataType: sDataType
                 };
-                
+
                 // ✅ Set caseSensitive: false for string fields to make filters case-insensitive
                 if (bIsString) {
                     oFilterFieldConfig.caseSensitive = false;
                 }
-                
+
                 return Promise.resolve(new FilterField(oFilterFieldConfig));
             }
         };
     };
     EmployeesTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
-    // Always call Base first
-    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+        // Always call Base first
+        BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-    // 1️⃣ Extract search text from ValueHelp Dialog
-    let sSearch = "";
-    try {
-        const oVH = oTable?.getParent()?.getParent();   // MDCTable → Dialog → ValueHelp
-        const aContent = oVH?.getContent?.();
-        const oDialogContent = aContent && aContent[0];
-        sSearch = oDialogContent?.getSearch?.() || "";
-    } catch (e) {}
+        // 1️⃣ Extract search text from ValueHelp Dialog
+        let sSearch = "";
+        try {
+            const oVH = oTable?.getParent()?.getParent();   // MDCTable → Dialog → ValueHelp
+            const aContent = oVH?.getContent?.();
+            const oDialogContent = aContent && aContent[0];
+            sSearch = oDialogContent?.getSearch?.() || "";
+        } catch (e) { }
 
-    // 2️⃣ Fallback → Main Employee FilterBar search
-    if (!sSearch) {
-        const oFB = sap.ui.getCore().byId("employeeFilterBar");
-        sSearch = oFB?.getSearch?.() || "";
-    }
+        // 2️⃣ Fallback → Main Employee FilterBar search
+        if (!sSearch) {
+            const oFB = sap.ui.getCore().byId("employeeFilterBar");
+            sSearch = oFB?.getSearch?.() || "";
+        }
 
-    // 3️⃣ No search → No override
-    if (!sSearch) return;
+        // 3️⃣ No search → No override
+        if (!sSearch) return;
 
-    // 4️⃣ Determine WHICH VH Table called this delegate
-    const sTableId = oTable.getId();
+        // 4️⃣ Determine WHICH VH Table called this delegate
+        const sTableId = oTable.getId();
 
-    let aFilters = [];
+        let aFilters = [];
 
-    // ============================
-    // 🔵 OHR ID VH
-    // ============================
-    if (sTableId.includes("tblEmployeeOHRIdVH")) {
-        aFilters = [
+        // ============================
+        // 🔵 OHR ID VH
+        // ============================
+        if (sTableId.includes("tblEmployeeOHRIdVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "ohrId",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "band",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "skills",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        // 🔵 BAND VH
+        // ============================
+        else if (sTableId.includes("tblEmployeeBandVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "band",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "ohrId",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "skills",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        // 🔵 SKILLS VH
+        // ============================
+        else if (sTableId.includes("tblEmployeeSkillsVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "skills",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "band",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "ohrId",
+                    operator: sap.ui.model.FilterOperator.Contains,
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        // ❗ SAFETY CHECK
+        // ============================
+        if (aFilters.length === 0) {
+            console.warn("Employees VH → No mapping for table:", sTableId);
+            return;
+        }
+
+        // ============================
+        // 🔥 APPLY OR-GROUP FILTER
+        // ============================
+        oBindingInfo.filters = [
             new sap.ui.model.Filter({
-                path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
+                filters: aFilters,
+                and: false
             })
         ];
-    }
 
-    // ============================
-    // 🔵 BAND VH
-    // ============================
-    else if (sTableId.includes("tblEmployeeBandVH")) {
-        aFilters = [
-            new sap.ui.model.Filter({
-                path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            })
-        ];
-    }
-
-    // ============================
-    // 🔵 SKILLS VH
-    // ============================
-    else if (sTableId.includes("tblEmployeeSkillsVH")) {
-        aFilters = [
-            new sap.ui.model.Filter({
-                path: "skills",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "band",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "ohrId",
-                operator: sap.ui.model.FilterOperator.Contains,
-                value1: sSearch,
-                caseSensitive: false
-            })
-        ];
-    }
-
-    // ============================
-    // ❗ SAFETY CHECK
-    // ============================
-    if (aFilters.length === 0) {
-        console.warn("Employees VH → No mapping for table:", sTableId);
-        return;
-    }
-
-    // ============================
-    // 🔥 APPLY OR-GROUP FILTER
-    // ============================
-    oBindingInfo.filters = [
-        new sap.ui.model.Filter({
-            filters: aFilters,
-            and: false
-        })
-    ];
-
-    // console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
-};
+        // console.log("EMPLOYEE VH FILTER APPLIED:", sTableId, oBindingInfo.filters);
+    };
 
 
     return EmployeesTableDelegate;

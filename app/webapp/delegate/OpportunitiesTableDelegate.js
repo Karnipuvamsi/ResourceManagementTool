@@ -18,10 +18,29 @@ sap.ui.define([
      */
     const OpportunitiesTableDelegate = Object.assign({}, BaseTableDelegate);
 
-    // ✅ Override default table ID for Opportunities
+     // ✅ Override default table ID for Opportunities
     OpportunitiesTableDelegate._getDefaultTableId = function() {
         return "Opportunities";
     };
+
+    OpportunitiesTableDelegate.fetchProperties = function (oTable) {
+    return Promise.resolve([
+        { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opp. ID", dataType: "Edm.Int32" },
+        { name: "sfdcOpportunityId", path: "sfdcOpportunityId", label: "SFDC Opp. ID", dataType: "Edm.String" },
+        { name: "opportunityName", path: "opportunityName", label: "Opp. Name", dataType: "Edm.String" },
+        { name: "businessUnit", path: "businessUnit", label: "Business Unit", dataType: "Edm.String" },
+        { name: "probability", path: "probability", label: "Actual Probability %", dataType: "Edm.Decimal" },
+        { name: "salesSPOC", path: "salesSPOC", label: "Sales SPOC", dataType: "Edm.String"},
+        { name: "deliverySPOC", path: "deliverySPOC", label: "Delivery SPOC", dataType: "Edm.String"},
+        { name: "expectedStart", path: "expectedStart", label: "Expected Start", dataType: "Edm.Date" },
+        { name: "expectedEnd", path: "expectedEnd", label: "Expected End", dataType: "Edm.Date"},
+        { name: "tcv", path: "tcv", label: "TCV", dataType: "Edm.Decimal" },
+        { name: "currency", path: "currency", label: "Currency", dataType: "Edm.String" },
+        { name: "Stage", path: "Stage", label: "SFDC Probability %", dataType: "Edm.Decimal" },
+        { name: "customerId", path: "customerId", label: "Customer ID", dataType: "Edm.Int32"}
+    ]);
+};
+
 
     // ✅ Override delegate name for logging
     OpportunitiesTableDelegate._getDelegateName = function() {

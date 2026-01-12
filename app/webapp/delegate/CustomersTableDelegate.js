@@ -23,6 +23,21 @@ sap.ui.define([
         return "Customers";
     };
 
+    //Settings icon mapping
+    CustomersTableDelegate.fetchProperties = function (oTable) {
+        return Promise.resolve([
+            { name: "SAPcustId", label: "SAP Customer ID", dataType: "String" },
+            { name: "customerName", label: "Customer Name", dataType: "String" },
+            { name: "custCountryId", label: "Country", dataType: "String" },
+            { name: "custStateId", label: "State", dataType: "String" },
+            { name: "custCityId", label: "City", dataType: "String" },
+            { name: "status", label: "Status", dataType: "String" },
+            { name: "vertical", label: "Vertical", dataType: "String" },
+            { name: "startDate", label: "Start Date", dataType: "Date" },
+            { name: "endDate", label: "End Date", dataType: "Date" }
+        ]);
+    };
+
     // ✅ Override delegate name for logging
     CustomersTableDelegate._getDelegateName = function () {
         return "CustomersTableDelegate";
@@ -48,54 +63,52 @@ sap.ui.define([
         }
         return {};
     };
-   CustomersTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
-    // call Base first
-    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+    CustomersTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
+        // call Base first
+        BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-    // get search text from the value help content
-    let sSearch = "";
-    try {
-        const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
-        const aContent = oVH && oVH.getContent && oVH.getContent();
-        const oDialogContent = aContent && aContent[0];
-        sSearch = oDialogContent && oDialogContent.getSearch && oDialogContent.getSearch();
-    } catch (e) {}
+        // get search text from the value help content
+        let sSearch = "";
+        try {
+            const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+            const aContent = oVH && oVH.getContent && oVH.getContent();
+            const oDialogContent = aContent && aContent[0];
+            sSearch = oDialogContent && oDialogContent.getSearch && oDialogContent.getSearch();
+        } catch (e) { }
 
-    // fallback to FilterBar if needed
-    if (!sSearch) {
-        const oFilterBar = sap.ui.getCore().byId("fbCustomerVH");
-        const bFilterBar = sap.ui.getCore().byId("tblVerticalVH");
-        if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
-    }
+        // fallback to FilterBar if needed
+        if (!sSearch) {
+            const oFilterBar = sap.ui.getCore().byId("fbCustomerVH");
+            const bFilterBar = sap.ui.getCore().byId("tblVerticalVH");
+            if (oFilterBar && oFilterBar.getSearch) sSearch = oFilterBar.getSearch();
+        }
 
-    // nothing typed → don't apply search
-    if (!sSearch) return;
+        // nothing typed → don't apply search
+        if (!sSearch) return;
 
-    // CASE-SENSITIVE FILTERS
-    oBindingInfo.filters = [
-        new sap.ui.model.Filter({
-            filters: [
-                new sap.ui.model.Filter({
-                    path: "customerName",
-                    operator: sap.ui.model.FilterOperator.Contains,
-                    value1: sSearch,
-                    caseSensitive: false
-                }),
-                new sap.ui.model.Filter({
-                    path: "vertical",
-                    operator: sap.ui.model.FilterOperator.Contains,
-                    value1: sSearch,
-                    caseSensitive: false
-                })
-            ],
-            and: false
-        })
-    ];
+        // CASE-SENSITIVE FILTERS
+        oBindingInfo.filters = [
+            new sap.ui.model.Filter({
+                filters: [
+                    new sap.ui.model.Filter({
+                        path: "customerName",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sSearch,
+                        caseSensitive: false
+                    }),
+                    new sap.ui.model.Filter({
+                        path: "vertical",
+                        operator: sap.ui.model.FilterOperator.Contains,
+                        value1: sSearch,
+                        caseSensitive: false
+                    })
+                ],
+                and: false
+            })
+        ];
 
-    // console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
-};
-
-
+        // console.log("CUSTOM CASE-SENSITIVE SEARCH FILTER:", oBindingInfo.filters);
+    };
 
     // ✅ removeItem and getFilterDelegate are inherited from BaseTableDelegate
 

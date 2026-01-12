@@ -17,14 +17,28 @@ sap.ui.define([
      * Extends BaseTableDelegate with Projects-specific logic
      */
     const ProjectsTableDelegate = Object.assign({}, BaseTableDelegate);
+    ProjectsTableDelegate.fetchProperties = function (oTable) {
+        return Promise.resolve([
+            { name: "sapPId", label: "Internal PID", dataType: "String" },
+            { name: "sfdcPId", label: "Actual PID", dataType: "String" },
+            { name: "projectName", label: "Project Name", dataType: "String" },
+            { name: "startDate", label: "Start Date", dataType: "Date" },
+            { name: "endDate", label: "End Date", dataType: "Date" },
+            { name: "gpm", label: "GPM", dataType: "String" },
+            { name: "projectType", label: "Project Type", dataType: "String" },
+            { name: "oppId", label: "Opp Name", dataType: "String" },
+            { name: "status", label: "Project Status", dataType: "String" },
+            { name: "subVertical", label: "Sub-Vertical", dataType: "String" }
+        ]);
+    };
 
     // ✅ Override default table ID for Projects
-    ProjectsTableDelegate._getDefaultTableId = function() {
+    ProjectsTableDelegate._getDefaultTableId = function () {
         return "Projects";
     };
 
     // ✅ Override delegate name for logging
-    ProjectsTableDelegate._getDelegateName = function() {
+    ProjectsTableDelegate._getDelegateName = function () {
         return "ProjectsTableDelegate";
     };
 
@@ -38,7 +52,7 @@ sap.ui.define([
 
         const sPath = oTable.getPayload()?.collectionPath || "Projects";
         const sCollectionPath = sPath.replace(/^\//, "");
-        
+
         // ✅ Projects-specific: Expand Opportunity and GPM associations
         if (sCollectionPath === "Projects") {
             // ✅ Expand Opportunity and GPM associations (like Supervisor in Employees)
@@ -108,11 +122,11 @@ sap.ui.define([
             return new Promise(function (resolve) {
                 sap.ui.require(["sap/ui/mdc/table/Column"], function (Column) {
                     const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Projects";
-                    
+
                     const oEnumConfig = ProjectsTableDelegate._getEnumConfig(sTableId, sPropertyName);
                     const bIsEnum = !!oEnumConfig;
                     const oAssocPromise = ProjectsTableDelegate._detectAssociation(oTable, sPropertyName);
-                    
+
                     const fnEditModeFormatter = function (sPath) {
                         var rowPath = this.getBindingContext() && this.getBindingContext().getPath();
                         if (sPath && sPath.includes(",")) {
@@ -135,12 +149,12 @@ sap.ui.define([
                         }
                     };
 
-                    oAssocPromise.then(function(oAssocConfig) {
+                    oAssocPromise.then(function (oAssocConfig) {
                         const bIsAssoc = !!oAssocConfig;
                         let oField;
 
                         if (bIsEnum) {
-                            const aItems = oEnumConfig.values.map(function(sVal, iIndex) {
+                            const aItems = oEnumConfig.values.map(function (sVal, iIndex) {
                                 return new Item({
                                     key: sVal,
                                     text: oEnumConfig.labels[iIndex] || sVal
@@ -184,10 +198,10 @@ sap.ui.define([
                                     sAssocPath = sPropertyName; // Fallback to ID
                                 }
                             }
-                            
+
                             const oModel = oTable.getModel();
                             const sCollectionPath = "/" + oAssocConfig.targetEntity;
-                            
+
                             const oComboBox = new ComboBox({
                                 selectedKey: "{" + sPropertyName + "}",
                                 value: "{" + sPropertyName + "}",
@@ -197,14 +211,14 @@ sap.ui.define([
                                         key: "{" + oAssocConfig.keyField + "}",
                                         text: "{" + oAssocConfig.displayField + "}"
                                     }),
-                                     templateShareable:false
+                                    templateShareable: false
                                 },
                                 editable: oEditableBinding,
                                 showSecondaryValues: true,
                                 filterSecondaryValues: true,
                                 placeholder: "Select " + oAssocConfig.displayField
                             });
-                            
+
                             // Bind to the same model as the table
                             oComboBox.setModel(oModel);
 
@@ -239,7 +253,7 @@ sap.ui.define([
                         });
 
                         resolve(oColumn);
-                    }).catch(function(oError) {
+                    }).catch(function (oError) {
                         const oField = new Field({
                             value: "{" + sPropertyName + "}",
                             tooltip: "{" + sPropertyName + "}",
@@ -321,129 +335,129 @@ sap.ui.define([
         };
     };
     ProjectsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
-    // Call Base delegate first
-    BaseTableDelegate.updateBindingInfo.apply(this, arguments);
+        // Call Base delegate first
+        BaseTableDelegate.updateBindingInfo.apply(this, arguments);
 
-    // 1️⃣ Extract search text from ValueHelp Dialog
-    let sSearch = "";
-    try {
-        const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
-        const aContent = oVH?.getContent?.();
-        const oDialogContent = aContent && aContent[0];
-        sSearch = oDialogContent?.getSearch?.() || "";
-    } catch (e) {}
+        // 1️⃣ Extract search text from ValueHelp Dialog
+        let sSearch = "";
+        try {
+            const oVH = oTable.getParent().getParent(); // MDCTable → Dialog → ValueHelp
+            const aContent = oVH?.getContent?.();
+            const oDialogContent = aContent && aContent[0];
+            sSearch = oDialogContent?.getSearch?.() || "";
+        } catch (e) { }
 
-    // 2️⃣ Try main Project FilterBar search
-    if (!sSearch) {
-        const oFB = sap.ui.getCore().byId("projectFilterBar");
-        sSearch = oFB?.getSearch?.() || "";
-    }
+        // 2️⃣ Try main Project FilterBar search
+        if (!sSearch) {
+            const oFB = sap.ui.getCore().byId("projectFilterBar");
+            sSearch = oFB?.getSearch?.() || "";
+        }
 
-    // 3️⃣ If still nothing → do NOT apply search
-    if (!sSearch) return;
+        // 3️⃣ If still nothing → do NOT apply search
+        if (!sSearch) return;
 
-    // 4️⃣ Detect table by ID
-    const sId = oTable.getId();
-    let aFilters = [];
+        // 4️⃣ Detect table by ID
+        const sId = oTable.getId();
+        let aFilters = [];
 
-    // ============================
-    //   INTERNAL PID (SAP PID)
-    // ============================
-    if (sId.includes("tblSapPIdVH")) {
-        aFilters = [
+        // ============================
+        //   INTERNAL PID (SAP PID)
+        // ============================
+        if (sId.includes("tblSapPIdVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "sapPId",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "projectType",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        //   SFDC PID (Actual PID)
+        // ============================
+        else if (sId.includes("tblSfdcPIdVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "sfdcPId",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "projectType",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        //   PROJECT TYPE VH
+        // ============================
+        else if (sId.includes("tblProjectTypeVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "projectType",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "sapPId",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        //   SOW RECEIVED VH
+        // ============================
+        else if (sId.includes("tblSOWReceivedVH")) {
+            aFilters = [
+                new sap.ui.model.Filter({
+                    path: "SOWReceived",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                }),
+                new sap.ui.model.Filter({
+                    path: "projectType",
+                    operator: "Contains",
+                    value1: sSearch,
+                    caseSensitive: false
+                })
+            ];
+        }
+
+        // ============================
+        //   SAFETY CHECK
+        // ============================
+        if (aFilters.length === 0) {
+            console.warn("No Project VH mapping for table:", sId);
+            return;
+        }
+
+        // OR group (search across multiple fields)
+        oBindingInfo.filters = [
             new sap.ui.model.Filter({
-                path: "sapPId",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "projectType",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
+                filters: aFilters,
+                and: false
             })
         ];
-    }
 
-    // ============================
-    //   SFDC PID (Actual PID)
-    // ============================
-    else if (sId.includes("tblSfdcPIdVH")) {
-        aFilters = [
-            new sap.ui.model.Filter({
-                path: "sfdcPId",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "projectType",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            })
-        ];
-    }
-
-    // ============================
-    //   PROJECT TYPE VH
-    // ============================
-    else if (sId.includes("tblProjectTypeVH")) {
-        aFilters = [
-            new sap.ui.model.Filter({
-                path: "projectType",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "sapPId",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            })
-        ];
-    }
-
-    // ============================
-    //   SOW RECEIVED VH
-    // ============================
-    else if (sId.includes("tblSOWReceivedVH")) {
-        aFilters = [
-            new sap.ui.model.Filter({
-                path: "SOWReceived",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive: false
-            }),
-            new sap.ui.model.Filter({
-                path: "projectType",
-                operator: "Contains",
-                value1: sSearch,
-                caseSensitive:false
-            })
-        ];
-    }
-
-    // ============================
-    //   SAFETY CHECK
-    // ============================
-    if (aFilters.length === 0) {
-        console.warn("No Project VH mapping for table:", sId);
-        return;
-    }
-
-    // OR group (search across multiple fields)
-    oBindingInfo.filters = [
-        new sap.ui.model.Filter({
-            filters: aFilters,
-            and: false
-        })
-    ];
-
-    console.log("PROJECT VH FILTER APPLIED for", sId, oBindingInfo.filters);
-};
+        console.log("PROJECT VH FILTER APPLIED for", sId, oBindingInfo.filters);
+    };
 
 
     return ProjectsTableDelegate;

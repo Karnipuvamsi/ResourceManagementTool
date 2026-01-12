@@ -105,8 +105,34 @@ sap.ui.define([
        
         return oFilterField;
     };
+
+    MasterDemandsFilterBarDelegate._getExcludedProperties = function(sEntitySet) {
+        if (sEntitySet === "Demands") {
+            return [];
+        }
+        return [];
+    };
+
+    // Friendly labels for Customers table
+    const FIELD_LABELS = {
+        "demandId": "Demand Id",
+        "skill": "Skill",
+        "band": "Band",
+        "sapPId": "SAP PID",
+        "quantity": "Quantity",
+        "allocatedCount": "Allocated Count",
+        "remaining": "Remaining",
+    };
+
+    // Override label hook so Base can call into this
+    MasterDemandsFilterBarDelegate.getLabelForProperty = function (sEntitySet, sPropertyName) {
+        if (sEntitySet === "Demands" && FIELD_LABELS[sPropertyName]) {
+            return FIELD_LABELS[sPropertyName];
+        }
+        //console.log(sPropertyName);
+        return sPropertyName;
+    };
  
     return MasterDemandsFilterBarDelegate;
 });
- 
  

@@ -1,17 +1,3 @@
-/**
- * Base FilterBar Delegate
- * 
- * This is the base delegate that contains all common functionality shared across
- * all FilterBar delegates. Specific delegates should extend this base delegate and
- * only add their entity-specific logic.
- * 
- * Usage:
- *   const BaseFilterBarDelegate = require("glassboard/delegate/BaseFilterBarDelegate");
- *   const SpecificDelegate = Object.assign({}, BaseFilterBarDelegate, {
- *       // Add specific logic here
- *   });
- */
-
 sap.ui.define([
     "sap/ui/mdc/FilterBarDelegate",
     "sap/ui/mdc/FilterField",
@@ -24,6 +10,11 @@ sap.ui.define([
      * Extends FilterBarDelegate with common functionality
      */
     const BaseFilterBarDelegate = Object.assign({}, FilterBarDelegate);
+    
+    // Hook: specific delegates override this to map labels
+    BaseFilterBarDelegate.getLabelForProperty = function (sEntitySet, sPropertyName) {
+        return sPropertyName; // default fallback
+    };
 
     // ============================================
     // COMMON CONFIGURATION METHODS
@@ -56,12 +47,6 @@ sap.ui.define([
             return "EmployeeBenchReport";
         } else if (sFilterBarId.includes("employeeSkillReportFilterBar")) {
             return "EmployeeSkillReport";
-        } else if (sFilterBarId.includes("projectsNearingCompletionReportFilterBar")) {
-            return "ProjectsNearingCompletionReport";
-        }else if (sFilterBarId.includes("employeeProbableReleaseReportFilterBar")) {
-            return "EmployeeProbableReleaseReport";
-        }else if (sFilterBarId.includes("revenueForecastReportFilterBar")) {
-            return "RevenueForecastReport";
         }
         // Default fallback
         return "Customers";
@@ -79,26 +64,17 @@ sap.ui.define([
         }
         return [];
     };
+    
+ 
 
-    // ============================================
-    // COMMON FETCH PROPERTIES METHOD
-    // ============================================
 
-    /**
-     * Fetch properties from OData metadata
-     * This is a common implementation that works for most entities
-     * Override in specific delegates if custom logic is needed
-     * 
-     * @param {object} oFilterBar - MDC FilterBar instance
-     * @returns {Promise<Array>} Promise resolving to array of property definitions
-     */
+    // Fetch properties for MDC Table / FilterBar
     BaseFilterBarDelegate.fetchProperties = async function (oFilterBar) {
-
         const oModel = oFilterBar.getModel("default");
         const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
         const oMetaModel = oModel.getMetaModel();
 
-        await oMetaModel.requestObject("/"); // Ensure metadata is loaded
+        await oMetaModel.requestObject("/");
         const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
         const oEntityType = oMetaModel.getObject(sEntityTypePath);
 
@@ -118,75 +94,39 @@ sap.ui.define([
 
         for (const sKey in oEntityType) {
             if (sKey.startsWith("$")) continue;
-
             const oProp = oEntityType[sKey];
 
-            // Skip excluded properties
-            if (aExcludedProperties.includes(sKey)) {
-                continue;
-            }
-
-            // Skip navigation properties
+            if (aExcludedProperties.includes(sKey)) continue;
             if (oProp.$isCollection || oProp.$Type?.startsWith("MyService.")) continue;
 
             aProperties.push({
                 name: sKey,
-                label: sKey,
+                label: this.getLabelForProperty(sEntitySet, sKey), // 🔑 use hook
                 dataType: typeMap[oProp.$Type] || "sap.ui.model.odata.type.String",
                 maxConditions: -1,
                 required: false
             });
         }
-
         return aProperties;
     };
 
-    // ============================================
-    // COMMON ADD ITEM METHOD
-    // ============================================
-
-    /**
-     * Create FilterField dynamically
-     * Override in specific delegates if custom logic is needed
-     * 
-     * @param {object} oFilterBar - MDC FilterBar instance
-     * @param {string} sPropertyName - Property name
-     * @returns {Promise<object>} Promise resolving to FilterField instance
-     */
+    // AddItem for FilterBar (still uses hook for labels)
     BaseFilterBarDelegate.addItem = async function (oFilterBar, sPropertyName) {
         const sId = oFilterBar.getId() + "--filter--" + sPropertyName;
-
         if (Element.getElementById(sId)) {
             return Element.getElementById(sId);
         }
 
-        // Get fragment name from FilterBar ID
         const sFilterBarId = oFilterBar.getId();
         const sFragmentName = this._getFragmentName(sFilterBarId);
 
-        // Determine if property is a string type for case-insensitive filtering
-        let bIsString = false;
-        try {
-            const oModel = oFilterBar.getModel("default");
-            const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
-            const oMetaModel = oModel && oModel.getMetaModel && oModel.getMetaModel();
-            if (oMetaModel) {
-                const sEntityTypePath = "/" + oMetaModel.getObject("/$EntityContainer/" + sEntitySet).$Type;
-                const oEntityType = oMetaModel.getObject(sEntityTypePath);
-                const oProp = oEntityType && oEntityType[sPropertyName];
-                if (oProp && oProp.$Type === "Edm.String") {
-                    bIsString = true;
-                }
-            }
-        } catch (e) {
-            // If metadata check fails, default to treating as string for safety
-            bIsString = true;
-        }
+        const sEntitySet = oFilterBar.getDelegate().payload.collectionPath;
+        const sLabel = this.getLabelForProperty(sEntitySet, sPropertyName);
 
         const oFilterFieldConfig = {
             conditions: "{filterModel>/" + sFragmentName + "/conditions/" + sPropertyName + "}",
             propertyKey: sPropertyName,
-            label: sPropertyName,
+            label: sLabel,
             maxConditions: -1,
             defaultOperator: "EQ",
             delegate: {
@@ -195,15 +135,10 @@ sap.ui.define([
             }
         };
 
-        // Set caseSensitive: false for string fields to make filters case-insensitive
-        if (bIsString) {
-            oFilterFieldConfig.caseSensitive = false;
-        }
-
         return new FilterField(sId, oFilterFieldConfig);
     };
 
-    // ============================================
+ // ============================================
     // COMMON REMOVE ITEM METHOD
     // ============================================
 
@@ -219,4 +154,4 @@ sap.ui.define([
     };
 
     return BaseFilterBarDelegate;
-});
+}); 

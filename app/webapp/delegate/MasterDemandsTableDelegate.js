@@ -4,31 +4,32 @@
  * Extends BaseTableDelegate with entity-specific configurations for multiple entities.
  * This delegate handles enum fields, associations, and custom headers for various tables.
  */
- 
+
 sap.ui.define([
     "glassboard/delegate/BaseTableDelegate"
 ], function (BaseTableDelegate) {
     "use strict";
- 
+
     const MasterDemandsTableDelegate = Object.assign({}, BaseTableDelegate);
- 
+
     // ============================================
     // ENTITY-SPECIFIC ENUM CONFIGURATION
     // ============================================
- 
+
     /**
      * Override enum configuration to support multiple entities
      * @param {string} sTableId - Table ID
      * @param {string} sPropertyName - Property name
      * @returns {object|null} Enum config with values and labels, or null
      */
-    MasterDemandsTableDelegate._getEnumConfig = function(sTableId, sPropertyName) {
+    MasterDemandsTableDelegate._getEnumConfig = function (sTableId, sPropertyName) {
         // First try base delegate's EnumConfig utility
         const oBaseConfig = BaseTableDelegate._getEnumConfig.call(this, sTableId, sPropertyName);
         if (oBaseConfig) {
             return oBaseConfig;
         }
- 
+
+
         // Fallback to static enum configurations for multiple entities
         const mEnumFields = {
             "Customers": {
@@ -93,39 +94,51 @@ sap.ui.define([
         };
         return mEnumFields[sTableId]?.[sPropertyName] || null;
     };
- 
+
+    MasterDemandsTableDelegate.fetchProperties = function (oTable) {
+        return Promise.resolve([
+            { name: "demandId", label: "Demand Id", dataType: "Edm.Int32" },
+            { name: "skill", label: "Skill", dataType: "Edm.String" },
+            { name: "band", label: "Band", dataType: "Edm.String" },
+            { name: "sapPId", label: "SAP PID", dataType: "Edm.String" }, // ✅ corrected
+            { name: "quantity", label: "Quantity", dataType: "Edm.Int32" },
+            { name: "allocatedCount", label: "Allocated Count", dataType: "Edm.Int32" },
+            { name: "remaining", label: "Remaining", dataType: "Edm.Int32" }
+        ]);
+    };
+
     // ============================================
     // ENTITY-SPECIFIC ASSOCIATION DETECTION
     // ============================================
- 
+
     /**
      * Override association detection to support multiple entities
      * @param {object} oTable - MDC Table instance
      * @param {string} sPropertyName - Property name
      * @returns {Promise<object|null>} Association config or null
      */
-    MasterDemandsTableDelegate._detectAssociation = function(oTable, sPropertyName) {
+    MasterDemandsTableDelegate._detectAssociation = function (oTable, sPropertyName) {
         const sTableId = oTable.getPayload()?.collectionPath?.replace(/^\//, "") || "Customers";
-       
+
         // ✅ CRITICAL: For Demands table, sapPId should NOT be treated as association
         // We want to display the ID directly, not the project name
         if (sTableId === "Demands" && sPropertyName === "sapPId") {
             return Promise.resolve(null);
         }
-       
+
         // First try base delegate's AssociationConfig utility
         return BaseTableDelegate._detectAssociation.call(this, oTable, sPropertyName)
             .then((oBaseAssocConfig) => {
                 if (oBaseAssocConfig) {
                     return oBaseAssocConfig;
                 }
- 
+
                 // Fallback to static association mappings for multiple entities
                 const oModel = oTable.getModel();
                 if (!oModel || !oModel.getMetaModel) {
                     return null;
                 }
- 
+
                 // Simple fallback mapping for associations (can be enhanced with metadata later)
                 const mAssociationFields = {
                     "Opportunities": {
@@ -150,22 +163,22 @@ sap.ui.define([
                         "projectId": { targetEntity: "Projects", displayField: "projectName", keyField: "sapPId" }
                     }
                 };
- 
+
                 const oAssocConfig = mAssociationFields[sTableId]?.[sPropertyName];
                 return oAssocConfig || null;
             });
     };
- 
+
     // ============================================
     // ENTITY-SPECIFIC CUSTOM HEADERS
     // ============================================
- 
+
     /**
      * Override custom headers for multiple entities
      * @param {string} sTableId - Table ID
      * @returns {object} Map of property names to header labels
      */
-    MasterDemandsTableDelegate._getCustomHeaders = function(sTableId) {
+    MasterDemandsTableDelegate._getCustomHeaders = function (sTableId) {
         const mAllCustomHeaders = {
             "Customers": {
                 "SAPcustId": "SAP Customer ID",
@@ -182,17 +195,17 @@ sap.ui.define([
         };
         return mAllCustomHeaders[sTableId] || {};
     };
- 
+
     // ============================================
     // ENTITY-SPECIFIC FALLBACK PROPERTIES
     // ============================================
- 
+
     /**
      * Override fallback properties for entities that may need them
      * @param {string} sCollectionPath - Collection path
      * @returns {Array} Fallback properties array
      */
-    MasterDemandsTableDelegate._getFallbackProperties = function(sCollectionPath) {
+    MasterDemandsTableDelegate._getFallbackProperties = function (sCollectionPath) {
         const mFallbackProperties = {
             "Opportunities": [
                 { name: "sapOpportunityId", path: "sapOpportunityId", label: "SAP Opportunity ID", dataType: "Edm.Int32", sortable: true, filterable: true, groupable: true },
@@ -207,11 +220,11 @@ sap.ui.define([
         };
         return mFallbackProperties[sCollectionPath] || [];
     };
- 
+
     // ============================================
     // ENTITY-SPECIFIC BINDING INFO UPDATE
     // ============================================
- 
+
     /**
      * Override updateBindingInfo to expand associations and handle value help search filtering
      * @param {object} oTable - MDC Table instance
@@ -220,10 +233,10 @@ sap.ui.define([
     MasterDemandsTableDelegate.updateBindingInfo = function (oTable, oBindingInfo) {
         // Call parent implementation first (handles common logic)
         BaseTableDelegate.updateBindingInfo.apply(this, arguments);
- 
+
         const sPath = oTable.getPayload()?.collectionPath || "Demands";
         const sCollectionPath = sPath.replace(/^\//, "");
-       
+
         // ✅ Expand associations to load related entity data
         if (sCollectionPath === "Demands") {
             // Expand Project association for Demands table
@@ -232,7 +245,7 @@ sap.ui.define([
             // Expand Opportunity association for Project table
             oBindingInfo.parameters.$expand = "to_Opportunity";
         }
- 
+
         // ✅ Handle value help search filtering (similar to CustomersTableDelegate)
         // Get search text from the value help content
         let sSearch = "";
@@ -244,12 +257,12 @@ sap.ui.define([
         } catch (e) {
             // Ignore errors
         }
- 
+
         // ✅ Apply search filters if search text exists and table is in value help context
         if (sSearch && sCollectionPath === "Projects") {
             // Get search keys from payload
             const aSearchKeys = oTable.getPayload()?.searchKeys || ["sapPId", "projectName"];
-           
+
             // Create case-insensitive search filters
             const aSearchFilters = aSearchKeys.map((sKey) => {
                 return new sap.ui.model.Filter({
@@ -259,13 +272,13 @@ sap.ui.define([
                     caseSensitive: false
                 });
             });
- 
+
             // Combine search filters with OR logic
             const oSearchFilter = new sap.ui.model.Filter({
                 filters: aSearchFilters,
                 and: false
             });
- 
+
             // Merge with existing filters
             if (oBindingInfo.filters) {
                 oBindingInfo.filters = new sap.ui.model.Filter({
@@ -275,12 +288,11 @@ sap.ui.define([
             } else {
                 oBindingInfo.filters = oSearchFilter;
             }
- 
+
             // console.log("✅ MasterDemands ValueHelp search filter applied:", sSearch, "on keys:", aSearchKeys);
         }
     };
- 
- 
+
+
     return MasterDemandsTableDelegate;
 });
- 
