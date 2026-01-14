@@ -145,7 +145,8 @@ sap.ui.define([
                             } else {
 
                                 // Convert to ISO format
-                                const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
+                                //const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "MM/dd/yyyy" }).parse(aRow[iIndex]?.trim());
+                                const oDate = sap.ui.core.format.DateFormat.getDateInstance({ pattern: "yyyy-MM-dd" }).parse(aRow[iIndex]?.trim());
                                 // Add +5:30 hours (IST) to the timestamp
 
                                 const ist = new Date(oDate);
@@ -156,7 +157,8 @@ sap.ui.define([
 
                                 const dd = String(ist.getDate()).padStart(2, '0');
 
-                                oRecord[sHeader] = `${mm}-${dd}-${yyyy}`;
+                                //oRecord[sHeader] = `${mm}-${dd}-${yyyy}`;
+                                oRecord[sHeader] = `${yyyy}-${mm}-${dd}`;
 
 
                             }
