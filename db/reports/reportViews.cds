@@ -70,6 +70,32 @@ where e.status in ('Unproductive Bench', 'Inactive Bench');
 // Employee Probable Release Report View
 define view EmployeeProbableReleaseView as
 select from db.Employee as e
+    inner join db.EmployeeNewAllocation as epa
+        on e.ohrId = epa.employeeId
+    inner join db.Project as p
+        on epa.projectId = p.sapPId
+    inner join db.Opportunity as opp
+        on p.oppId = opp.sapOpportunityId
+    inner join db.Customer as c
+        on opp.customerId = c.SAPcustId
+{
+    key epa.allocationId as allocationId,
+        e.ohrId       as employeeId,
+        e.fullName    as employeeName,
+        e.band,
+        p.projectName as currentProject,
+        c.customerName as customer,
+        epa.endDate   as releaseDate,
+        cast(
+            days_between(current_date, epa.endDate)
+            as Integer
+        ) as daysToRelease,
+        e.skills,
+        e.location
+}
+where epa.endDate >= current_date;
+/* define view EmployeeProbableReleaseView as
+select from db.Employee as e
     inner join db.EmployeeNewAllocation as epa on e.ohrId = epa.employeeId
     inner join db.Project as p on epa.projectId = p.sapPId
     inner join db.Opportunity as opp on p.oppId = opp.sapOpportunityId
@@ -86,7 +112,7 @@ select from db.Employee as e
         e.location,
         
 }
-where epa.endDate >= current_date;
+where epa.endDate >= current_date;*/
 
 // Revenue Forecast Report View
 define view RevenueForecastView as
@@ -121,6 +147,36 @@ where p.status in ('Active', 'Planned');
 
 // Employee Allocation Report View
 define view EmployeeAllocationReportView as
+select from db.EmployeeNewAllocation as epa
+left outer join db.Employee as e
+    on e.ohrId = epa.employeeId
+left outer join db.Project as p
+    on epa.projectId = p.sapPId
+left outer join db.Opportunity as opp
+    on p.oppId = opp.sapOpportunityId
+left outer join db.Customer as c
+    on opp.customerId = c.SAPcustId
+{
+    key epa.allocationId as allocationId,
+    e.ohrId            as employeeId,
+    e.fullName         as employeeName,
+    e.band,
+    e.employeeType,
+    e.status,
+    p.projectName      as currentProject,
+    c.customerName     as customer,
+    epa.startDate      as allocationStartDate,
+    epa.endDate        as allocationEndDate,
+    cast(days_between(current_date, epa.endDate) as Integer) as daysRemaining,
+    epa.allocationPercentage as utilizationPercentage
+}
+where
+    ( e.lwd is null or e.lwd = '' )
+    and (
+          e.status <> 'Resigned'
+          or epa.allocationId is not null
+        );
+/* define view EmployeeAllocationReportView as
 select from db.Employee as e
 inner join db.EmployeeNewAllocation as epa
   on e.ohrId = epa.employeeId
@@ -147,6 +203,7 @@ inner join db.Customer as c
 where
   e.lwd is null
   and e.status not in ('Resigned', 'Productive Bench', 'Unproductive Bench');
+*/
 
 // Employee Skill Report View
 define view EmployeeSkillReportView as
